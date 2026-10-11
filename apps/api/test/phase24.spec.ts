@@ -1,4 +1,4 @@
-import { poolTls } from '../src/prisma/pool-tls';
+import { normalizePem, poolTls } from '../src/prisma/pool-tls';
 import { BadRequestException } from '@nestjs/common';
 import { buildBaseQuery, orderBy } from '../src/search/postgres-search.engine';
 import { cleanFaq, parseSeoSettings, validGtin } from '../src/seo/seo-rules';
@@ -54,8 +54,16 @@ describe('Phase 24 — search order', () => {
 describe('Hosted database TLS (free test deploy)', () => {
   it('with the provider CA the pool verifies the server; URL ssl options cannot override it', () => {
     const r = poolTls('postgresql://postgres.ref:pa%40ss@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?sslmode=require&connect_timeout=10', '-----BEGIN CERTIFICATE-----\\nAAA\\n-----END CERTIFICATE-----');
-    expect(r.ssl).toEqual({ ca: '-----BEGIN CERTIFICATE-----\nAAA\n-----END CERTIFICATE-----', rejectUnauthorized: true });
+    expect(r.ssl).toEqual({ ca: '-----BEGIN CERTIFICATE-----\nAAA\n-----END CERTIFICATE-----\n', rejectUnauthorized: true });
     expect(r.connectionString).toBe('postgresql://postgres.ref:pa%40ss@aws-0-eu-central-1.pooler.supabase.com:5432/postgres?connect_timeout=10');
+  });
+  it('a certificate pasted into a one-line box (line breaks became spaces) is rebuilt into valid PEM', () => {
+    const b64 = 'A'.repeat(64) + 'B'.repeat(64) + 'CCCC';
+    const pem = `-----BEGIN CERTIFICATE-----\n${b64.slice(0, 64)}\n${b64.slice(64, 128)}\n${b64.slice(128)}\n-----END CERTIFICATE-----\n`;
+    expect(normalizePem(pem.replace(/\n/g, ' '))).toBe(pem);
+    expect(normalizePem(pem.replace(/\n/g, '\r\n'))).toBe(pem);
+    expect(normalizePem(`  ${pem}  `)).toBe(pem);
+    expect(normalizePem('not a pem')).toBe('not a pem');
   });
   it('without it the URL is used as it is (local Postgres)', () => {
     expect(poolTls('postgresql://jovia:x@localhost:5432/jovia', undefined)).toEqual({ connectionString: 'postgresql://jovia:x@localhost:5432/jovia' });
