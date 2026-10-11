@@ -1,0 +1,2034 @@
+// ============================================================
+// FastMoveX — Core database schema (PostgreSQL + Prisma)
+// Qatar first, multi-country ready.
+// MONEY RULE: every amount is BigInt in MINOR units (dirham = 1/100 QAR).
+//             KWD/BHD/OMR use 3 minor digits -> see Currency.minorUnits.
+// RATE RULE:  percentages stored as basis points (bps). 1000 bps = 10%.
+// ============================================================
+
+generator client {
+  provider   = "prisma-client-js"
+  // Engine-free: queries are compiled by a WebAssembly module and executed through node-postgres.
+  // No native binaries to download at install or deploy time.
+  engineType = "client"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------- ENUMS
+
+enum UserStatus {
+  ACTIVE
+  SUSPENDED
+  DELETED
+}
+
+enum SellerStatus {
+  PENDING
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  SUSPENDED
+}
+
+enum DocumentType {
+  COMMERCIAL_REGISTRATION
+  TRADE_LICENSE
+  QID
+  ESTABLISHMENT_CARD
+  BANK_LETTER
+  OTHER
+}
+
+enum ReviewStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum ProductStatus {
+  DRAFT
+  PENDING_REVIEW
+  ACTIVE
+  REJECTED
+  ARCHIVED
+}
+
+enum MediaKind {
+  IMAGE
+  VIDEO
+}
+
+enum InventoryReason {
+  RESTOCK
+  RESERVE
+  RELEASE
+  COMMIT
+  RETURN
+  ADJUSTMENT
+  TRANSFER_OUT
+  TRANSFER_IN
+  DAMAGED // broken / unsellable, written off
+  EXPIRED // past its expiry date, written off
+  LOST // missing (theft, misplaced)
+  FOUND // turned up again
+  COUNT // stocktake correction
+}
+
+enum StockCountStatus {
+  OPEN
+  SUBMITTED
+  APPROVED
+  CANCELLED
+}
+
+enum PurchaseOrderStatus {
+  DRAFT
+  ORDERED
+  PARTIAL
+  RECEIVED
+  CANCELLED
+}
+
+enum TransferStatus {
+  PENDING
+  RECEIVED
+  CANCELLED
+}
+
+enum OrderStatus {
+  PENDING
+  CONFIRMED
+  PREPARING
+  READY_FOR_PICKUP
+  SHIPPED
+  OUT_FOR_DELIVERY
+  DELIVERED
+  CANCELLED
+  RETURN_REQUESTED
+  RETURNED
+  REFUNDED
+}
+
+enum PaymentMethod {
+  CARD
+  APPLE_PAY
+  GOOGLE_PAY
+  COD
+}
+
+enum PaymentStatus {
+  PENDING
+  AUTHORIZED
+  CAPTURED
+  FAILED
+  CANCELLED
+  PARTIALLY_REFUNDED
+  REFUNDED
+}
+
+enum RefundStatus {
+  PENDING
+  PROCESSING
+  SUCCEEDED
+  FAILED
+}
+
+/// What staff found when a returned item came back (decides restock and refund)
+enum ReturnCondition {
+  SELLABLE     // back on the shelf, refund
+  DAMAGED      // refund, but kept off sellable stock
+  NOT_ACCEPTED // not what was sold / used by the customer: no refund, no restock
+}
+
+enum ReturnStatus {
+  REQUESTED
+  APPROVED
+  REJECTED
+  RECEIVED
+  REFUNDED
+}
+
+enum CommissionScope {
+  GLOBAL
+  COUNTRY
+  CATEGORY
+  SELLER
+  PRODUCT
+  CAMPAIGN
+}
+
+enum CommissionType {
+  PERCENTAGE
+  FIXED
+}
+
+enum LedgerAccountType {
+  CUSTOMER_CLEARING // money received from customers, not yet allocated
+  SELLER_PENDING    // earned, still inside return window
+  SELLER_AVAILABLE  // can be paid out
+  SELLER_PAID       // paid out to bank
+  PLATFORM_REVENUE  // FastMoveX commission
+  PLATFORM_DISCOUNT // coupons funded by FastMoveX
+  DELIVERY_REVENUE
+  TAX_PAYABLE
+  REFUND_PAYABLE    // money received for an order that no longer exists (late payment), owed back to the customer
+}
+
+enum PayoutStatus {
+  REQUESTED
+  APPROVED
+  PROCESSING
+  PAID
+  REJECTED
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+  FREE_DELIVERY
+}
+
+enum CouponScope {
+  PLATFORM
+  SELLER
+  CATEGORY
+}
+
+enum FundedBy {
+  PLATFORM
+  SELLER
+}
+
+enum CampaignType {
+  FLASH_DEAL
+  SEASONAL
+  JOVIA_EXCLUSIVE
+  PRICE_CAMPAIGN
+}
+
+enum ReviewTarget {
+  PRODUCT
+  SELLER
+}
+
+enum NotificationChannel {
+  PUSH
+  EMAIL
+  SMS
+  IN_APP
+  WHATSAPP
+}
+
+enum NotificationStatus {
+  QUEUED
+  SENT
+  FAILED
+}
+
+enum TicketStatus {
+  OPEN
+  PENDING_CUSTOMER
+  PENDING_SELLER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  NORMAL
+  HIGH
+  URGENT
+}
+
+enum DeliveryMethod {
+  SELLER
+  JOVIA
+  THIRD_PARTY
+  PICKUP
+}
+
+enum DeliveryStatus {
+  CREATED
+  ASSIGNED
+  PICKED_UP
+  IN_TRANSIT
+  OUT_FOR_DELIVERY
+  DELIVERED
+  FAILED
+  RETURNED
+  CANCELLED
+}
+
+// -------------------------------------------------- COUNTRY & CURRENCY
+
+model Currency {
+  code       String    @id @db.Char(3) // QAR, AED, SAR, KWD...
+  minorUnits Int       @default(2)
+  symbol     String
+  countries  Country[]
+}
+
+model Country {
+  code            String   @id @db.Char(2) // QA, AE, SA, PK...
+  name            String
+  nameAr          String
+  currencyCode    String   @db.Char(3)
+  currency        Currency @relation(fields: [currencyCode], references: [code])
+  defaultLocale   String   @default("en")
+  locales         String[] @default(["en", "ar"])
+  vatRateBps      Int      @default(0) // Qatar = 0 today, UAE = 500
+  pricesIncludeTax Boolean @default(true)
+  paymentMethods  PaymentMethod[]
+  deliveryProviders String[] // provider codes enabled in this country
+  addressFormat   Json     // field config for address forms (zone/street/building for QA)
+  legalSettings   Json     @default("{}")
+  // {"flatFeeMinor":"1000","freeOverMinor":"10000"} — admin-editable default delivery pricing per seller shipment
+  deliveryConfig  Json     @default("{}")
+  guestCheckout   Boolean  @default(true) // shoppers may order without creating an account
+  // Delivery time windows the customer picks at checkout (see src/delivery/slots.ts). {} = off.
+  deliverySlots   Json     @default("{}")
+  // Abandoned-cart reminders (see src/marketing/cart-reminders.ts). {} = off.
+  cartReminders   Json     @default("{}")
+  /// pinned / hidden popular searches and synonyms (see search-text.ts)
+  searchSettings  Json     @default("{}")
+  /// Cash on delivery rules: max order, open orders, phone check, refusals, driver cash limit (see src/cash/cod-rules.ts)
+  codRules        Json     @default("{}")
+  /// search engines & social: { googleVerification, bingVerification, social: { instagram, facebook, tiktok, x, youtube, snapchat }, merchantFeed }
+  seoSettings     Json     @default("{}")
+  isActive        Boolean  @default(false)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  users     User[]
+  sellers   Seller[]
+  products  Product[]
+  orders    Order[]
+  addresses Address[]
+}
+
+// ------------------------------------------------ USERS, ROLES, AUTH
+
+model User {
+  id              String     @id @default(uuid()) @db.Uuid
+  email           String?    @unique
+  phone           String?    @unique // E.164, e.g. +974XXXXXXXX
+  passwordHash    String?
+  fullName        String
+  locale          String     @default("en")
+  countryCode     String     @db.Char(2)
+  country         Country    @relation(fields: [countryCode], references: [code])
+  status          UserStatus @default(ACTIVE)
+  emailVerifiedAt DateTime?
+  phoneVerifiedAt DateTime?
+  lastLoginAt     DateTime?
+  marketingOptIn  Boolean    @default(false) // promotions only with explicit consent
+  whatsappOptIn   Boolean    @default(false) // order updates on WhatsApp, only with explicit consent
+  whatsappOptInAt DateTime?
+  // Ordered without an account (guest checkout). No password; becomes a normal account after "forgot password".
+  isGuest         Boolean    @default(false)
+  createdAt       DateTime   @default(now())
+  updatedAt       DateTime   @updatedAt
+  deletedAt       DateTime?
+
+  roles          UserRole[]
+  refreshTokens  RefreshToken[]
+  seller         Seller?
+  addresses      Address[]
+  carts          Cart[]
+  orders         Order[]
+  reviews        Review[]
+  questionsAsked    ProductQuestion[] @relation("QuestionAsker")
+  questionsAnswered ProductQuestion[] @relation("QuestionAnswerer")
+  wishlists      Wishlist[]
+  notifications  Notification[]
+  deviceTokens   DeviceToken[]
+  tickets        SupportTicket[]
+  ticketMessages TicketMessage[]
+  redemptions    CouponRedemption[]
+  returns        ReturnRequest[]
+  recentlyViewed RecentlyViewed[]
+  verificationCodes VerificationCode[]
+  // Cash on delivery controls: blocked customers can still pay by card
+  codBlocked       Boolean  @default(false)
+  codBlockedReason String?
+  codRefusals      Int      @default(0) // COD orders refused at the door
+  // Two-step sign-in (TOTP). Secrets are encrypted; recovery codes are stored as hashes only.
+  twoFactorSecret        String?
+  twoFactorPendingSecret String?
+  twoFactorEnabledAt     DateTime?
+  twoFactorRecovery      String[] @default([])
+  twoFactorLastStep      Int? // a code works once (replay guard)
+  // Per-account lockout after repeated failed sign-ins
+  failedLogins  Int       @default(0)
+  failedLoginAt DateTime?
+  lockedUntil   DateTime?
+  loginEvents   LoginEvent[]
+  /// account deletion (PDPPL): asked at, carried out at/after, why (optional); null = not asked
+  deletionRequestedAt  DateTime?
+  deletionScheduledFor DateTime?
+  deletionReason       String?   @db.VarChar(300)
+  /// staff labels on a customer (VIP, RISKY, WHOLESALE, …) — never shown to the customer
+  tags             String[]  @default([])
+  /// staff: which alerts also come by email, e.g. {"NEW_ORDER": false, "LOW_STOCK": true}
+  alertPrefs       Json      @default("{}")
+  customerNotes    CustomerNote[] @relation("NoteAbout")
+  notesWritten     CustomerNote[] @relation("NoteAuthor")
+  orderNotesWritten OrderNote[]   @relation("OrderNoteAuthor")
+  /// biggest single refund this staff member may approve (minor units); null = no limit of their own
+  refundLimitMinor BigInt?
+  socialAccounts   SocialAccount[]
+  webPushSubscriptions WebPushSubscription[]
+  cashHeld         CodCollection[] @relation("CodHolder")
+  cashHandovers    CashHandover[]  @relation("CashHandoverHolder")
+  cashReceived     CashHandover[]  @relation("CashHandoverReceiver")
+
+  @@index([deletionScheduledFor])
+}
+
+model Role {
+  id          String           @id @default(uuid()) @db.Uuid
+  code        String           @unique // SUPER_ADMIN, ADMIN, FINANCE_ADMIN, ...
+  name        String
+  isSystem    Boolean          @default(true)
+  permissions RolePermission[]
+  users       UserRole[]
+}
+
+model Permission {
+  id    String           @id @default(uuid()) @db.Uuid
+  code  String           @unique // e.g. "payouts.approve"
+  group String
+  roles RolePermission[]
+}
+
+model RolePermission {
+  roleId       String     @db.Uuid
+  permissionId String     @db.Uuid
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model UserRole {
+  userId String @db.Uuid
+  roleId String @db.Uuid
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([userId, roleId])
+}
+
+enum OtpPurpose {
+  VERIFY_EMAIL
+  VERIFY_PHONE
+  RESET_PASSWORD
+}
+
+/// One-time codes for email/phone verification and password reset. Only an HMAC of the code is stored.
+model VerificationCode {
+  id         String              @id @default(uuid()) @db.Uuid
+  userId     String              @db.Uuid
+  user       User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  purpose    OtpPurpose
+  channel    NotificationChannel // EMAIL or SMS
+  target     String // the email/phone the code was sent to (a code is only valid for that address)
+  codeHash   String
+  attempts   Int                 @default(0)
+  expiresAt  DateTime
+  consumedAt DateTime?
+  ip         String?
+  createdAt  DateTime            @default(now())
+
+  @@index([userId, purpose, createdAt(sort: Desc)])
+  @@index([target, createdAt])
+}
+
+model RefreshToken {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  user      User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash String    @unique // store SHA-256 only, never raw token
+  familyId  String    @db.Uuid // rotation family; reuse => revoke whole family
+  expiresAt DateTime
+  revokedAt DateTime?
+  userAgent String?
+  ip        String?
+  mfa       Boolean   @default(false) // this sign-in passed the two-step code
+  createdAt DateTime  @default(now())
+
+  @@index([userId])
+  @@index([familyId])
+}
+
+/// Every sign-in attempt for a known account (success or why it failed): staff can see their history and spot strangers.
+model LoginEvent {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  success    Boolean
+  reason     String   @db.VarChar(40) // OK, BAD_PASSWORD, LOCKED, BAD_CODE, NOT_STAFF, INACTIVE
+  method     String   @db.VarChar(20) // password, totp, recovery
+  client     String   @db.VarChar(10) // web, admin, mobile
+  ip         String?
+  userAgent  String?
+  device     String?  @db.VarChar(80)
+  deviceHash String?  @db.VarChar(64)
+  newDevice  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+
+  @@index([userId, createdAt(sort: Desc)])
+  @@index([userId, deviceHash])
+}
+
+// ---------------------------------------------------------- SELLERS
+
+model Seller {
+  id                 String       @id @default(uuid()) @db.Uuid
+  ownerUserId        String       @unique @db.Uuid
+  owner              User         @relation(fields: [ownerUserId], references: [id])
+  businessName       String
+  legalName          String?
+  commercialRegNo    String? // Qatar CR number
+  taxNumber          String?
+  contactEmail       String
+  contactPhone       String
+  countryCode        String       @db.Char(2)
+  country            Country      @relation(fields: [countryCode], references: [code])
+  status             SellerStatus @default(PENDING)
+  approvedAt         DateTime?
+  approvedById       String?      @db.Uuid
+  rejectionReason    String?
+  // Bank details are ENCRYPTED at app level (AES-256-GCM) before saving
+  bankName           String?
+  accountHolder      String?
+  ibanEncrypted      String?
+  ibanLast4          String?
+  returnWindowDays   Int          @default(14) // pending -> available after this
+  /// The platform's own store ("sell directly"). Created by the base seed; at most one (partial unique index).
+  isHouse            Boolean      @default(false)
+  createdAt          DateTime     @default(now())
+  updatedAt          DateTime     @updatedAt
+
+  store           Store?
+  documents       SellerDocument[]
+  sellerOrders    SellerOrder[]
+  payouts         SellerPayout[]
+  warehouses      Warehouse[]
+  commissionRules CommissionRule[]
+  coupons         Coupon[]
+  reviews         Review[]
+  ledgerAccounts  LedgerAccount[]
+  tickets         SupportTicket[]
+
+  @@index([status])
+  @@index([countryCode])
+}
+
+model SellerDocument {
+  id           String       @id @default(uuid()) @db.Uuid
+  sellerId     String       @db.Uuid
+  seller       Seller       @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  type         DocumentType
+  fileKey      String // S3 key in PRIVATE bucket, served by signed URL only
+  mimeType     String
+  status       ReviewStatus @default(PENDING)
+  reviewedById String?      @db.Uuid
+  reviewedAt   DateTime?
+  note         String?
+  expiresAt    DateTime?
+  createdAt    DateTime     @default(now())
+
+  @@index([sellerId])
+}
+
+model Store {
+  id            String   @id @default(uuid()) @db.Uuid
+  sellerId      String   @unique @db.Uuid
+  seller        Seller   @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  slug          String   @unique
+  name          String
+  nameAr        String?
+  description   String?
+  descriptionAr String?
+  logoKey       String?
+  bannerKey     String?
+  city          String?
+  lat           Float?
+  lng           Float?
+  ratingAvg     Float    @default(0)
+  ratingCount   Int      @default(0)
+  isFeatured    Boolean  @default(false)
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  products Product[]
+
+  @@index([isFeatured, isActive])
+}
+
+// ---------------------------------------------------------- CATALOG
+
+model Category {
+  id        String     @id @default(uuid()) @db.Uuid
+  parentId  String?    @db.Uuid
+  parent    Category?  @relation("CategoryTree", fields: [parentId], references: [id])
+  children  Category[] @relation("CategoryTree")
+  slug      String     @unique
+  name      String
+  nameAr    String
+  iconKey   String?
+  imageKey  String?
+  path      String // materialized path "electronics/phones" for fast subtree queries
+  depth     Int        @default(0)
+  sortOrder Int        @default(0)
+  isActive  Boolean    @default(true)
+  /// search-engine content (Phase 24): intro text shown on the category page, own title/description, FAQ
+  description      String?
+  descriptionAr    String?
+  seoTitle         String?
+  seoTitleAr       String?
+  seoDescription   String?
+  seoDescriptionAr String?
+  /// [{ q, qAr, a, aAr }] — shown on the page and as FAQ structured data
+  faq              Json       @default("[]")
+  createdAt DateTime   @default(now())
+  updatedAt DateTime   @updatedAt
+
+  products        Product[]
+  commissionRules CommissionRule[]
+  coupons         Coupon[]
+
+  @@index([parentId, sortOrder])
+  @@index([path])
+}
+
+model Brand {
+  id       String    @id @default(uuid()) @db.Uuid
+  name     String
+  slug     String    @unique
+  logoKey  String?
+  /// brand page content (Phase 24): /brand/<slug>
+  nameAr           String?
+  description      String?
+  descriptionAr    String?
+  seoTitle         String?
+  seoTitleAr       String?
+  seoDescription   String?
+  seoDescriptionAr String?
+  products Product[]
+}
+
+model Product {
+  id               String        @id @default(uuid()) @db.Uuid
+  storeId          String        @db.Uuid
+  store            Store         @relation(fields: [storeId], references: [id])
+  categoryId       String        @db.Uuid
+  category         Category      @relation(fields: [categoryId], references: [id])
+  brandId          String?       @db.Uuid
+  brand            Brand?        @relation(fields: [brandId], references: [id])
+  countryCode      String        @db.Char(2)
+  country          Country       @relation(fields: [countryCode], references: [code])
+  slug             String        @unique
+  /// food, cosmetics, medicine: stock is kept in dated lots, sold earliest-expiry first, written off when expired
+  tracksExpiry     Boolean       @default(false)
+  title            String
+  titleAr          String?
+  shortDescription   String?
+  shortDescriptionAr String?
+  description      String?
+  descriptionAr    String?
+  specs            Json          @default("{}")
+  tags             String[]      @default([]) // lowercase keywords for filtering and search, GIN-indexed
+  seoTitle         String?
+  seoDescription   String?
+  status           ProductStatus @default(DRAFT)
+  moderationNote   String? // admin reason when REJECTED
+  returnPolicyDays Int?
+  warrantyMonths   Int?
+  // Denormalized for fast listing (updated by background jobs)
+  minPriceMinor    BigInt        @default(0)
+  ratingAvg        Float         @default(0)
+  ratingCount      Int           @default(0)
+  soldCount        Int           @default(0)
+  viewCount        Int           @default(0)
+  isFeatured       Boolean       @default(false)
+  sponsoredUntil   DateTime?
+  // searchVector tsvector column + GIN index added in raw SQL migration
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+  deletedAt        DateTime?
+
+  variants        ProductVariant[]
+  images          ProductImage[]
+  reviews         Review[]
+  questions       ProductQuestion[]
+  commissionRules CommissionRule[]
+  wishlistItems   WishlistItem[]
+  recentlyViewed  RecentlyViewed[]
+
+  @@index([storeId, status])
+  @@index([categoryId, status, createdAt(sort: Desc)])
+  @@index([countryCode, status, soldCount(sort: Desc)])
+  @@index([countryCode, status, minPriceMinor])
+  @@index([brandId])
+}
+
+model ProductVariant {
+  id             String   @id @default(uuid()) @db.Uuid
+  productId      String   @db.Uuid
+  product        Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  sku            String // unique per product, not globally (two sellers may use "TSHIRT-M")
+  barcode        String? // EAN/UPC/GTIN as printed on the pack
+  optionValues   Json     @default("{}") // {"color":"Black","size":"M"}
+  priceMinor     BigInt
+  compareAtMinor BigInt? // old price for "discount" display
+  costPriceMinor BigInt? // what the goods cost us: margin reports only, never shown to customers
+  currencyCode   String   @db.Char(3)
+  weightGrams    Int?
+  lengthMm       Int?
+  widthMm        Int?
+  heightMm       Int?
+  isActive       Boolean  @default(true)
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+
+  inventory        Inventory?
+  warehouseStock  WarehouseStock[]
+  transferItems   StockTransferItem[]
+  movements        InventoryMovement[]
+  lots             StockLot[]
+  countLines       StockCountLine[]
+  poLines          PurchaseOrderLine[]
+  receiptLines     GoodsReceiptLine[]
+  images           ProductImage[]
+  cartItems        CartItem[]
+  orderItems       OrderItem[]
+  campaignProducts CampaignProduct[]
+
+  @@unique([productId, sku])
+  @@index([sku])
+  @@index([barcode])
+}
+
+model ProductImage {
+  id        String          @id @default(uuid()) @db.Uuid
+  productId String          @db.Uuid
+  product   Product         @relation(fields: [productId], references: [id], onDelete: Cascade)
+  variantId String?         @db.Uuid
+  variant   ProductVariant? @relation(fields: [variantId], references: [id], onDelete: SetNull)
+  kind      MediaKind       @default(IMAGE)
+  fileKey   String
+  width     Int?
+  height    Int?
+  altText   String?
+  sortOrder Int             @default(0)
+
+  @@index([productId, sortOrder])
+}
+
+model Inventory {
+  id                String         @id @default(uuid()) @db.Uuid
+  variantId         String         @unique @db.Uuid
+  variant           ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  onHand            Int            @default(0)
+  reserved          Int            @default(0) // held by unpaid/unfulfilled orders
+  lowStockThreshold Int            @default(5)
+  version           Int            @default(0) // optimistic locking
+  lowStockAlertedAt DateTime? // staff were told it is running low (cleared when restocked above the level)
+  updatedAt         DateTime       @updatedAt
+}
+
+model InventoryMovement {
+  id        String          @id @default(uuid()) @db.Uuid
+  variantId String          @db.Uuid
+  variant   ProductVariant  @relation(fields: [variantId], references: [id])
+  qtyDelta  Int
+  reason    InventoryReason
+  refType   String? // "order_item", "return", "manual", "transfer"
+  refId     String?
+  warehouseId String?       @db.Uuid
+  actorId   String?         @db.Uuid
+  note      String?
+  createdAt DateTime        @default(now())
+
+  @@index([variantId, createdAt])
+}
+
+/// A place stock is kept. Each seller has one default warehouse (made automatically); FastMoveX can add more.
+model Warehouse {
+  id          String   @id @default(uuid()) @db.Uuid
+  sellerId    String   @db.Uuid
+  seller      Seller   @relation(fields: [sellerId], references: [id])
+  code        String   @db.VarChar(20)
+  name        String   @db.VarChar(80)
+  nameAr      String?  @db.VarChar(80)
+  city        String?  @db.VarChar(80)
+  address     String?  @db.VarChar(300)
+  /// delivery zones this warehouse is closest to (Qatar zone numbers): preferred for orders there
+  zones       String[] @default([])
+  /// lower first when several warehouses can send an order
+  priority    Int      @default(100)
+  isDefault   Boolean  @default(false)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  stock        WarehouseStock[]
+  sellerOrders SellerOrder[]
+  transfersOut StockTransfer[] @relation("TransferFrom")
+  transfersIn  StockTransfer[] @relation("TransferTo")
+  lots           StockLot[]
+  counts         StockCount[]
+  purchaseOrders PurchaseOrder[]
+  receipts       GoodsReceipt[]
+
+  @@unique([sellerId, code])
+}
+
+/// Units on the shelf per warehouse. Inventory.onHand is always their sum (kept by a database trigger).
+model WarehouseStock {
+  warehouseId String         @db.Uuid
+  warehouse   Warehouse      @relation(fields: [warehouseId], references: [id])
+  variantId   String         @db.Uuid
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  onHand      Int            @default(0)
+  bin         String?        @db.VarChar(40)
+  updatedAt   DateTime       @updatedAt
+
+  @@id([warehouseId, variantId])
+  @@index([variantId])
+}
+
+/// Stock moved between two warehouses of the same seller. Units move when it is received.
+model StockTransfer {
+  id              String              @id @default(uuid()) @db.Uuid
+  number          String              @unique @db.VarChar(30)
+  fromWarehouseId String              @db.Uuid
+  fromWarehouse   Warehouse           @relation("TransferFrom", fields: [fromWarehouseId], references: [id])
+  toWarehouseId   String              @db.Uuid
+  toWarehouse     Warehouse           @relation("TransferTo", fields: [toWarehouseId], references: [id])
+  status          TransferStatus      @default(PENDING)
+  note            String?             @db.VarChar(300)
+  createdById     String              @db.Uuid
+  receivedById    String?             @db.Uuid
+  receivedAt      DateTime?
+  cancelledAt     DateTime?
+  createdAt       DateTime            @default(now())
+  items           StockTransferItem[]
+
+  @@index([status, createdAt])
+}
+
+model StockTransferItem {
+  transferId String         @db.Uuid
+  transfer   StockTransfer  @relation(fields: [transferId], references: [id], onDelete: Cascade)
+  variantId  String         @db.Uuid
+  variant    ProductVariant @relation(fields: [variantId], references: [id])
+  quantity   Int
+
+  @@id([transferId, variantId])
+}
+
+model RecentlyViewed {
+  userId    String   @db.Uuid
+  productId String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  product   Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  viewedAt  DateTime @default(now())
+
+  @@id([userId, productId])
+  @@index([userId, viewedAt(sort: Desc)])
+}
+
+// ------------------------------------------------------------- CART
+
+model Cart {
+  id           String     @id @default(uuid()) @db.Uuid
+  userId       String?    @db.Uuid
+  user         User?      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  guestToken   String?    @unique
+  countryCode  String     @db.Char(2)
+  currencyCode String     @db.Char(3)
+  couponCode   String?
+  createdAt    DateTime   @default(now())
+  updatedAt    DateTime   @updatedAt
+  /// Last time items were added or changed (set by a database trigger); abandoned-cart reminders count from here
+  itemsChangedAt DateTime @default(now())
+  remindersSent  Int      @default(0)
+  lastReminderAt DateTime?
+  items        CartItem[]
+
+  @@unique([userId, countryCode]) // one cart per user per market; guests are keyed by guestToken
+  @@index([updatedAt])
+  @@index([itemsChangedAt])
+}
+
+model CartItem {
+  id                 String         @id @default(uuid()) @db.Uuid
+  cartId             String         @db.Uuid
+  cart               Cart           @relation(fields: [cartId], references: [id], onDelete: Cascade)
+  variantId          String         @db.Uuid
+  variant            ProductVariant @relation(fields: [variantId], references: [id])
+  quantity           Int
+  priceSnapshotMinor BigInt // only to warn "price changed"; NEVER used for charging
+  addedAt            DateTime       @default(now())
+
+  @@unique([cartId, variantId])
+}
+
+model Address {
+  id            String   @id @default(uuid()) @db.Uuid
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  label         String? // Home, Work
+  recipientName String
+  phone         String
+  countryCode   String   @db.Char(2)
+  country       Country  @relation(fields: [countryCode], references: [code])
+  city          String
+  zone          String? // Qatar zone number
+  street        String?
+  building      String?
+  unit          String?
+  line1         String? // for countries using free-text addresses
+  postalCode    String?
+  lat           Float?
+  lng           Float?
+  isDefault     Boolean  @default(false)
+  createdAt     DateTime @default(now())
+
+  @@index([userId])
+}
+
+// ----------------------------------------------------------- ORDERS
+// Order        = what the customer sees (one clean order)
+// SellerOrder  = internal fulfillment split, one per seller
+
+model Order {
+  id               String      @id @default(uuid()) @db.Uuid
+  orderNumber      String      @unique // FMX-QA-260922-000123
+  userId           String      @db.Uuid
+  user             User        @relation(fields: [userId], references: [id])
+  countryCode      String      @db.Char(2)
+  country          Country     @relation(fields: [countryCode], references: [code])
+  currencyCode     String      @db.Char(3)
+  status           OrderStatus @default(PENDING)
+  subtotalMinor    BigInt
+  discountMinor    BigInt      @default(0)
+  deliveryFeeMinor BigInt      @default(0)
+  taxMinor         BigInt      @default(0)
+  totalMinor       BigInt
+  couponId         String?     @db.Uuid
+  coupon           Coupon?     @relation(fields: [couponId], references: [id])
+  shippingAddress  Json // snapshot at checkout time
+  idempotencyKey   String      @unique // blocks duplicate "Place order" taps
+  customerNote     String?
+  placedAt         DateTime    @default(now())
+  /// Delivery window the customer chose (null = no slot, "as soon as possible")
+  deliverySlotStart DateTime?
+  deliverySlotEnd   DateTime?
+  /// Set when the customer had been sent a cart reminder before ordering (to measure recovered sales)
+  cartReminderAt    DateTime?
+  /// where the order came from (website analytics: utm / referrer, last non-direct visit)
+  trafficSource   String?  @db.VarChar(60)
+  trafficMedium   String?  @db.VarChar(30)
+  trafficCampaign String?  @db.VarChar(100)
+  createdAt        DateTime    @default(now())
+  updatedAt        DateTime    @updatedAt
+
+  sellerOrders  SellerOrder[]
+  items         OrderItem[]
+  payments      Payment[]
+  refunds       Refund[]
+  history       OrderStatusHistory[]
+  redemptions   CouponRedemption[]
+  tickets       SupportTicket[]
+  notes         OrderNote[]
+  changes       OrderChange[]
+  /// staff member who took the order by phone (null = the customer ordered)
+  placedById    String?     @db.Uuid
+
+  @@index([userId, placedAt(sort: Desc)])
+  @@index([countryCode, placedAt])
+  @@index([countryCode, deliverySlotStart])
+  @@index([status])
+}
+
+model SellerOrder {
+  id               String         @id @default(uuid()) @db.Uuid
+  orderId          String         @db.Uuid
+  order            Order          @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerId         String         @db.Uuid
+  seller           Seller         @relation(fields: [sellerId], references: [id])
+  status           OrderStatus    @default(PENDING)
+  deliveryMethod   DeliveryMethod
+  subtotalMinor    BigInt
+  discountMinor    BigInt         @default(0)
+  deliveryFeeMinor BigInt         @default(0)
+  taxMinor         BigInt         @default(0)
+  commissionMinor  BigInt         @default(0)
+  sellerNetMinor   BigInt         @default(0)
+  deliveredAt      DateTime?
+  releasedAt       DateTime? // earnings moved SELLER_PENDING -> SELLER_AVAILABLE (marker only; amounts live in the ledger)
+  cancelledAt      DateTime?
+  cancelReason     String?
+  /// where the shipment is packed (picked at checkout, staff can change it until it ships)
+  warehouseId      String?        @db.Uuid
+  warehouse        Warehouse?     @relation(fields: [warehouseId], references: [id])
+  createdAt        DateTime       @default(now())
+  updatedAt        DateTime       @updatedAt
+
+  items    OrderItem[]
+  delivery DeliveryOrder?
+  codCollection CodCollection?
+  refunds  Refund[]
+  history  OrderStatusHistory[]
+
+  @@unique([orderId, sellerId])
+  @@index([sellerId, status, createdAt(sort: Desc)])
+  @@index([status, deliveredAt]) // release job
+}
+
+model OrderItem {
+  id                 String          @id @default(uuid()) @db.Uuid
+  orderId            String          @db.Uuid
+  order              Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerOrderId      String          @db.Uuid
+  sellerOrder        SellerOrder     @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
+  variantId          String          @db.Uuid
+  variant            ProductVariant  @relation(fields: [variantId], references: [id])
+  productTitle       String // snapshot
+  sku                String // snapshot
+  imageKey           String?
+  unitPriceMinor     BigInt
+  quantity           Int
+  discountMinor      BigInt          @default(0)
+  taxMinor           BigInt          @default(0)
+  lineTotalMinor     BigInt
+  commissionMinor    BigInt          @default(0)
+  campaignId         String?         @db.Uuid // deal the unit price came from (to give the deal stock back on cancellation)
+  commissionRuleId   String?         @db.Uuid
+  commissionSnapshot Json? // which rule, rate, min/max applied -> transparency
+  refundedQty        Int             @default(0)
+  status             OrderStatus     @default(PENDING)
+  /// what one unit cost FastMoveX when it was sold (copied from the variant by the database): margin reports never change afterwards
+  unitCostMinor      BigInt?
+
+  reviews Review[]
+  returns ReturnRequest[]
+  doorReturns DoorReturn[]
+
+  @@index([orderId])
+  @@index([sellerOrderId])
+}
+
+model OrderStatusHistory {
+  id            String       @id @default(uuid()) @db.Uuid
+  orderId       String       @db.Uuid
+  order         Order        @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerOrderId String?      @db.Uuid
+  sellerOrder   SellerOrder? @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
+  fromStatus    OrderStatus?
+  toStatus      OrderStatus
+  actorId       String?      @db.Uuid
+  note          String?
+  createdAt     DateTime     @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// ---------------------------------------------------------- PAYMENTS
+
+model Payment {
+  id             String        @id @default(uuid()) @db.Uuid
+  orderId        String        @db.Uuid
+  order          Order         @relation(fields: [orderId], references: [id])
+  provider       String // "test", "cod", "stripe", "qpay", ... (abstracted)
+  method         PaymentMethod
+  status         PaymentStatus @default(PENDING)
+  amountMinor    BigInt
+  refundedMinor  BigInt        @default(0)
+  currencyCode   String        @db.Char(3)
+  providerRef    String? // provider's payment id — NEVER card numbers
+  idempotencyKey String        @unique
+  failureReason  String?
+  metadata       Json          @default("{}")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+
+  refunds Refund[]
+
+  @@unique([provider, providerRef])
+  @@index([orderId])
+}
+
+model WebhookEvent {
+  id          String    @id @default(uuid()) @db.Uuid
+  provider    String
+  eventId     String
+  type        String
+  payload     Json
+  processedAt DateTime?
+  error       String?
+  receivedAt  DateTime  @default(now())
+
+  @@unique([provider, eventId]) // replayed webhooks are ignored
+}
+
+model Refund {
+  id             String       @id @default(uuid()) @db.Uuid
+  paymentId      String       @db.Uuid
+  payment        Payment      @relation(fields: [paymentId], references: [id])
+  orderId        String       @db.Uuid
+  order          Order        @relation(fields: [orderId], references: [id])
+  sellerOrderId  String?      @db.Uuid
+  sellerOrder    SellerOrder? @relation(fields: [sellerOrderId], references: [id])
+  amountMinor    BigInt
+  reason         String
+  status         RefundStatus @default(PENDING)
+  providerRef    String?
+  idempotencyKey String       @unique
+  createdById    String?      @db.Uuid
+  approvedById   String?      @db.Uuid // four-eyes: never the person who created it
+  createdAt      DateTime     @default(now())
+  completedAt    DateTime?
+  /// set by the database when the refund succeeds (CN-QA-261005-000012); never changes afterwards
+  creditNoteNo   String?      @unique
+  creditNoteAt   DateTime?
+
+  @@index([orderId])
+}
+
+model ReturnRequest {
+  id          String       @id @default(uuid()) @db.Uuid
+  orderItemId String       @db.Uuid
+  orderItem   OrderItem    @relation(fields: [orderItemId], references: [id])
+  userId      String       @db.Uuid
+  user        User         @relation(fields: [userId], references: [id])
+  quantity    Int
+  reason      String
+  images      Json         @default("[]")
+  status      ReturnStatus @default(REQUESTED)
+  resolution  String?
+  reviewedById String?     @db.Uuid
+  condition      ReturnCondition?
+  inspectionNote String?
+  receivedById   String?   @db.Uuid
+  receivedAt     DateTime?
+  pickup         ReturnPickup?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
+
+  @@index([orderItemId])
+  @@index([status])
+}
+
+// --------------------------------------------------- COMMISSION ENGINE
+// Resolution order (most specific wins): PRODUCT > CAMPAIGN > SELLER > CATEGORY > COUNTRY > GLOBAL
+// then by `priority` desc. Result is clamped to [minMinor, maxMinor].
+
+model CommissionRule {
+  id           String          @id @default(uuid()) @db.Uuid
+  name         String
+  scope        CommissionScope
+  countryCode  String?         @db.Char(2)
+  categoryId   String?         @db.Uuid
+  category     Category?       @relation(fields: [categoryId], references: [id])
+  sellerId     String?         @db.Uuid
+  seller       Seller?         @relation(fields: [sellerId], references: [id])
+  productId    String?         @db.Uuid
+  product      Product?        @relation(fields: [productId], references: [id])
+  campaignId   String?         @db.Uuid
+  campaign     Campaign?       @relation(fields: [campaignId], references: [id])
+  type         CommissionType
+  rateBps      Int? // PERCENTAGE: 1000 = 10%
+  fixedMinor   BigInt? // FIXED: per unit
+  minMinor     BigInt?
+  maxMinor     BigInt?
+  priority     Int             @default(0)
+  startsAt     DateTime?
+  endsAt       DateTime?
+  isActive     Boolean         @default(true)
+  createdById  String?         @db.Uuid
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+
+  @@index([scope, isActive])
+  @@index([categoryId])
+  @@index([sellerId])
+  @@index([productId])
+}
+
+// ------------------------------------------------ LEDGER (double-entry)
+// Balances are ALWAYS SUM(entries). Entries are immutable (DB trigger).
+// Every transaction's entries must sum to zero.
+
+model LedgerAccount {
+  id           String            @id @default(uuid()) @db.Uuid
+  type         LedgerAccountType
+  sellerId     String?           @db.Uuid
+  seller       Seller?           @relation(fields: [sellerId], references: [id])
+  currencyCode String            @db.Char(3)
+  createdAt    DateTime          @default(now())
+  entries      LedgerEntry[]
+
+  @@unique([type, sellerId, currencyCode])
+}
+
+model LedgerTransaction {
+  id             String        @id @default(uuid()) @db.Uuid
+  type           String // ORDER_CAPTURED, SELLER_RELEASE, REFUND, PAYOUT, ADJUSTMENT
+  refType        String
+  refId          String
+  idempotencyKey String        @unique
+  description    String?
+  actorId        String?       @db.Uuid
+  createdAt      DateTime      @default(now())
+  entries        LedgerEntry[]
+  payout         SellerPayout?
+
+  @@index([refType, refId])
+}
+
+model LedgerEntry {
+  id            String            @id @default(uuid()) @db.Uuid
+  transactionId String            @db.Uuid
+  transaction   LedgerTransaction @relation(fields: [transactionId], references: [id])
+  accountId     String            @db.Uuid
+  account       LedgerAccount     @relation(fields: [accountId], references: [id])
+  amountMinor   BigInt // signed: + credit to account, - debit
+  createdAt     DateTime          @default(now())
+
+  @@index([accountId, createdAt])
+  @@index([transactionId])
+}
+
+model SellerPayout {
+  id                  String             @id @default(uuid()) @db.Uuid
+  sellerId            String             @db.Uuid
+  seller              Seller             @relation(fields: [sellerId], references: [id])
+  amountMinor         BigInt
+  currencyCode        String             @db.Char(3)
+  status              PayoutStatus       @default(REQUESTED)
+  requestedAt         DateTime           @default(now())
+  approvedById        String?            @db.Uuid
+  approvedAt          DateTime?
+  paidAt              DateTime?
+  bankReference       String?
+  rejectionReason     String?
+  ledgerTransactionId String?            @unique @db.Uuid
+  ledgerTransaction   LedgerTransaction? @relation(fields: [ledgerTransactionId], references: [id])
+
+  @@index([sellerId, requestedAt(sort: Desc)])
+  @@index([status])
+}
+
+// ----------------------------------------------- COUPONS & CAMPAIGNS
+
+model Coupon {
+  id               String      @id @default(uuid()) @db.Uuid
+  code             String
+  countryCode      String      @db.Char(2)
+  type             CouponType
+  scope            CouponScope @default(PLATFORM)
+  fundedBy         FundedBy    @default(PLATFORM)
+  valueBps         Int? // for PERCENTAGE
+  valueMinor       BigInt? // for FIXED
+  maxDiscountMinor BigInt?
+  minOrderMinor    BigInt      @default(0)
+  sellerId         String?     @db.Uuid
+  seller           Seller?     @relation(fields: [sellerId], references: [id])
+  categoryId       String?     @db.Uuid
+  category         Category?   @relation(fields: [categoryId], references: [id])
+  firstOrderOnly   Boolean     @default(false)
+  newCustomerDays  Int? // "new customer" = registered within N days
+  startsAt         DateTime
+  endsAt           DateTime
+  usageLimit       Int?
+  perUserLimit     Int         @default(1)
+  usedCount        Int         @default(0)
+  isActive         Boolean     @default(true)
+  createdAt        DateTime    @default(now())
+
+  orders      Order[]
+  redemptions CouponRedemption[]
+
+  @@unique([code, countryCode])
+  @@index([isActive, endsAt])
+}
+
+model CouponRedemption {
+  id            String   @id @default(uuid()) @db.Uuid
+  couponId      String   @db.Uuid
+  coupon        Coupon   @relation(fields: [couponId], references: [id])
+  userId        String   @db.Uuid
+  user          User     @relation(fields: [userId], references: [id])
+  orderId       String   @db.Uuid
+  order         Order    @relation(fields: [orderId], references: [id])
+  discountMinor BigInt
+  createdAt     DateTime @default(now())
+
+  @@unique([couponId, orderId])
+  @@index([couponId, userId])
+}
+
+model Campaign {
+  id          String       @id @default(uuid()) @db.Uuid
+  name        String
+  nameAr      String?
+  type        CampaignType
+  countryCode String       @db.Char(2)
+  bannerKey   String?
+  startsAt    DateTime
+  endsAt      DateTime
+  isActive    Boolean      @default(true)
+  createdAt   DateTime     @default(now())
+
+  products        CampaignProduct[]
+  commissionRules CommissionRule[]
+
+  @@index([countryCode, isActive, endsAt])
+}
+
+model CampaignProduct {
+  campaignId     String         @db.Uuid
+  campaign       Campaign       @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  variantId      String         @db.Uuid
+  variant        ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  dealPriceMinor BigInt
+  stockLimit     Int?
+  soldCount      Int            @default(0)
+
+  @@id([campaignId, variantId])
+}
+
+model Banner {
+  id          String    @id @default(uuid()) @db.Uuid
+  countryCode String    @db.Char(2)
+  placement   String // HOME_HERO, HOME_MID, CATEGORY_TOP
+  locale      String?
+  imageKey    String
+  linkUrl     String?
+  /// Text the website draws on the banner (empty = the picture alone). Headline: up to two lines; *stars* colour words.
+  kicker      String?   @db.VarChar(30)
+  kickerAr    String?   @db.VarChar(30)
+  headline    String?   @db.VarChar(80)
+  headlineAr  String?   @db.VarChar(80)
+  subline     String?   @db.VarChar(120)
+  sublineAr   String?   @db.VarChar(120)
+  ctaLabel    String?   @db.VarChar(24)
+  ctaLabelAr  String?   @db.VarChar(24)
+  sortOrder   Int       @default(0)
+  startsAt    DateTime?
+  endsAt      DateTime?
+  isActive    Boolean   @default(true)
+
+  @@index([countryCode, placement, isActive])
+}
+
+/// Home page layout per market, edited in the admin panel. No rows = the built-in default layout.
+/// key: a built-in section ("hero", "categories", "flash_deals", "best_sellers", …) or "collection" (a product list
+/// configured in `config`: { source: "category" | "tag" | "products" | "sale", categoryId?, tag?, productIds?, sort?, limit? }).
+model HomeSection {
+  id          String   @id @default(uuid()) @db.Uuid
+  countryCode String   @db.Char(2)
+  key         String   @db.VarChar(40)
+  title       String?  @db.VarChar(80)
+  titleAr     String?  @db.VarChar(80)
+  config      Json     @default("{}")
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([countryCode, sortOrder])
+}
+
+// ---------------------------------------------------------- CONTENT
+
+/// Content pages (About, Privacy, Terms, …) edited in the admin panel. Body is plain text with a few markdown
+/// conventions (## heading, - list, **bold**, [link](url)); the website renders it without raw HTML.
+model Page {
+  id           String   @id @default(uuid()) @db.Uuid
+  slug         String   @unique @db.VarChar(60)
+  title        String   @db.VarChar(120)
+  titleAr      String   @db.VarChar(120)
+  body         String
+  bodyAr       String
+  isPublished  Boolean  @default(false)
+  showInFooter Boolean  @default(true)
+  sortOrder    Int      @default(0)
+  updatedById  String?  @db.Uuid
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+enum ContactStatus {
+  NEW
+  HANDLED
+  SPAM
+}
+
+/// Messages sent from the website's Contact page (no account needed).
+model ContactMessage {
+  id          String        @id @default(uuid()) @db.Uuid
+  name        String        @db.VarChar(100)
+  email       String        @db.VarChar(200)
+  phone       String?       @db.VarChar(20)
+  subject     String?       @db.VarChar(150)
+  message     String
+  orderNumber String?       @db.VarChar(40)
+  userId      String?       @db.Uuid
+  status      ContactStatus @default(NEW)
+  note        String?
+  handledById String?       @db.Uuid
+  handledAt   DateTime?
+  ip          String?       @db.VarChar(64)
+  createdAt   DateTime      @default(now())
+
+  @@index([status, createdAt])
+}
+
+// ---------------------------------------------------------- REVIEWS
+
+model Review {
+  id                 String       @id @default(uuid()) @db.Uuid
+  userId             String       @db.Uuid
+  user               User         @relation(fields: [userId], references: [id])
+  orderItemId        String       @db.Uuid
+  orderItem          OrderItem    @relation(fields: [orderItemId], references: [id])
+  target             ReviewTarget
+  productId          String?      @db.Uuid
+  product            Product?     @relation(fields: [productId], references: [id])
+  sellerId           String?      @db.Uuid
+  seller             Seller?      @relation(fields: [sellerId], references: [id])
+  rating             Int // 1..5 (CHECK constraint in SQL)
+  body               String?
+  images             Json         @default("[]")
+  isVerifiedPurchase Boolean      @default(true)
+  status             ReviewStatus @default(PENDING)
+  moderatedById      String?      @db.Uuid
+  createdAt          DateTime     @default(now())
+
+  @@unique([orderItemId, target]) // one product + one seller review per purchased item
+  @@index([productId, status, createdAt(sort: Desc)])
+  @@index([sellerId, status])
+}
+
+enum QuestionStatus {
+  PENDING
+  ANSWERED
+  REJECTED
+}
+
+/// A customer's question about a product. Shown on the product page only once the store has answered it.
+model ProductQuestion {
+  id           String         @id @default(uuid()) @db.Uuid
+  productId    String         @db.Uuid
+  product      Product        @relation(fields: [productId], references: [id], onDelete: Cascade)
+  userId       String         @db.Uuid
+  user         User           @relation("QuestionAsker", fields: [userId], references: [id])
+  body         String         @db.VarChar(500)
+  locale       String         @default("en") @db.VarChar(5)
+  status       QuestionStatus @default(PENDING)
+  answer       String?        @db.VarChar(2000)
+  answeredById String?        @db.Uuid
+  answeredBy   User?          @relation("QuestionAnswerer", fields: [answeredById], references: [id])
+  answeredAt   DateTime?
+  rejectReason String?        @db.VarChar(300)
+  createdAt    DateTime       @default(now())
+  updatedAt    DateTime       @updatedAt
+
+  @@index([productId, status, answeredAt(sort: Desc)])
+  @@index([status, createdAt])
+  @@index([userId, createdAt])
+}
+
+// --------------------------------------------------------- WISHLIST
+
+model Wishlist {
+  id        String         @id @default(uuid()) @db.Uuid
+  userId    String         @db.Uuid
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name      String         @default("My Wishlist")
+  isDefault Boolean        @default(false)
+  createdAt DateTime       @default(now())
+  items     WishlistItem[]
+
+  @@index([userId])
+}
+
+model WishlistItem {
+  id                String   @id @default(uuid()) @db.Uuid
+  wishlistId        String   @db.Uuid
+  wishlist          Wishlist @relation(fields: [wishlistId], references: [id], onDelete: Cascade)
+  productId         String   @db.Uuid
+  product           Product  @relation(fields: [productId], references: [id], onDelete: Cascade)
+  priceAtAddMinor   BigInt
+  notifyPriceDrop   Boolean  @default(true)
+  notifyBackInStock Boolean  @default(true)
+  addedAt           DateTime @default(now())
+
+  @@unique([wishlistId, productId])
+  @@index([productId])
+}
+
+// ---------------------------------------------------- NOTIFICATIONS
+
+model Notification {
+  id        String              @id @default(uuid()) @db.Uuid
+  userId    String              @db.Uuid
+  user      User                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  channel   NotificationChannel
+  type      String // ORDER_PLACED, PRICE_DROP, PAYOUT_PAID...
+  title     String
+  body      String
+  data      Json                @default("{}")
+  status    NotificationStatus  @default(QUEUED)
+  readAt    DateTime?
+  sentAt    DateTime?
+  error     String?
+  attempts  Int                 @default(0)
+  nextAttemptAt DateTime? // outbox worker lease / retry backoff
+  createdAt DateTime            @default(now())
+
+  @@index([userId, channel, createdAt(sort: Desc)])
+  @@index([status, nextAttemptAt])
+}
+
+model DeviceToken {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  platform  String // ios, android, web
+  createdAt DateTime @default(now())
+}
+
+// ---------------------------------------------------------- SUPPORT
+
+model SupportTicket {
+  id           String          @id @default(uuid()) @db.Uuid
+  number       String          @unique
+  userId       String          @db.Uuid
+  user         User            @relation(fields: [userId], references: [id])
+  sellerId     String?         @db.Uuid
+  seller       Seller?         @relation(fields: [sellerId], references: [id])
+  orderId      String?         @db.Uuid
+  order        Order?          @relation(fields: [orderId], references: [id])
+  subject      String
+  category     String
+  status       TicketStatus    @default(OPEN)
+  priority     TicketPriority  @default(NORMAL)
+  assignedToId String?         @db.Uuid
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  messages     TicketMessage[]
+
+  @@index([userId])
+  @@index([status, priority])
+}
+
+model TicketMessage {
+  id          String        @id @default(uuid()) @db.Uuid
+  ticketId    String        @db.Uuid
+  ticket      SupportTicket @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  authorId    String        @db.Uuid
+  author      User          @relation(fields: [authorId], references: [id])
+  body        String
+  attachments Json          @default("[]")
+  isInternal  Boolean       @default(false) // admin-only notes
+  createdAt   DateTime      @default(now())
+
+  @@index([ticketId, createdAt])
+}
+
+// --------------------------------------------------------- DELIVERY
+
+model DeliveryOrder {
+  id               String          @id @default(uuid()) @db.Uuid
+  sellerOrderId    String          @unique @db.Uuid
+  sellerOrder      SellerOrder     @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
+  method           DeliveryMethod
+  providerCode     String // "seller", "jovia_fleet", or 3rd-party code
+  providerRef      String?
+  status           DeliveryStatus  @default(CREATED)
+  courierUserId    String?         @db.Uuid // DELIVERY_AGENT for FastMoveX fleet
+  courierName      String?
+  courierPhone     String?
+  trackingUrl      String?
+  etaAt            DateTime?
+  pickedUpAt       DateTime?
+  deliveredAt      DateTime?
+  proofOfDeliveryKey String?
+  deliveryCode     String? // 4-digit code the customer tells the courier (FastMoveX fleet)
+  recipientName    String?
+  attempts         Int             @default(0)
+  failureReason    String?
+  assignedAt       DateTime?
+  lastLat          Float?
+  lastLng          Float?
+  lastLocationAt   DateTime?
+  // Staff marked it delivered without the customer's code (permission delivery.override)
+  overrideById     String?         @db.Uuid
+  overrideReason   String?
+  // Proof of the last failed attempt: when, where the driver was (and how far from the address pin), a photo
+  failedAt          DateTime?
+  failureLat        Float?
+  failureLng        Float?
+  failureDistanceM  Int?
+  failurePhotoKey   String?
+  // What the customer asked for after a failed attempt (new time chosen on the website)
+  customerRequest   String?
+  customerRequestAt DateTime?
+  createdAt        DateTime        @default(now())
+  updatedAt        DateTime        @updatedAt
+  events           DeliveryEvent[]
+  doorReturns      DoorReturn[]
+
+  @@index([status])
+  @@index([courierUserId, status])
+}
+
+model DeliveryEvent {
+  id              String         @id @default(uuid()) @db.Uuid
+  deliveryOrderId String         @db.Uuid
+  deliveryOrder   DeliveryOrder  @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+  status          DeliveryStatus
+  lat             Float?
+  lng             Float?
+  note            String?
+  occurredAt      DateTime       @default(now())
+
+  @@index([deliveryOrderId, occurredAt])
+}
+
+// ------------------------------------------------------------ AUDIT
+
+model AuditLog {
+  id         String   @id @default(uuid()) @db.Uuid
+  actorId    String?  @db.Uuid
+  actorRole  String?
+  action     String // "seller.approve", "payout.mark_paid", "commission_rule.update"
+  entityType String
+  entityId   String?
+  before     Json?
+  after      Json?
+  ip         String?
+  userAgent  String?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@index([actorId, createdAt])
+  @@index([createdAt])
+}
+
+// ------------------------------------------------------------ FAQ
+
+model FaqEntry {
+  id          String   @id @default(uuid()) @db.Uuid
+  countryCode String?  @db.Char(2) // null = all markets
+  category    String // orders, payments, returns, sellers, account
+  question    String
+  questionAr  String
+  answer      String
+  answerAr    String
+  sortOrder   Int      @default(0)
+  isActive    Boolean  @default(true)
+  updatedAt   DateTime @updatedAt
+
+  @@index([isActive, category, sortOrder])
+}
+
+/// How many orders hold each delivery window. Booked atomically at checkout (booked < capacity);
+/// released by a database trigger when the order is cancelled, whatever code path cancels it.
+model DeliverySlotUsage {
+  countryCode String   @db.Char(2)
+  slotStart   DateTime
+  booked      Int      @default(0)
+  updatedAt   DateTime @updatedAt
+
+  @@id([countryCode, slotStart])
+}
+
+/// Counts per market, day and search text: what customers look for and what they do not find. No user ids.
+model SearchLog {
+  countryCode String   @db.VarChar(2)
+  day         DateTime @db.Date
+  query       String   @db.VarChar(100)
+  searches    Int      @default(0)
+  /// distinct visitors (approximate: counted per API instance)
+  visitors    Int      @default(0)
+  zeroResults Int      @default(0)
+  /// searches answered with a spelling correction
+  corrected   Int      @default(0)
+  lastTotal   Int      @default(0)
+
+  @@id([countryCode, day, query])
+  @@index([countryCode, day])
+}
+
+/// One anonymous browsing session (id made in the browser; no cookie, user id or IP): source and how far it got.
+model AnalyticsSession {
+  id              String   @id @db.Uuid
+  countryCode     String   @db.VarChar(2)
+  day             DateTime @db.Date
+  startedAt       DateTime
+  lastSeenAt      DateTime
+  source          String   @default("direct") @db.VarChar(60)
+  medium          String   @default("none") @db.VarChar(30)
+  campaign        String?  @db.VarChar(100)
+  landingPath     String?  @db.VarChar(200)
+  device          String   @default("desktop") @db.VarChar(10)
+  locale          String?  @db.VarChar(5)
+  pageViews       Int      @default(0)
+  productViews    Int      @default(0)
+  addedToCart     Boolean  @default(false)
+  startedCheckout Boolean  @default(false)
+  purchased       Boolean  @default(false)
+
+  @@index([countryCode, day])
+}
+
+// -------------------------------------------------- CASH ON DELIVERY
+
+/// Cash taken at the door for one shipment, and who is holding it until it is handed over.
+model CodCollection {
+  id            String        @id @default(uuid()) @db.Uuid
+  sellerOrderId String        @unique @db.Uuid
+  sellerOrder   SellerOrder   @relation(fields: [sellerOrderId], references: [id])
+  holderUserId  String        @db.Uuid // the courier, or the staff member who marked it delivered
+  holder        User          @relation("CodHolder", fields: [holderUserId], references: [id])
+  amountMinor   BigInt
+  currencyCode  String        @db.Char(3)
+  collectedAt   DateTime      @default(now())
+  handoverId    String?       @db.Uuid
+  handover      CashHandover? @relation(fields: [handoverId], references: [id])
+
+  @@index([holderUserId, handoverId])
+  @@index([collectedAt])
+}
+
+/// A driver hands the cash to a cashier: counted amount vs what the system expects.
+model CashHandover {
+  id            String          @id @default(uuid()) @db.Uuid
+  number        String          @unique // CH-QA-261004-7F3A
+  holderUserId  String          @db.Uuid
+  holder        User            @relation("CashHandoverHolder", fields: [holderUserId], references: [id])
+  receivedById  String          @db.Uuid
+  receivedBy    User            @relation("CashHandoverReceiver", fields: [receivedById], references: [id])
+  expectedMinor BigInt
+  receivedMinor BigInt
+  varianceMinor BigInt          // received - expected: negative = short
+  currencyCode  String          @db.Char(3)
+  note          String?
+  createdAt     DateTime        @default(now())
+  collections   CodCollection[]
+
+  @@index([holderUserId, createdAt(sort: Desc)])
+  @@index([createdAt])
+}
+
+// -------------------------------------------------- STOCK CONTROL
+
+/// Dated stock of a product that tracks expiry: sold earliest-expiry first (FEFO), written off when expired.
+/// The shelf total stays in WarehouseStock; lots are its dated part (never more than the shelf).
+model StockLot {
+  id          String         @id @default(uuid()) @db.Uuid
+  warehouseId String         @db.Uuid
+  warehouse   Warehouse      @relation(fields: [warehouseId], references: [id])
+  variantId   String         @db.Uuid
+  variant     ProductVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+  lotCode     String         @default("") @db.VarChar(40)
+  expiresOn   DateTime       @db.Date
+  quantity    Int
+  receivedAt  DateTime       @default(now())
+  updatedAt   DateTime       @updatedAt
+
+  @@unique([warehouseId, variantId, lotCode, expiresOn])
+  @@index([variantId, expiresOn])
+  @@index([expiresOn])
+}
+
+/// A stocktake: staff count the shelves (blind by default), a second person approves, differences are posted.
+model StockCount {
+  id            String           @id @default(uuid()) @db.Uuid
+  number        String           @unique
+  warehouseId   String           @db.Uuid
+  warehouse     Warehouse        @relation(fields: [warehouseId], references: [id])
+  status        StockCountStatus @default(OPEN)
+  blind         Boolean          @default(true) // counters do not see what the system expects
+  note          String?
+  createdById   String           @db.Uuid
+  submittedById String?          @db.Uuid
+  approvedById  String?          @db.Uuid
+  createdAt     DateTime         @default(now())
+  submittedAt   DateTime?
+  approvedAt    DateTime?
+  cancelledAt   DateTime?
+  lines         StockCountLine[]
+
+  @@index([status, createdAt])
+}
+
+model StockCountLine {
+  id          String         @id @default(uuid()) @db.Uuid
+  countId     String         @db.Uuid
+  count       StockCount     @relation(fields: [countId], references: [id], onDelete: Cascade)
+  variantId   String         @db.Uuid
+  variant     ProductVariant @relation(fields: [variantId], references: [id])
+  expectedQty Int // on the shelf when counted (difference = counted - expected)
+  countedQty  Int?
+  countedAt   DateTime?
+  countedById String?        @db.Uuid
+
+  @@unique([countId, variantId])
+}
+
+// -------------------------------------------------- PURCHASING
+
+model Supplier {
+  id           String          @id @default(uuid()) @db.Uuid
+  name         String          @db.VarChar(120)
+  contactName  String?         @db.VarChar(120)
+  phone        String?         @db.VarChar(30)
+  email        String?         @db.VarChar(200)
+  crNumber     String?         @db.VarChar(40)
+  address      String?         @db.VarChar(300)
+  paymentTerms String?         @db.VarChar(120) // e.g. "30 days", "cash on delivery"
+  notes        String?
+  isActive     Boolean         @default(true)
+  createdAt    DateTime        @default(now())
+  updatedAt    DateTime        @updatedAt
+  orders       PurchaseOrder[]
+}
+
+model PurchaseOrder {
+  id           String              @id @default(uuid()) @db.Uuid
+  number       String              @unique // PO-QA-261005-3F2A
+  supplierId   String              @db.Uuid
+  supplier     Supplier            @relation(fields: [supplierId], references: [id])
+  warehouseId  String              @db.Uuid
+  warehouse    Warehouse           @relation(fields: [warehouseId], references: [id])
+  status       PurchaseOrderStatus @default(DRAFT)
+  currencyCode String              @db.Char(3)
+  totalMinor   BigInt              @default(0)
+  expectedOn   DateTime?           @db.Date
+  note         String?
+  createdById  String              @db.Uuid
+  orderedById  String?             @db.Uuid
+  orderedAt    DateTime?
+  receivedAt   DateTime?
+  cancelledAt  DateTime?
+  createdAt    DateTime            @default(now())
+  updatedAt    DateTime            @updatedAt
+  lines        PurchaseOrderLine[]
+  receipts     GoodsReceipt[]
+
+  @@index([status, createdAt])
+  @@index([supplierId, createdAt])
+}
+
+model PurchaseOrderLine {
+  id            String             @id @default(uuid()) @db.Uuid
+  orderId       String             @db.Uuid
+  order         PurchaseOrder      @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  variantId     String             @db.Uuid
+  variant       ProductVariant     @relation(fields: [variantId], references: [id])
+  quantity      Int
+  receivedQty   Int                @default(0)
+  unitCostMinor BigInt
+  receiptLines  GoodsReceiptLine[]
+
+  @@unique([orderId, variantId])
+}
+
+/// Goods received against a purchase order: adds stock (with lot and expiry when tracked) and updates the cost price.
+model GoodsReceipt {
+  id           String             @id @default(uuid()) @db.Uuid
+  number       String             @unique // GRN-QA-261005-7C1D
+  orderId      String             @db.Uuid
+  order        PurchaseOrder      @relation(fields: [orderId], references: [id])
+  warehouseId  String             @db.Uuid
+  warehouse    Warehouse          @relation(fields: [warehouseId], references: [id])
+  receivedById String             @db.Uuid
+  supplierRef  String?            @db.VarChar(60) // the supplier's delivery note / invoice number
+  note         String?
+  createdAt    DateTime           @default(now())
+  lines        GoodsReceiptLine[]
+
+  @@index([orderId])
+}
+
+model GoodsReceiptLine {
+  id        String            @id @default(uuid()) @db.Uuid
+  receiptId String            @db.Uuid
+  receipt   GoodsReceipt      @relation(fields: [receiptId], references: [id], onDelete: Cascade)
+  poLineId  String            @db.Uuid
+  poLine    PurchaseOrderLine @relation(fields: [poLineId], references: [id])
+  variantId String            @db.Uuid
+  variant   ProductVariant    @relation(fields: [variantId], references: [id])
+  quantity  Int
+  lotCode   String?           @db.VarChar(40)
+  expiresOn DateTime?         @db.Date
+}
+
+// -------------------------------------------------- PAYMENTS RECONCILIATION
+
+/// A gateway settlement file matched against FastMoveX's payments (what was paid out vs what we recorded).
+model PaymentSettlement {
+  id           String   @id @default(uuid()) @db.Uuid
+  provider     String   @db.VarChar(30)
+  fileName     String   @db.VarChar(200)
+  currencyCode String   @db.Char(3)
+  rows         Int
+  matched      Int
+  mismatched   Int
+  missing      Int // in the file, not in FastMoveX
+  extra        Int // captured in FastMoveX, not in the file (within the file's dates)
+  fileTotalMinor BigInt
+  result       Json
+  createdById  String   @db.Uuid
+  createdAt    DateTime @default(now())
+
+  @@index([createdAt])
+}
+
+/// Staff's internal notes about a customer (never shown to the customer)
+model CustomerNote {
+  id        String   @id @default(uuid()) @db.Uuid
+  userId    String   @db.Uuid
+  user      User     @relation("NoteAbout", fields: [userId], references: [id], onDelete: Cascade)
+  authorId  String   @db.Uuid
+  author    User     @relation("NoteAuthor", fields: [authorId], references: [id])
+  body      String   @db.VarChar(2000)
+  pinned    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([userId, pinned, createdAt(sort: Desc)])
+}
+
+/// Staff's internal notes on an order (call log, special handling) — never shown to the customer
+model OrderNote {
+  id        String   @id @default(uuid()) @db.Uuid
+  orderId   String   @db.Uuid
+  order     Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  authorId  String   @db.Uuid
+  author    User     @relation("OrderNoteAuthor", fields: [authorId], references: [id])
+  body      String   @db.VarChar(2000)
+  createdAt DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+// -------------------------------------------------- ORDER CHANGES (Phase 22)
+
+/// Every change to an order after it was placed: items reduced or removed, address, delivery window, items refused at the door.
+model OrderChange {
+  id            String   @id @default(uuid()) @db.Uuid
+  orderId       String   @db.Uuid
+  order         Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  sellerOrderId String?  @db.Uuid
+  kind          String   @db.VarChar(20) // ITEMS | ADDED | ADDRESS | SLOT | DOOR_REFUSAL
+  byRole        String   @db.VarChar(10) // STAFF | CUSTOMER | DRIVER
+  actorId       String?  @db.Uuid
+  reason        String?  @db.VarChar(500)
+  summary       String   @db.VarChar(1000)
+  before        Json?
+  after         Json?
+  /// how much the order total went down (ADDED: how much it went up; 0 for address / window changes)
+  amountMinor   BigInt   @default(0)
+  createdAt     DateTime @default(now())
+
+  @@index([orderId, createdAt])
+}
+
+/// Units the customer refused at the door: the driver brings them back and the warehouse books them in.
+model DoorReturn {
+  id              String           @id @default(uuid()) @db.Uuid
+  deliveryOrderId String           @db.Uuid
+  deliveryOrder   DeliveryOrder    @relation(fields: [deliveryOrderId], references: [id], onDelete: Cascade)
+  orderItemId     String           @db.Uuid
+  orderItem       OrderItem        @relation(fields: [orderItemId], references: [id])
+  quantity        Int
+  reason          String           @db.VarChar(300)
+  courierUserId   String?          @db.Uuid
+  createdAt       DateTime         @default(now())
+  receivedAt      DateTime?
+  receivedById    String?          @db.Uuid
+  condition       ReturnCondition?
+  note            String?          @db.VarChar(300)
+
+  @@index([receivedAt, createdAt])
+  @@index([orderItemId])
+}
+
+enum PickupStatus {
+  ASSIGNED
+  COLLECTED
+  FAILED
+  CANCELLED
+}
+
+/// A driver collects an approved return from the customer.
+model ReturnPickup {
+  id              String        @id @default(uuid()) @db.Uuid
+  returnRequestId String        @unique @db.Uuid
+  returnRequest   ReturnRequest @relation(fields: [returnRequestId], references: [id], onDelete: Cascade)
+  status          PickupStatus  @default(ASSIGNED)
+  courierUserId   String        @db.Uuid
+  date            DateTime      @db.Date
+  address         Json
+  note            String?       @db.VarChar(300)
+  createdById     String        @db.Uuid
+  collectedAt     DateTime?
+  collectedLat    Float?
+  collectedLng    Float?
+  failedAt        DateTime?
+  failureReason   String?       @db.VarChar(300)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+
+  @@index([courierUserId, status])
+  @@index([status, date])
+}
+
+// -------------------------------------------------- SIGN-IN & PUSH (Phase 23)
+
+/// A Google or Apple sign-in linked to an account (the provider's stable user id).
+model SocialAccount {
+  id         String    @id @default(uuid()) @db.Uuid
+  userId     String    @db.Uuid
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider   String    @db.VarChar(10) // GOOGLE | APPLE
+  subject    String    @db.VarChar(255)
+  email      String?   @db.VarChar(255)
+  createdAt  DateTime  @default(now())
+  lastUsedAt DateTime  @default(now())
+
+  @@unique([provider, subject])
+  @@index([userId])
+}
+
+/// A browser that agreed to receive notifications (Web Push, VAPID).
+model WebPushSubscription {
+  id         String   @id @default(uuid()) @db.Uuid
+  userId     String   @db.Uuid
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint   String   @unique
+  p256dh     String   @db.VarChar(200)
+  auth       String   @db.VarChar(100)
+  userAgent  String?  @db.VarChar(300)
+  failures   Int      @default(0)
+  createdAt  DateTime @default(now())
+  lastUsedAt DateTime @default(now())
+
+  @@index([userId])
+}

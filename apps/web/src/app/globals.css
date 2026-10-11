@@ -1,0 +1,207 @@
+@import 'tailwindcss';
+
+/*
+ * FastMoveX design tokens.
+ * Brand: FastMoveX purple (#7422E6, from the logo's #C13CFE → #6711FA) with a warm sand accent for ratings;
+ * warm neutrals so product photos stay the hero.
+ */
+@theme {
+  --font-sans: 'Inter Variable', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #f6f0ff;
+  --color-brand-100: #ede1ff;
+  --color-brand-200: #dcc4ff;
+  --color-brand-300: #c39aff;
+  --color-brand-400: #a865fc;
+  --color-brand-500: #8f3cf7;
+  --color-brand-600: #7422e6;
+  --color-brand-700: #5f19c0;
+  --color-brand-800: #4c169a;
+  --color-brand-900: #36106d;
+
+  --color-sand-50: #fbf7ef;
+  --color-sand-100: #f5ecda;
+  --color-sand-200: #ecdab5;
+  --color-sand-300: #e0c28a;
+  --color-sand-400: #d2a862;
+  --color-sand-500: #c29146;
+  --color-sand-600: #a47535;
+  --color-sand-700: #7f5a2a;
+
+  --color-ink-0: #ffffff;
+  --color-ink-25: #fcfbfa;
+  --color-ink-50: #f7f5f2;
+  --color-ink-100: #efebe6;
+  --color-ink-200: #e2dcd5;
+  --color-ink-300: #cbc3b9;
+  --color-ink-400: #776e64;
+  --color-ink-500: #655d55;
+  --color-ink-600: #5d554d;
+  --color-ink-700: #443e38;
+  --color-ink-800: #2c2824;
+  --color-ink-900: #1b1815;
+
+  --color-deal-500: #d8392c;
+  --color-deal-600: #b92d22;
+  --color-success-50: #ecf7f0;
+  --color-success-600: #1f7a4d;
+  --color-success-700: #17603c;
+  --color-warning-50: #fdf5e7;
+  --color-warning-600: #b45309;
+  --color-danger-50: #fdeeee;
+  --color-danger-600: #c0262d;
+
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgb(27 24 21 / 0.04), 0 4px 16px -6px rgb(27 24 21 / 0.08);
+  --shadow-pop: 0 12px 40px -12px rgb(27 24 21 / 0.28);
+
+  --animate-toast-in: toast-in 180ms ease-out;
+  --animate-fade-in: fade-in 160ms ease-out;
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  html[lang='ar'] body {
+    font-family: var(--font-arabic);
+  }
+  body {
+    @apply bg-ink-25 text-ink-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+  /* Numbers line up in prices, totals and countdowns */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+}
+
+/* Reusable building blocks (Tailwind v4 utilities, so they can be combined with variants and @apply) */
+/* Rating stars: ONE element (a star mask over a two-colour bar) instead of five SVG icons — product grids render dozens. */
+@utility stars {
+  --star-size: 0.875rem;
+  --star: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 1.8l3 6.9 7.4.6-5.6 4.9 1.7 7.3L12 17.6l-6.5 3.9 1.7-7.3L1.6 9.3 9 8.7z'/%3E%3C/svg%3E");
+  display: inline-block;
+  flex-shrink: 0;
+  height: var(--star-size);
+  width: calc(var(--star-size) * 5);
+  background: linear-gradient(to right, var(--color-sand-500) var(--rating, 0%), var(--color-ink-200) var(--rating, 0%));
+  -webkit-mask: var(--star) left center / var(--star-size) var(--star-size) repeat-x;
+  mask: var(--star) left center / var(--star-size) var(--star-size) repeat-x;
+}
+/* Product card pieces: short class names keep big product grids small in the HTML. */
+/* The card is a size container: four-across rails on phones get smaller type than two-across grids. */
+@utility pcard {
+  @apply @container relative flex h-full flex-col overflow-hidden rounded-xl border border-ink-100 bg-white transition-shadow hover:shadow-[var(--shadow-card)];
+}
+@utility pcard-title {
+  @apply line-clamp-2 min-h-[2rem] text-[12px] leading-4 font-medium text-ink-900 @min-[150px]:min-h-[2.5rem] @min-[150px]:text-[13.5px] @min-[150px]:leading-5;
+}
+@utility pcard-fav {
+  @apply relative z-10 flex size-8 items-center justify-center rounded-full bg-white/80 text-ink-700 transition hover:text-brand-600;
+}
+/* rails: four cards across a phone (like the app), more on wider screens */
+@utility rail-item {
+  @apply w-[calc((100%-24px)/4)] min-w-[84px] shrink-0 snap-start sm:w-[30%] md:w-[23%] lg:w-[18.5%] xl:w-[15.8%];
+}
+@utility container-page {
+  @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8;
+}
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-ink-100 bg-white shadow-[var(--shadow-card)];
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-150 select-none disabled:cursor-not-allowed disabled:opacity-55;
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
+}
+@utility btn-secondary {
+  @apply btn border border-ink-200 bg-white text-ink-800 hover:border-ink-300 hover:bg-ink-50;
+}
+@utility btn-ghost {
+  @apply btn text-ink-700 hover:bg-ink-100;
+}
+@utility btn-danger {
+  @apply btn border border-danger-600/30 bg-white text-danger-600 hover:bg-danger-50;
+}
+@utility btn-lg {
+  @apply px-6 py-3.5 text-base;
+}
+@utility input {
+  @apply block w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-600/15 disabled:bg-ink-50 aria-invalid:border-danger-600;
+}
+@utility label {
+  @apply mb-1.5 block text-sm font-medium text-ink-700;
+}
+@utility hint {
+  @apply mt-1.5 text-xs text-ink-500;
+}
+@utility field-error {
+  @apply mt-1.5 text-xs font-medium text-danger-600;
+}
+@utility chip {
+  @apply inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-700 transition-colors hover:border-ink-300;
+}
+@utility chip-active {
+  @apply border-brand-600 bg-brand-50 text-brand-700;
+}
+@utility link {
+  @apply font-medium text-brand-600 underline-offset-2 hover:underline;
+}
+@utility section-title {
+  @apply text-lg font-bold tracking-tight text-ink-900 sm:text-xl;
+}
+@utility no-scrollbar {
+  scrollbar-width: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+@utility toast-in {
+  animation: var(--animate-toast-in);
+}
+@utility skeleton {
+  @apply animate-pulse rounded-lg bg-ink-100;
+}
+
+/* Arabic script needs a touch more line height and no letter-spacing */
+html[lang='ar'] .tracking-tight,
+html[lang='ar'] .tracking-wide {
+  letter-spacing: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Stars fill from the reading start in Arabic. */
+[dir='rtl'] .stars {
+  background: linear-gradient(to left, var(--color-sand-500) var(--rating, 0%), var(--color-ink-200) var(--rating, 0%));
+  -webkit-mask-position: right center;
+  mask-position: right center;
+}

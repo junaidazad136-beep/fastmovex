@@ -1,0 +1,83 @@
+# Render Blueprint — FastMoveX API on the FREE plan, for testing (sleeps after 15 minutes without visits; see FREE-TEST.md).
+# Render → New → Blueprint → pick this repository. Fill the values marked sync: false when Render asks.
+services:
+  - type: web
+    name: fastmovex-api
+    runtime: node
+    plan: free
+    region: frankfurt
+    rootDir: apps/api
+    buildCommand: bash scripts/render-build.sh
+    startCommand: node dist/main.js
+    healthCheckPath: /api/v1/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: NODE_VERSION
+        value: "22.12.0"
+      - key: DEFAULT_COUNTRY
+        value: QA
+      # Supabase → Project Settings → Database → Connection string → "Session pooler" (port 5432)
+      - key: DATABASE_URL
+        sync: false
+      # Supabase → Project Settings → Database → SSL Configuration → Download certificate: paste the whole file here
+      # (encrypted AND verified database connection)
+      - key: DATABASE_CA_CERT
+        sync: false
+      # free Supabase allows few connections: keep this small
+      - key: DATABASE_POOL_MAX
+        value: "5"
+      - key: JWT_ACCESS_SECRET
+        generateValue: true
+      - key: FIELD_ENCRYPTION_KEY
+        generateValue: true
+      # copy this value to both Vercel projects (website + admin) as INTERNAL_API_KEY
+      - key: INTERNAL_API_KEY
+        generateValue: true
+      # Supabase → Storage → S3 Connection (endpoint + region + access keys); buckets fastmovex-public (public) and fastmovex-private
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY_ID
+        sync: false
+      - key: S3_SECRET_ACCESS_KEY
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: "true"
+      - key: S3_BUCKET_PUBLIC
+        value: fastmovex-public
+      - key: S3_BUCKET_PRIVATE
+        value: fastmovex-private
+      # https://<project-ref>.supabase.co/storage/v1/object/public/fastmovex-public
+      - key: PUBLIC_MEDIA_BASE_URL
+        sync: false
+      # https://<website>.vercel.app,https://<admin>.vercel.app
+      - key: CORS_ORIGINS
+        sync: false
+      - key: STOREFRONT_URL
+        sync: false
+      - key: ADMIN_URL
+        sync: false
+      # your own super admin login (email + a strong password)
+      - key: SEED_SUPERADMIN_EMAIL
+        sync: false
+      - key: SEED_SUPERADMIN_PASSWORD
+        sync: false
+      # staff two-step sign-in: "optional" while testing (production default is required)
+      - key: STAFF_TWO_FACTOR
+        value: optional
+      - key: NOTIFY_EMAIL_DRIVER
+        value: none
+      - key: NOTIFY_SMS_DRIVER
+        value: none
+      - key: NOTIFY_PUSH_DRIVER
+        value: none
+      - key: WHATSAPP_DRIVER
+        value: none
+      # demo shop (products, demo staff / seller / customer accounts): "yes" for the first deploy, with your own private
+      # DEMO_PASSWORD (12+ characters, used by every demo account); change to "no" afterwards
+      - key: DEMO_SEED_ALLOW
+        sync: false
+      - key: DEMO_PASSWORD
+        sync: false

@@ -1,0 +1,146 @@
+name: Web
+
+on:
+  push:
+    branches: [main]
+    paths: ['apps/web/**', 'apps/api/**', '.github/workflows/web.yml']
+  pull_request:
+    paths: ['apps/web/**', 'apps/api/**', '.github/workflows/web.yml']
+
+concurrency:
+  group: web-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_USER: jovia
+          POSTGRES_PASSWORD: jovia
+          POSTGRES_DB: jovia
+          POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd "pg_isready -U jovia -d jovia" --health-interval 5s --health-timeout 5s --health-retries 10
+      minio:
+        image: bitnami/minio:2024
+        env:
+          MINIO_ROOT_USER: jovia
+          MINIO_ROOT_PASSWORD: jovia-minio-secret
+          MINIO_DEFAULT_BUCKETS: jovia-public:download,jovia-private
+        ports: ['9000:9000']
+    env:
+      # API (runs in the background for the browser tests)
+      NODE_ENV: test
+      PORT: 4000
+      DATABASE_URL: postgresql://jovia:jovia@localhost:5432/jovia
+      JWT_ACCESS_SECRET: ci-only-secret-0123456789abcdefghijklmnopqrstuvwxyz
+      FIELD_ENCRYPTION_KEY: AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
+      S3_ENDPOINT: http://localhost:9000
+      S3_REGION: us-east-1
+      S3_ACCESS_KEY_ID: jovia
+      S3_SECRET_ACCESS_KEY: jovia-minio-secret
+      S3_FORCE_PATH_STYLE: 'true'
+      S3_BUCKET_PUBLIC: jovia-public
+      S3_BUCKET_PRIVATE: jovia-private
+      PUBLIC_MEDIA_BASE_URL: http://localhost:9000/jovia-public
+      CORS_ORIGINS: http://localhost:3000
+      NOTIFY_EMAIL_DRIVER: log
+      NOTIFY_SMS_DRIVER: log
+      RATE_LIMIT_DISABLED: 'true'
+      INTERNAL_API_KEY: ci-internal-key-0123456789abcdefghijkl
+      SEED_SUPERADMIN_EMAIL: owner@jovia.test
+      SEED_SUPERADMIN_PASSWORD: Owner-Pass-2026
+      # Website
+      PUBLIC_API_URL: http://localhost:4000/api/v1
+      SITE_URL: http://localhost:3000
+      NEXT_PUBLIC_MEDIA_URL: http://localhost:9000/jovia-public
+      IMAGE_ALLOW_LOCAL_IP: 'true'
+      E2E_API_LOG: ${{ github.workspace }}/api.log
+      STOREFRONT_URL: http://localhost:3000   # the API refreshes the website cache after admin changes
+      WHATSAPP_DRIVER: log
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            apps/api/package-lock.json
+            apps/web/package-lock.json
+
+      - name: API — install, migrate, seed, start
+        working-directory: apps/api
+        run: |
+          npm ci --no-audit --no-fund
+          npx prisma generate
+          npm run build
+          npx prisma migrate deploy
+          npm run db:seed && npm run db:seed:demo
+          nohup node dist/main.js > "$E2E_API_LOG" 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:4000/api/v1/health && break; sleep 1; done
+
+      - name: Web — install, type-check, unit tests
+        working-directory: apps/web
+        run: |
+          npm ci --no-audit --no-fund
+          npm run typecheck
+          npm test
+
+      - name: Web — production build and start
+        working-directory: apps/web
+        run: |
+          npm run build
+          cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static
+          PORT=3000 HOSTNAME=0.0.0.0 NODE_ENV=production nohup node .next/standalone/server.js > web.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:3000/robots.txt >/dev/null && break; sleep 1; done
+
+      - name: Browser tests (desktop + phone, English + Arabic, accessibility)
+        working-directory: apps/web
+        run: |
+          npx playwright install --with-deps chromium
+          npm run test:e2e
+
+      - name: Card payments through the Dibsy page (API switched to the local Dibsy stand-in)
+        run: |
+          pkill -f "node dist/main.js" || true
+          pkill -f "standalone/server.js" || true
+          (cd apps/api && nohup node scripts/dibsy-sandbox.mjs > dibsy.log 2>&1 &)
+          (cd apps/api && DIBSY_SECRET_KEY=sk_test_local_sandbox_key DIBSY_API_URL=http://localhost:4010/v2 API_PUBLIC_URL=http://localhost:4000 nohup node dist/main.js >> "$E2E_API_LOG" 2>&1 &)
+          for i in $(seq 1 30); do curl -sf localhost:4000/api/v1/health && break; sleep 1; done
+          cd apps/web
+          rm -rf .next/cache/fetch-cache .next/standalone/.next/cache/fetch-cache
+          PORT=3000 HOSTNAME=0.0.0.0 NODE_ENV=production nohup node .next/standalone/server.js >> web.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf localhost:3000/robots.txt >/dev/null && break; sleep 1; done
+          npx playwright test e2e/dibsy.spec.ts --project=desktop
+
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            apps/web/playwright-report
+            apps/web/e2e/.results
+            api.log
+            apps/web/web.log
+
+  docker:
+    runs-on: ubuntu-latest
+    needs: test
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: docker/setup-buildx-action@v3
+      - name: Build production image
+        uses: docker/build-push-action@v6
+        with:
+          context: apps/web
+          push: false
+          build-args: NEXT_PUBLIC_MEDIA_URL=https://media.example.com
+          tags: jovia-web:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max

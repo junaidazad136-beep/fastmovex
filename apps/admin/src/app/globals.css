@@ -1,0 +1,167 @@
+@import 'tailwindcss';
+
+/*
+ * FastMoveX design tokens.
+ * Brand: FastMoveX purple (#7422E6, from the logo's #C13CFE → #6711FA) with a warm sand accent for ratings;
+ * warm neutrals so product photos stay the hero.
+ */
+@theme {
+  --font-sans: 'Inter Variable', 'IBM Plex Sans Arabic', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --font-arabic: 'IBM Plex Sans Arabic', 'Inter Variable', ui-sans-serif, system-ui, sans-serif;
+
+  --color-brand-50: #f6f0ff;
+  --color-brand-100: #ede1ff;
+  --color-brand-200: #dcc4ff;
+  --color-brand-300: #c39aff;
+  --color-brand-400: #a865fc;
+  --color-brand-500: #8f3cf7;
+  --color-brand-600: #7422e6;
+  --color-brand-700: #5f19c0;
+  --color-brand-800: #4c169a;
+  --color-brand-900: #36106d;
+
+  --color-sand-50: #fbf7ef;
+  --color-sand-100: #f5ecda;
+  --color-sand-200: #ecdab5;
+  --color-sand-300: #e0c28a;
+  --color-sand-400: #d2a862;
+  --color-sand-500: #c29146;
+  --color-sand-600: #a47535;
+  --color-sand-700: #7f5a2a;
+
+  --color-ink-0: #ffffff;
+  --color-ink-25: #fcfbfa;
+  --color-ink-50: #f7f5f2;
+  --color-ink-100: #efebe6;
+  --color-ink-200: #e2dcd5;
+  --color-ink-300: #cbc3b9;
+  --color-ink-400: #776e64;
+  --color-ink-500: #655d55;
+  --color-ink-600: #5d554d;
+  --color-ink-700: #443e38;
+  --color-ink-800: #2c2824;
+  --color-ink-900: #1b1815;
+
+  --color-deal-500: #d8392c;
+  --color-deal-600: #b92d22;
+  --color-success-50: #ecf7f0;
+  --color-success-600: #1f7a4d;
+  --color-success-700: #17603c;
+  --color-warning-50: #fdf5e7;
+  --color-warning-600: #b45309;
+  --color-danger-50: #fdeeee;
+  --color-danger-600: #c0262d;
+
+  --radius-card: 14px;
+  --shadow-card: 0 1px 2px rgb(27 24 21 / 0.04), 0 4px 16px -6px rgb(27 24 21 / 0.08);
+  --shadow-pop: 0 12px 40px -12px rgb(27 24 21 / 0.28);
+
+  --animate-toast-in: toast-in 180ms ease-out;
+  --animate-fade-in: fade-in 160ms ease-out;
+  @keyframes toast-in {
+    from { opacity: 0; transform: translateY(8px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes fade-in {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+  }
+  body {
+    @apply bg-ink-25 text-ink-900 antialiased;
+    font-feature-settings: 'cv11', 'ss01';
+    text-rendering: optimizeLegibility;
+  }
+  :focus-visible {
+    @apply outline-2 outline-offset-2 outline-brand-600;
+  }
+  /* Numbers line up in prices, totals and countdowns */
+  .tabular {
+    font-variant-numeric: tabular-nums;
+  }
+  ::selection {
+    @apply bg-brand-100 text-brand-900;
+  }
+}
+
+
+/* Reusable building blocks (Tailwind v4 utilities, so they combine with variants and @apply) */
+@utility card {
+  @apply rounded-[var(--radius-card)] border border-ink-100 bg-white shadow-[var(--shadow-card)];
+}
+@utility btn {
+  @apply inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-semibold whitespace-nowrap transition-colors duration-150 select-none disabled:cursor-not-allowed disabled:opacity-55;
+}
+@utility btn-primary {
+  @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
+}
+@utility btn-secondary {
+  @apply btn border border-ink-200 bg-white text-ink-800 hover:border-ink-300 hover:bg-ink-50;
+}
+@utility btn-ghost {
+  @apply btn text-ink-700 hover:bg-ink-100;
+}
+@utility btn-danger {
+  @apply btn border border-danger-600/30 bg-white text-danger-600 hover:bg-danger-50;
+}
+@utility btn-sm {
+  @apply px-2.5 py-1.5 text-xs;
+}
+@utility input {
+  @apply block w-full rounded-lg border border-ink-200 bg-white px-3 py-2 text-sm text-ink-900 placeholder:text-ink-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-600/15 disabled:bg-ink-50 disabled:text-ink-500 aria-invalid:border-danger-600;
+}
+@utility label {
+  @apply mb-1 block text-sm font-medium text-ink-700;
+}
+@utility hint {
+  @apply mt-1 text-xs text-ink-500;
+}
+@utility field-error {
+  @apply mt-1 text-xs font-medium text-danger-600;
+}
+@utility link {
+  @apply font-medium text-brand-600 underline-offset-2 hover:underline;
+}
+@utility skeleton {
+  @apply animate-pulse rounded-md bg-ink-100;
+}
+@utility toast-in {
+  animation: var(--animate-toast-in);
+}
+@utility th {
+  @apply border-b border-ink-100 bg-ink-25 px-3 py-2.5 text-start text-xs font-semibold tracking-wide text-ink-500 uppercase;
+}
+@utility td {
+  @apply border-b border-ink-100 px-3 py-2.5 align-middle text-sm text-ink-800;
+}
+
+/* Arabic inputs and text: correct font and direction without flipping the whole panel */
+[dir='rtl'] {
+  font-family: var(--font-arabic);
+}
+
+@media print {
+  .no-print {
+    display: none !important;
+  }
+  body {
+    background: white !important;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
