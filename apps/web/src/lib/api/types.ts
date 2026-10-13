@@ -76,6 +76,8 @@ export interface CategoryNode {
   name: string;
   nameAr: string;
   iconUrl: string | null;
+  /** tile picture (admin upload, or the drawn default) */
+  imageUrl?: string | null;
   sortOrder: number;
   children: CategoryNode[];
 }

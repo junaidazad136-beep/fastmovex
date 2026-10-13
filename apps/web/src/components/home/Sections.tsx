@@ -118,7 +118,7 @@ export function CategoryTiles({ items, t, title }: { items: { slug: string; name
         {items.slice(0, 24).map((c) => (
           <li key={c.slug} className="w-[calc((100%-50px)/6)] min-w-[64px] max-w-[132px] shrink-0 snap-start sm:w-[104px]">
             <Link href={paths.category(t.locale, c.slug)} className="group flex flex-col items-center gap-1.5 text-center" data-testid="category-tile">
-              <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-white text-brand-700 ring-1 ring-ink-100 transition group-hover:ring-brand-300">
+              <span className="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-b from-[#F4F2F7] to-[#E6E3EC] text-brand-700 ring-1 ring-ink-100 transition group-hover:ring-brand-300">
                 {c.imageUrl ? (
                   <Image src={c.imageUrl} alt="" fill sizes="(min-width: 640px) 104px, 16vw" className="object-contain p-1.5 transition-transform duration-300 group-hover:scale-105" quality={70} />
                 ) : (

@@ -20,3 +20,20 @@ export async function cleanPhoto(input: Buffer, maxSide = 1600): Promise<CleanPh
     throw new BadRequestException('This photo could not be read. Please try another one (JPG, PNG or WebP).');
   }
 }
+
+/**
+ * A category tile picture: upright, at most `maxSide` pixels, WebP with its transparency kept (a cut-out product sits
+ * on the tile's own background). Metadata is dropped by re-encoding.
+ */
+export async function tilePicture(input: Buffer, maxSide = 800): Promise<CleanPhoto> {
+  try {
+    const { data, info } = await sharp(input, { failOn: 'error', limitInputPixels: 40_000_000 })
+      .rotate()
+      .resize({ width: maxSide, height: maxSide, fit: 'inside', withoutEnlargement: true })
+      .webp({ quality: 86, alphaQuality: 90 })
+      .toBuffer({ resolveWithObject: true });
+    return { buffer: data, mime: 'image/webp', ext: 'webp', width: info.width, height: info.height };
+  } catch {
+    throw new BadRequestException('This picture could not be read. Please try another one (JPG, PNG or WebP).');
+  }
+}

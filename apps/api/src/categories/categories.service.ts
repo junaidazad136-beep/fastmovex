@@ -5,6 +5,9 @@ import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { slugify } from '../common/utils/slug';
 import { PrismaService } from '../prisma/prisma.service';
+import { randomUUID } from 'node:crypto';
+import { validateUpload } from '../storage/file-validation';
+import { tilePicture } from '../storage/photo';
 import { StorageService } from '../storage/storage.service';
 import { CreateCategoryDto, ReorderCategoriesDto, UpdateCategoryDto } from './dto/category.dto';
 
@@ -16,17 +19,19 @@ export interface CategoryNode {
   name: string;
   nameAr: string;
   iconUrl: string | null;
+  /** the tile picture on the categories page and home row (admin upload; drawn defaults until then) */
+  imageUrl: string | null;
   sortOrder: number;
   children: CategoryNode[];
 }
 
-type Row = { id: string; parentId: string | null; slug: string; name: string; nameAr: string; iconKey: string | null; sortOrder: number };
+type Row = { id: string; parentId: string | null; slug: string; name: string; nameAr: string; iconKey: string | null; imageKey?: string | null; sortOrder: number };
 
 /** Pure: flat rows -> nested tree, sorted by sortOrder. Exported for tests. */
 export function buildTree(rows: Row[], toUrl: (k: string | null) => string | null): CategoryNode[] {
   const nodes = new Map<string, CategoryNode & { parentId: string | null }>();
   for (const r of rows) {
-    nodes.set(r.id, { id: r.id, slug: r.slug, name: r.name, nameAr: r.nameAr, iconUrl: toUrl(r.iconKey), sortOrder: r.sortOrder, parentId: r.parentId, children: [] });
+    nodes.set(r.id, { id: r.id, slug: r.slug, name: r.name, nameAr: r.nameAr, iconUrl: toUrl(r.iconKey), imageUrl: toUrl(r.imageKey ?? null), sortOrder: r.sortOrder, parentId: r.parentId, children: [] });
   }
   const roots: CategoryNode[] = [];
   for (const n of nodes.values()) {
@@ -75,7 +80,7 @@ export class CategoriesService {
     if (this.cache && Date.now() - this.cache.at < CategoriesService.TTL_MS) return this.cache.tree;
     const rows = await this.prisma.category.findMany({
       where: { isActive: true },
-      select: { id: true, parentId: true, slug: true, name: true, nameAr: true, iconKey: true, sortOrder: true },
+      select: { id: true, parentId: true, slug: true, name: true, nameAr: true, iconKey: true, imageKey: true, sortOrder: true },
     });
     const tree = buildTree(rows, (k) => this.storage.publicUrl(k));
     this.cache = { at: Date.now(), tree };
@@ -106,11 +111,12 @@ export class CategoriesService {
     return { ...rest, faq: cleanFaq(faq), imageUrl: this.storage.publicUrl(imageKey), breadcrumbs, children: findNode(tree)?.children ?? [] };
   }
 
-  adminList() {
-    return this.prisma.category.findMany({
+  async adminList() {
+    const rows = await this.prisma.category.findMany({
       orderBy: [{ depth: 'asc' }, { sortOrder: 'asc' }],
       include: { _count: { select: { products: true, children: true } } },
     });
+    return rows.map((r) => ({ ...r, imageUrl: this.storage.publicUrl(r.imageKey) }));
   }
 
   async create(dto: CreateCategoryDto, actorId: string) {
@@ -202,6 +208,37 @@ export class CategoriesService {
     }
     await this.audit.log({ actorId, action: 'category.delete', entityType: 'Category', entityId: id, before: { slug: cat.slug } });
     this.cache = undefined;
+  }
+
+  /**
+   * The category's tile picture (categories page, home row). Any photo works; a product cut-out on a transparent
+   * background looks best. Kept as WebP (transparency kept), at most 800 px. The old file is left in storage: pages
+   * the website cached for a few minutes still point at it, and a deleted file would show as a broken picture.
+   */
+  async setImage(id: string, file: Express.Multer.File | undefined, actorId: string) {
+    const cat = await this.mustGet(id);
+    const f = validateUpload(file, 'image');
+    const pic = await tilePicture(f.buffer);
+    const key = `categories/${cat.slug}-${randomUUID().slice(0, 8)}.webp`;
+    await this.storage.put('public', key, pic.buffer, pic.mime);
+    await this.prisma.category.update({ where: { id }, data: { imageKey: key } });
+    await this.audit.log({ actorId, action: 'category.image', entityType: 'Category', entityId: id, after: { imageKey: key } });
+    this.changed();
+    return { imageUrl: this.storage.publicUrl(key) };
+  }
+
+  async removeImage(id: string, actorId: string) {
+    const cat = await this.mustGet(id);
+    if (!cat.imageKey) return;
+    await this.prisma.category.update({ where: { id }, data: { imageKey: null } });
+    await this.audit.log({ actorId, action: 'category.image_remove', entityType: 'Category', entityId: id });
+    this.changed();
+  }
+
+  /** Category tiles changed: drop the cached tree and tell the website. */
+  private changed() {
+    this.cache = undefined;
+    this.storefront?.refresh('categories', 'home');
   }
 
   async reorder(dto: ReorderCategoriesDto, actorId: string) {

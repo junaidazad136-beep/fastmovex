@@ -240,7 +240,7 @@ export class HomeService {
     return [
       { key: 'hero', type: 'banners', items: banners.filter((b) => b.placement === 'HOME_HERO') },
       { key: 'promo', type: 'banners', items: banners.filter((b) => b.placement === 'HOME_MID') },
-      { key: 'categories', type: 'categories', items: tree.map(({ slug, name, nameAr, iconUrl }) => ({ slug, name, nameAr, iconUrl, imageUrl: photos.get(slug) ?? null })) },
+      { key: 'categories', type: 'categories', items: tree.map(({ slug, name, nameAr, iconUrl, imageUrl }) => ({ slug, name, nameAr, iconUrl, imageUrl: imageUrl ?? photos.get(slug) ?? null })) },
       { key: 'flash_deals', type: 'deals', ...flash, viewAll: { offers: true } },
       { key: 'jovia_exclusive', type: 'deals', ...exclusive },
       { key: 'featured', type: 'products', items: featuredCards },

@@ -9,6 +9,7 @@ npm run build
 npx prisma migrate deploy
 npx tsx scripts/lock-data-api.ts   # Supabase: tables never reachable through its public REST API
 SEED_ONLY_IF_EMPTY=yes npm run db:seed   # first deploy only (a set-up database is left alone)
+npx tsx scripts/category-pictures.ts   # drawn tile pictures for categories that have none (uploads are kept)
 if [ "${DEMO_SEED_ALLOW:-}" = "yes" ]; then
   npm run db:seed:demo
 fi

@@ -1,7 +1,7 @@
 'use client';
 
-import { ArrowDown, ArrowUp, Pencil, Plus, Trash2 } from 'lucide-react';
-import { useMemo, useState } from 'react';
+import { ArrowDown, ArrowUp, ImageUp, Pencil, Plus, Trash2 } from 'lucide-react';
+import { useMemo, useRef, useState } from 'react';
 import { Badge, Card, ConfirmDialog, Dialog, ErrorState, Loading, PageHeader, SelectField, Spinner, Switch, TextField } from '@/components/ui';
 import { api } from '@/lib/api/client';
 import { useAction, useApi } from '@/lib/use-api';
@@ -9,10 +9,10 @@ import { useConfig } from '@/components/layout/Providers';
 import { EMPTY_SEO, type FaqRow, SeoEditor, seoBody, seoOf, type SeoValue } from '@/components/seo/SeoEditor';
 
 interface Cat {
-  id: string; parentId: string | null; slug: string; name: string; nameAr: string; depth: number; sortOrder: number; isActive: boolean; _count: { products: number; children: number };
+  id: string; parentId: string | null; slug: string; name: string; nameAr: string; imageUrl?: string | null; depth: number; sortOrder: number; isActive: boolean; _count: { products: number; children: number };
   description?: string | null; descriptionAr?: string | null; seoTitle?: string | null; seoTitleAr?: string | null; seoDescription?: string | null; seoDescriptionAr?: string | null; faq?: FaqRow[];
 }
-interface Form { id?: string; name: string; nameAr: string; slug: string; parentId: string; isActive: boolean; seo: SeoValue; faq: FaqRow[] }
+interface Form { id?: string; imageUrl?: string | null; name: string; nameAr: string; slug: string; parentId: string; isActive: boolean; seo: SeoValue; faq: FaqRow[] }
 
 export function CategoriesPage() {
   const cats = useApi<Cat[]>('/admin/categories');
@@ -90,6 +90,11 @@ export function CategoriesPage() {
               const idx = siblings.findIndex((s) => s.id === c.id);
               return (
                 <li key={c.id} className="flex items-center gap-3 px-4 py-2.5" style={{ paddingInlineStart: `${16 + c.depth * 28}px` }}>
+                  {c.depth === 0 ? (
+                    <span className="relative size-11 shrink-0 overflow-hidden rounded-lg bg-gradient-to-b from-[#F4F2F7] to-[#E6E3EC]" data-testid="category-thumb">
+                      {c.imageUrl ? <img src={c.imageUrl} alt="" className="absolute inset-0.5 size-10 object-contain" /> : null}
+                    </span>
+                  ) : null}
                   <div className="min-w-0 flex-1">
                     <p className="flex items-center gap-2 text-sm font-medium">
                       {c.depth ? <span className="text-ink-300" aria-hidden>└</span> : null}
@@ -103,7 +108,7 @@ export function CategoriesPage() {
                   <div className="flex items-center gap-1">
                     <button type="button" className="rounded-md p-1.5 text-ink-500 hover:bg-ink-100 disabled:opacity-30" disabled={!!busy || idx === 0} onClick={() => move(c, -1)} aria-label={`Move ${c.name} up`}><ArrowUp className="size-4" aria-hidden /></button>
                     <button type="button" className="rounded-md p-1.5 text-ink-500 hover:bg-ink-100 disabled:opacity-30" disabled={!!busy || idx === siblings.length - 1} onClick={() => move(c, 1)} aria-label={`Move ${c.name} down`}><ArrowDown className="size-4" aria-hidden /></button>
-                    <button type="button" className="rounded-md p-1.5 text-ink-500 hover:bg-ink-100" onClick={() => { setTab('basics'); setForm({ id: c.id, name: c.name, nameAr: c.nameAr, slug: c.slug, parentId: c.parentId ?? '', isActive: c.isActive, seo: seoOf(c), faq: c.faq ?? [] }); }} aria-label={`Edit ${c.name}`}><Pencil className="size-4" aria-hidden /></button>
+                    <button type="button" className="rounded-md p-1.5 text-ink-500 hover:bg-ink-100" onClick={() => { setTab('basics'); setForm({ id: c.id, imageUrl: c.imageUrl ?? null, name: c.name, nameAr: c.nameAr, slug: c.slug, parentId: c.parentId ?? '', isActive: c.isActive, seo: seoOf(c), faq: c.faq ?? [] }); }} aria-label={`Edit ${c.name}`}><Pencil className="size-4" aria-hidden /></button>
                     <button type="button" className="rounded-md p-1.5 text-danger-600 hover:bg-danger-50 disabled:opacity-30" disabled={c._count.products > 0 || c._count.children > 0} title={c._count.products || c._count.children ? 'Move its products and subcategories first, or hide it' : 'Delete'} onClick={() => setDel(c)} aria-label={`Delete ${c.name}`}><Trash2 className="size-4" aria-hidden /></button>
                   </div>
                 </li>
@@ -142,11 +147,50 @@ export function CategoriesPage() {
               {ordered.filter((c) => !invalidParents.has(c.id)).map((c) => <option key={c.id} value={c.id}>{'  '.repeat(c.depth * 2)}{c.name}</option>)}
             </SelectField>
             <Switch checked={form.isActive} onChange={(isActive) => setForm({ ...form, isActive })} label="Show in the shop" />
+            {form.id ? <TilePicture id={form.id} name={form.name} url={form.imageUrl ?? null} onChange={(imageUrl) => { setForm({ ...form, imageUrl }); cats.reload(); }} /> : <p className="text-xs text-ink-500">Save the category first, then add its picture.</p>}
             </>)}
           </div>
         ) : null}
       </Dialog>
       <ConfirmDialog open={!!del} onClose={() => setDel(null)} onConfirm={remove} title={`Delete ${del?.name ?? ''}?`} description="This cannot be undone." confirmLabel="Delete" danger busy={busy === 'delete'} />
     </>
+  );
+}
+
+/**
+ * The picture on the category's tile (website "All categories" page and the home row). Uploaded at once, not on Save.
+ * A product cut-out on a transparent background (PNG) looks best; it stands in the tile's bottom corner.
+ */
+function TilePicture({ id, name, url, onChange }: { id: string; name: string; url: string | null; onChange: (url: string | null) => void }) {
+  const file = useRef<HTMLInputElement>(null);
+  const { busy, run } = useAction();
+  async function upload(f: File) {
+    const form = new FormData();
+    form.append('file', f);
+    const r = await run('pic', () => api<{ imageUrl: string }>(`/admin/categories/${id}/image`, { method: 'POST', body: form }), 'Picture saved');
+    if (file.current) file.current.value = '';
+    if (r) onChange(r.imageUrl);
+  }
+  async function remove() {
+    const r = await run('pic-del', () => api(`/admin/categories/${id}/image`, { method: 'DELETE' }), 'Picture removed');
+    if (r !== undefined) onChange(null);
+  }
+  return (
+    <div className="rounded-xl border border-ink-100 p-3" data-testid="category-picture">
+      <p className="text-sm font-medium text-ink-800">Tile picture</p>
+      <p className="mb-3 text-xs text-ink-500">Shown on the website’s “All categories” page and the home page. Best: a square PNG of a product with a transparent background, at least 600 × 600 px.</p>
+      <div className="flex flex-wrap items-end gap-4">
+        {/* the same tile customers see, so the picture can be judged in place */}
+        <div className="relative flex aspect-[2/1] w-56 overflow-hidden rounded-2xl bg-gradient-to-b from-[#F4F2F7] to-[#E6E3EC] p-3">
+          <span className="relative z-10 max-w-[60%] text-[15px] font-medium leading-[19px] text-ink-900">{name || 'Category'}</span>
+          {url ? <img src={url} alt="" className="absolute bottom-0 end-0 h-[86%] w-[55%] object-contain object-right-bottom" data-testid="category-picture-preview" /> : null}
+        </div>
+        <div className="flex flex-col gap-2">
+          <input ref={file} type="file" accept="image/png,image/jpeg,image/webp" className="sr-only" onChange={(e) => { const f = e.target.files?.[0]; if (f) void upload(f); }} data-testid="category-picture-input" />
+          <button type="button" className="btn-secondary" disabled={!!busy} onClick={() => file.current?.click()}>{busy === 'pic' ? <Spinner /> : <ImageUp className="size-4" aria-hidden />}{url ? 'Replace picture' : 'Upload picture'}</button>
+          {url ? <button type="button" className="btn-ghost text-danger-600" disabled={!!busy} onClick={remove}>{busy === 'pic-del' ? <Spinner /> : <Trash2 className="size-4" aria-hidden />}Remove</button> : null}
+        </div>
+      </div>
+    </div>
   );
 }
