@@ -184,7 +184,7 @@ export interface ProductDetail {
   boughtLastMonth?: number;
   minPriceMinor: Minor;
   countryCode: string;
-  brand: { name: string; nameAr?: string | null; slug: string } | null;
+  brand: { name: string; nameAr?: string | null; slug: string; logoUrl?: string | null } | null;
   seoTitle?: string | null;
   seoDescription?: string | null;
   category: { slug: string; name: string; nameAr: string };

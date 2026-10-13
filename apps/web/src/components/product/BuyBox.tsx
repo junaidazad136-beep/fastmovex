@@ -64,7 +64,6 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
     }
   }
 
-  const storeName = pick(t.locale, product.store.name, product.store.nameAr);
   const bought = product.boughtLastMonth ?? 0;
   const subtitle = pick(t.locale, product.shortDescription ?? '', product.shortDescriptionAr).trim();
   /** the photo of each option value (a colour's own picture), when the seller added one */
@@ -78,43 +77,39 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
     // photos on the left, everything else on the right.
     <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-12">
       <div className="lg:col-start-2 lg:row-start-1" data-testid="product-head">
-        {/* Amazon's two forms: a store with a logo gets the logo line; otherwise one plain line (the brand, or the store) */}
-        <div className="flex items-center gap-3">
-          {product.store.logoUrl ? (
-            <Link href={paths.store(t.locale, product.store.slug)} className="flex min-w-0 items-center gap-2.5" data-testid="product-store">
-              <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-ink-100">
-                <Image src={product.store.logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" />
-              </span>
-              <span className="min-w-0 leading-tight">
-                <span className="flex items-center gap-1 text-[15px] font-semibold text-ink-900">
-                  <span className="truncate">{storeName}</span>
-                  {product.store.isHouse && <BadgeCheck className="size-4 shrink-0 text-brand-600" aria-label={t('product.officialStore')} />}
+        {/* Amazon: the top line is the BRAND (with its logo when it has one); the shop selling it is shown once, under
+            "Sold by" further down. No brand: only the rating. */}
+        {(product.brand || product.ratingCount > 0) && (
+          <div className="flex min-h-5 items-center gap-3">
+            {product.brand && (product.brand.logoUrl ? (
+              <Link href={paths.brand(t.locale, product.brand.slug)} className="flex min-w-0 items-center gap-2.5" data-testid="product-brand-line">
+                <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-ink-100">
+                  <Image src={product.brand.logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" />
                 </span>
-                <span className="text-[13px] text-brand-700">{t('product.visitTheStore')}</span>
-              </span>
-            </Link>
-          ) : product.brand ? (
-            <Link href={paths.brand(t.locale, product.brand.slug)} className="min-w-0 truncate text-sm text-brand-700 hover:underline" data-testid="product-brand-line">
-              {t('product.brandLine', { name: pick(t.locale, product.brand.name, product.brand.nameAr) })}
-            </Link>
-          ) : (
-            <Link href={paths.store(t.locale, product.store.slug)} className="min-w-0 truncate text-sm text-brand-700 hover:underline" data-testid="product-store">
-              {t('product.visitStoreNamed', { name: storeName })}
-            </Link>
-          )}
-          {product.ratingCount > 0 && (
-            <a href="#reviews" className="ms-auto flex shrink-0 items-center gap-1 text-[13px]" aria-label={t('product.seeReviews', { count: product.ratingCount })} data-testid="product-rating">
-              <span className="tabular text-ink-800">{product.ratingAvg.toFixed(1)}</span>
-              <Stars value={product.ratingAvg} label={t('product.ratingOutOf', { rating: product.ratingAvg })} />
-              <span className="tabular text-brand-700">({product.ratingCount.toLocaleString('en')})</span>
-            </a>
-          )}
-        </div>
-        <h1 className="mt-2 text-[15px] font-normal leading-[21px] text-ink-900 sm:text-lg lg:text-2xl lg:font-bold lg:leading-snug lg:tracking-tight" data-testid="product-title">{title}</h1>
-        {subtitle && <p className="text-[15px] leading-[21px] text-ink-500 sm:text-base lg:mt-1" data-testid="product-subtitle">{subtitle}</p>}
+                <span className="min-w-0 leading-tight">
+                  <span className="block truncate text-[15px] font-semibold text-ink-900">{pick(t.locale, product.brand.name, product.brand.nameAr)}</span>
+                  <span className="text-[13px] text-brand-700">{t('product.visitTheStore')}</span>
+                </span>
+              </Link>
+            ) : (
+              <Link href={paths.brand(t.locale, product.brand.slug)} className="min-w-0 truncate text-sm text-brand-700 hover:underline" data-testid="product-brand-line">
+                {t('product.brandLine', { name: pick(t.locale, product.brand.name, product.brand.nameAr) })}
+              </Link>
+            ))}
+            {product.ratingCount > 0 && (
+              <a href="#reviews" className="ms-auto flex shrink-0 items-center gap-1 text-[13px]" aria-label={t('product.seeReviews', { count: product.ratingCount })} data-testid="product-rating">
+                <span className="tabular text-ink-800">{product.ratingAvg.toFixed(1)}</span>
+                <Stars value={product.ratingAvg} label={t('product.ratingOutOf', { rating: product.ratingAvg })} />
+                <span className="tabular text-brand-700">({product.ratingCount.toLocaleString('en')})</span>
+              </a>
+            )}
+          </div>
+        )}
+        <h1 className={`mt-1 text-sm leading-[19px] lg:mt-2 lg:text-2xl lg:font-bold lg:leading-snug lg:tracking-tight lg:text-ink-900 ${subtitle ? 'text-ink-900' : 'text-ink-700'}`} data-testid="product-title">{title}</h1>
+        {subtitle && <p className="text-sm leading-[19px] text-ink-500 lg:mt-1 lg:text-base" data-testid="product-subtitle">{subtitle}</p>}
         {bought > 0 && (
-          <p className="mt-1.5 text-sm text-ink-800" data-testid="bought-last-month">
-            {t('product.boughtLastMonth', { n: bought >= 1000 ? `${bought / 1000}K` : String(bought) })}
+          <p className="mt-1.5 text-sm text-ink-900" data-testid="bought-last-month">
+            <strong className="font-bold">{t('product.boughtCount', { n: bought >= 1000 ? `${bought / 1000}K` : String(bought) })}</strong> {t('product.boughtPeriod')}
           </p>
         )}
       </div>

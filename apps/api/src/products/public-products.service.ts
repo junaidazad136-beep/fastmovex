@@ -62,7 +62,7 @@ export class PublicProductsService {
         shortDescription: true, shortDescriptionAr: true, seoTitle: true, seoDescription: true, tags: true,
         returnPolicyDays: true, warrantyMonths: true, ratingAvg: true, ratingCount: true, soldCount: true, minPriceMinor: true, countryCode: true,
         category: { select: { slug: true, name: true, nameAr: true, path: true } },
-        brand: { select: { name: true, nameAr: true, slug: true } },
+        brand: { select: { name: true, nameAr: true, slug: true, logoKey: true } },
         store: { select: { slug: true, name: true, nameAr: true, logoKey: true, ratingAvg: true, ratingCount: true, seller: { select: { returnWindowDays: true, isHouse: true } } } },
         images: { select: { id: true, fileKey: true, kind: true, altText: true, variantId: true }, orderBy: { sortOrder: 'asc' } },
         variants: {
@@ -81,11 +81,12 @@ export class PublicProductsService {
     const slugs = p.category.path.split('/');
     const crumbs = await this.prisma.category.findMany({ where: { slug: { in: slugs } }, select: { slug: true, name: true, nameAr: true } });
 
-    const { store, images, variants, category, ...rest } = p;
+    const { store, images, variants, category, brand, ...rest } = p;
     const boughtLastMonth = await this.cache.wrap(`product:bought:${p.id}`, 900, () => this.boughtLastMonth(p.id));
     return {
       ...rest,
       boughtLastMonth,
+      brand: brand ? { name: brand.name, nameAr: brand.nameAr, slug: brand.slug, logoUrl: this.storage.publicUrl(brand.logoKey) } : null,
       category: { slug: category.slug, name: category.name, nameAr: category.nameAr },
       breadcrumbs: slugs.map((s) => crumbs.find((c) => c.slug === s)).filter(Boolean),
       // 0 = not returnable; otherwise the product's own window or the seller's default (same rule as return requests)

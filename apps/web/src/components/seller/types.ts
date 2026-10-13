@@ -86,6 +86,9 @@ export interface SellerProductDetail {
   status: ProductStatus;
   description: string | null;
   descriptionAr: string | null;
+  shortDescription?: string | null;
+  shortDescriptionAr?: string | null;
+  brandId?: string | null;
   categoryId: string;
   warrantyMonths: number | null;
   returnPolicyDays: number | null;

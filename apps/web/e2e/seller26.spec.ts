@@ -102,6 +102,15 @@ test.describe('Seller Center (phase 26)', () => {
     await page.getByTestId('stock-add').click();
     await expect(page.getByTestId('stock-now')).toHaveText('In stock now: 10');
 
+    // the brand (shown above the name) and the grey line under the name are the seller's to write
+    await page.getByLabel('Short line under the name (English)').fill('Aluminium, folds flat, fits 4–7" phones');
+    await page.getByLabel('Brand').selectOption({ label: 'Nova' });
+    await page.getByTestId('save-product').click();
+    await expect(page.getByText('Saved', { exact: true }).first()).toBeVisible();
+    await page.reload();
+    await expect(page.getByLabel('Short line under the name (English)')).toHaveValue('Aluminium, folds flat, fits 4–7" phones');
+    await expect(page.getByLabel('Brand')).toHaveValue(/[0-9a-f-]{36}/);
+
     await page.getByTestId('send-review').click();
     await expect(page.getByTestId('product-status')).toHaveText('In review');
     await page.goto('/en/seller/products');

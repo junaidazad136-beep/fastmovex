@@ -43,17 +43,38 @@ function useCategories() {
   return list;
 }
 
-interface Basics { title: string; titleAr: string; categoryId: string; description: string; descriptionAr: string; warrantyMonths: string; returnPolicyDays: string }
+interface Basics { title: string; titleAr: string; shortDescription: string; shortDescriptionAr: string; brandId: string; categoryId: string; description: string; descriptionAr: string; warrantyMonths: string; returnPolicyDays: string }
+
+/** Brands a seller can pick (FastMoveX adds new ones on request). */
+function useBrands() {
+  const [list, setList] = useState<{ id: string; label: string }[]>([]);
+  const t = useT();
+  useEffect(() => {
+    api<{ id: string; name: string; nameAr: string | null }[]>('/brands')
+      .then((rows) => setList(rows.map((b) => ({ id: b.id, label: pick(t.locale, b.name, b.nameAr) }))))
+      .catch(() => setList([]));
+  }, [t.locale]);
+  return list;
+}
 const intOrUndefined = (v: string) => (v.trim() === '' ? undefined : Math.max(0, Math.round(Number(v))));
 
 function BasicsFields({ f, setF }: { f: Basics; setF: (f: Basics) => void }) {
   const t = useT();
   const cats = useCategories();
+  const brands = useBrands();
   const set = (k: keyof Basics) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
   return (
     <div className="space-y-3">
       <Field id="pf-title" label={t('seller.form.titleEn')}><input id="pf-title" className="input" required minLength={3} maxLength={200} value={f.title} onChange={set('title')} /></Field>
       <Field id="pf-title-ar" label={t('seller.form.titleAr')}><input id="pf-title-ar" className="input" dir="rtl" maxLength={200} value={f.titleAr} onChange={set('titleAr')} /></Field>
+      <Field id="pf-short" label={t('seller.form.shortLine')} hint={t('seller.form.shortLineHint')}><input id="pf-short" className="input" maxLength={300} value={f.shortDescription} onChange={set('shortDescription')} /></Field>
+      <Field id="pf-short-ar" label={t('seller.form.shortLineAr')}><input id="pf-short-ar" className="input" dir="rtl" maxLength={300} value={f.shortDescriptionAr} onChange={set('shortDescriptionAr')} /></Field>
+      <Field id="pf-brand" label={t('seller.form.brand')} hint={t('seller.form.brandHint')}>
+        <select id="pf-brand" className="input" value={f.brandId} onChange={set('brandId')}>
+          <option value="">{t('seller.form.noBrand')}</option>
+          {brands.map((b) => <option key={b.id} value={b.id}>{b.label}</option>)}
+        </select>
+      </Field>
       <Field id="pf-cat" label={t('seller.form.category')}>
         <select id="pf-cat" className="input" required value={f.categoryId} onChange={set('categoryId')}>
           <option value="">{t('seller.form.choose')}</option>
@@ -73,6 +94,8 @@ function BasicsFields({ f, setF }: { f: Basics; setF: (f: Basics) => void }) {
 const basicsBody = (f: Basics) => ({
   title: f.title.trim(), categoryId: f.categoryId,
   ...(f.titleAr.trim() && { titleAr: f.titleAr.trim() }),
+  shortDescription: f.shortDescription.trim(), shortDescriptionAr: f.shortDescriptionAr.trim(),
+  brandId: f.brandId || null,
   description: f.description, descriptionAr: f.descriptionAr,
   ...(intOrUndefined(f.warrantyMonths) !== undefined && { warrantyMonths: Math.min(120, intOrUndefined(f.warrantyMonths)!) }),
   ...(intOrUndefined(f.returnPolicyDays) !== undefined && { returnPolicyDays: Math.min(90, intOrUndefined(f.returnPolicyDays)!) }),
@@ -85,7 +108,7 @@ export function NewProductForm() {
   const toast = useToast();
   const { market } = useShop();
   const mu = market.currency.minorUnits;
-  const [f, setF] = useState<Basics>({ title: '', titleAr: '', categoryId: '', description: '', descriptionAr: '', warrantyMonths: '', returnPolicyDays: '' });
+  const [f, setF] = useState<Basics>({ title: '', titleAr: '', shortDescription: '', shortDescriptionAr: '', brandId: '', categoryId: '', description: '', descriptionAr: '', warrantyMonths: '', returnPolicyDays: '' });
   const [v, setV] = useState({ price: '', oldPrice: '', stock: '1', sku: '', barcode: '' });
   const [skuTouched, setSkuTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -151,7 +174,7 @@ export function EditProduct({ id }: { id: string }) {
       const d = await api<SellerProductDetail>(`/seller/products/${id}`);
       setP(d);
       setF((x) => x ?? {
-        title: d.title, titleAr: d.titleAr ?? '', categoryId: d.categoryId, description: d.description ?? '', descriptionAr: d.descriptionAr ?? '',
+        title: d.title, titleAr: d.titleAr ?? '', shortDescription: d.shortDescription ?? '', shortDescriptionAr: d.shortDescriptionAr ?? '', brandId: d.brandId ?? '', categoryId: d.categoryId, description: d.description ?? '', descriptionAr: d.descriptionAr ?? '',
         warrantyMonths: d.warrantyMonths?.toString() ?? '', returnPolicyDays: d.returnPolicyDays?.toString() ?? '',
       });
     } catch (e) { setError(errorMessage(e, t)); }
