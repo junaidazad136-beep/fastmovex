@@ -126,8 +126,9 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
           )}
         </div>
 
+        {/* Phones add from the bar at the bottom of the screen; here they pick the quantity (and save to the wishlist). */}
         <div className="mt-4 flex items-stretch gap-3">
-          <div className="flex items-center rounded-xl border border-ink-200 bg-white">
+          <div className="flex items-center justify-between rounded-xl border border-ink-200 bg-white max-md:flex-1">
             <button type="button" onClick={() => setQty((q) => Math.max(1, q - 1))} disabled={qty <= 1} aria-label={t('product.decrease')} className="flex size-12 items-center justify-center text-ink-700 disabled:text-ink-300">
               <Minus className="size-4" aria-hidden />
             </button>
@@ -136,7 +137,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
               <Plus className="size-4" aria-hidden />
             </button>
           </div>
-          <button type="button" onClick={add} disabled={!ready || !variant?.inStock || busy} className="btn-primary btn-lg flex-1" data-testid="add-to-cart">
+          <button type="button" onClick={add} disabled={!ready || !variant?.inStock || busy} className="btn-primary btn-lg flex-1 max-md:hidden" data-testid="add-to-cart">
             {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : null}
             {busy ? t('product.adding') : justAdded ? t('product.added') : t('product.addToCart')}
           </button>
