@@ -88,7 +88,7 @@ export class NotificationListener {
       const vars: Record<string, string> = { orderNumber: so.order.orderNumber, store: so.seller.store?.name ?? 'FastMoveX' };
       let code: string | null = null;
       if (type === 'ORDER_OUT_FOR_DELIVERY') {
-        code = so.delivery?.method === 'JOVIA' ? so.delivery.deliveryCode : null;
+        code = so.delivery?.method === 'FASTMOVEX' ? so.delivery.deliveryCode : null;
         const ar = so.order.user.locale === 'ar';
         vars.code = code ?? '-';
         vars.codeLine = code ? (ar ? ` رمز التسليم: ${code}. أعطه للسائق فقط عند استلام طلبك.` : ` Delivery code: ${code}. Give it to the driver only when you receive your order.`) : '';

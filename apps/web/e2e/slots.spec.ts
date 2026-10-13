@@ -3,7 +3,7 @@ import { API, DEMO_PASSWORD, freshCustomer, signIn, confirmGuestPhone, freshMobi
 
 /** Delivery time slots at checkout. Turns slots on for these tests only (and off again afterwards). */
 async function setSlots(deliverySlots: Record<string, unknown>) {
-  const login = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }) });
+  const login = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }) });
   const { accessToken } = (await login.json()) as { accessToken: string };
   const res = await fetch(`${API}/admin/countries/QA`, { method: 'PATCH', headers: { 'content-type': 'application/json', authorization: `Bearer ${accessToken}` }, body: JSON.stringify({ deliverySlots }) });
   if (!res.ok) throw new Error(`slots: ${res.status} ${await res.text()}`);

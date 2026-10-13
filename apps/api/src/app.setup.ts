@@ -6,6 +6,7 @@ import cookieParser from 'cookie-parser';
 import { text } from 'express';
 import helmet from 'helmet';
 import { Env } from './config/env';
+import { edgeClientIpMiddleware } from './common/utils/edge-client-ip';
 
 // Money is BigInt minor units. JSON has no BigInt, so it goes over the wire as a string: "10000" = QAR 100.00
 (BigInt.prototype as unknown as { toJSON: () => string }).toJSON = function (this: bigint) {
@@ -17,6 +18,8 @@ export function configureApp(app: INestApplication) {
   const config = app.get<ConfigService<Env, true>>(ConfigService);
   const express = app as NestExpressApplication;
   express.set('trust proxy', 1); // real client IP behind Railway/Render/Cloudflare, needed for rate limits
+  // requests passed on by our website's proxy carry the shopper's own IP (see edge-client-ip.ts)
+  app.use(edgeClientIpMiddleware(config.get('INTERNAL_API_KEY', { infer: true }) || undefined));
   app.use(helmet());
   app.use(compression());
   app.use(cookieParser());

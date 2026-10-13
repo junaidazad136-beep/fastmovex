@@ -36,15 +36,15 @@ describe('Phase 26 — Seller Center: labels and pick-up scan (real database)', 
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF' });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
-    t.admin = await login('admin@demo.jovia.test');
-    t.gadgets = await login('seller.gadgets@demo.jovia.test');
-    t.home = await login('seller.home@demo.jovia.test');
-    t.courier = await login('courier@demo.jovia.test');
-    t.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.jovia.test' } })).id;
+    t.admin = await login('admin@demo.fastmovex.test');
+    t.gadgets = await login('seller.gadgets@demo.fastmovex.test');
+    t.home = await login('seller.home@demo.fastmovex.test');
+    t.courier = await login('courier@demo.fastmovex.test');
+    t.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.fastmovex.test' } })).id;
 
     // a guest buys one of Doha Gadgets Hub's products, cash on delivery
     const v = await prisma.productVariant.findFirstOrThrow({
-      where: { isActive: true, product: { status: 'ACTIVE', deletedAt: null, store: { seller: { owner: { email: 'seller.gadgets@demo.jovia.test' } } } }, inventory: { onHand: { gte: 5 } } },
+      where: { isActive: true, product: { status: 'ACTIVE', deletedAt: null, store: { seller: { owner: { email: 'seller.gadgets@demo.fastmovex.test' } } } }, inventory: { onHand: { gte: 5 } } },
       select: { id: true },
     });
     await api().post(`/api/v1/seller/variants/${v.id}/stock`).set(bearer(t.gadgets)).send({ delta: 2, reason: 'RESTOCK' }).expect(200); // the seller's own stock screen
@@ -55,7 +55,7 @@ describe('Phase 26 — Seller Center: labels and pick-up scan (real database)', 
     }).expect(201);
     const o = await prisma.order.findUniqueOrThrow({ where: { orderNumber: res.body.orderNumber }, include: { sellerOrders: { include: { seller: { select: { owner: { select: { email: true } } } } } } } });
     t.orderNumber = o.orderNumber;
-    t.so = o.sellerOrders.find((so) => so.seller.owner.email === 'seller.gadgets@demo.jovia.test')!.id;
+    t.so = o.sellerOrders.find((so) => so.seller.owner.email === 'seller.gadgets@demo.fastmovex.test')!.id;
   });
 
   afterAll(async () => { await restoreCod?.(); await app?.close(); });

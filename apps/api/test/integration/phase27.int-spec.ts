@@ -39,7 +39,7 @@ describe('Phase 27 — category tile pictures (real database)', () => {
   });
 
   it('the admin uploads a picture: kept as WebP with transparency, shown in the categories list', async () => {
-    const admin = await login('admin@demo.jovia.test');
+    const admin = await login('admin@demo.fastmovex.test');
     const png = await sharp({ create: { width: 900, height: 900, channels: 4, background: { r: 116, g: 34, b: 230, alpha: 0.5 } } }).png().toBuffer();
     const res = await api().post(`/api/v1/admin/categories/${id}/image`).set(bearer(admin)).attach('file', png, 'gifts.png').expect(200);
     expect(res.body.imageUrl).toMatch(/categories\/gifts-[0-9a-f]{8}\.webp$/);
@@ -56,9 +56,9 @@ describe('Phase 27 — category tile pictures (real database)', () => {
   });
 
   it('a file that is not a picture is refused, and a customer cannot change it', async () => {
-    const admin = await login('admin@demo.jovia.test');
+    const admin = await login('admin@demo.fastmovex.test');
     await api().post(`/api/v1/admin/categories/${id}/image`).set(bearer(admin)).attach('file', Buffer.from('%PDF-1.4 nope'), 'x.pdf').expect(400);
-    const customer = await login('customer@demo.jovia.test');
+    const customer = await login('customer@demo.fastmovex.test');
     const png = await sharp({ create: { width: 10, height: 10, channels: 4, background: '#fff' } }).png().toBuffer();
     await api().post(`/api/v1/admin/categories/${id}/image`).set(bearer(customer)).attach('file', png, 'x.png').expect(403);
   });
@@ -82,21 +82,21 @@ describe('Phase 27 — product page: colour photos and "bought in past month" (r
 
   it('staff and the seller link a photo to a colour (or clear it); other sellers cannot; the page reports bought-in-past-month', async () => {
     const product = await prisma.product.findFirstOrThrow({
-      where: { status: 'ACTIVE', deletedAt: null, images: { some: {} }, variants: { some: {} }, store: { seller: { owner: { email: 'seller.gadgets@demo.jovia.test' } } } },
+      where: { status: 'ACTIVE', deletedAt: null, images: { some: {} }, variants: { some: {} }, store: { seller: { owner: { email: 'seller.gadgets@demo.fastmovex.test' } } } },
       include: { images: { orderBy: { sortOrder: 'asc' } }, variants: true },
     });
     const img = product.images[0];
     const v = product.variants[0];
-    const admin = await login('admin@demo.jovia.test');
+    const admin = await login('admin@demo.fastmovex.test');
     const res = await api().patch(`/api/v1/admin/images/${img.id}`).set(bearer(admin)).send({ variantId: v.id }).expect(200);
     expect(res.body.variantId).toBe(v.id);
     // another product's variant is refused
     const other = await prisma.productVariant.findFirstOrThrow({ where: { productId: { not: product.id } } });
     await api().patch(`/api/v1/admin/images/${img.id}`).set(bearer(admin)).send({ variantId: other.id }).expect(400);
     // the seller can clear it from Seller Center; another seller cannot touch it
-    const seller = await login('seller.gadgets@demo.jovia.test');
+    const seller = await login('seller.gadgets@demo.fastmovex.test');
     await api().patch(`/api/v1/seller/images/${img.id}`).set(bearer(seller)).send({ variantId: null }).expect(200);
-    const home = await login('seller.home@demo.jovia.test');
+    const home = await login('seller.home@demo.fastmovex.test');
     await api().patch(`/api/v1/seller/images/${img.id}`).set(bearer(home)).send({ variantId: v.id }).expect((r) => expect([403, 404]).toContain(r.status));
     expect((await prisma.productImage.findUniqueOrThrow({ where: { id: img.id } })).variantId).toBeNull(); // cleared by the seller, not changed by the other one
     await prisma.productImage.update({ where: { id: img.id }, data: { variantId: img.variantId } });
@@ -110,8 +110,8 @@ describe('Phase 27 — product page: colour photos and "bought in past month" (r
 describe('Phase 27 — sign out ends the whole login (real database)', () => {
   let app: INestApplication;
   const api = () => request(app.getHttpServer());
-  const web = { 'x-requested-with': 'jovia-web', 'content-type': 'application/json' };
-  const cookieOf = (res: request.Response) => ((res.headers['set-cookie'] as unknown as string[] | undefined) ?? []).map((c) => c.split(';')[0]).find((c) => c.startsWith('jovia_rt=') && c.length > 'jovia_rt='.length);
+  const web = { 'x-requested-with': 'fastmovex-web', 'content-type': 'application/json' };
+  const cookieOf = (res: request.Response) => ((res.headers['set-cookie'] as unknown as string[] | undefined) ?? []).map((c) => c.split(';')[0]).find((c) => c.startsWith('fmx_rt=') && c.length > 'fmx_rt='.length);
 
   beforeAll(async () => {
     const mod = await Test.createTestingModule({ imports: [AppModule] }).compile();
@@ -122,7 +122,7 @@ describe('Phase 27 — sign out ends the whole login (real database)', () => {
   afterAll(async () => { await app.close(); });
 
   it('a refresh that raced the sign-out cannot keep the person signed in', async () => {
-    const login = await api().post('/api/v1/auth/login').set(web).send({ identifier: 'customer@demo.jovia.test', password: DEMO_PASSWORD }).expect(200);
+    const login = await api().post('/api/v1/auth/login').set(web).send({ identifier: 'customer@demo.fastmovex.test', password: DEMO_PASSWORD }).expect(200);
     const first = cookieOf(login)!;
     expect(first).toBeTruthy();
     // the page opens and refreshes: first → second (the browser may not have stored "second" yet)

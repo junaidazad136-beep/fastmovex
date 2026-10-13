@@ -9,7 +9,7 @@ import type { SocialProvider } from './api/types';
 export const GOOGLE_SCRIPT = 'https://accounts.google.com/gsi/client';
 export const APPLE_SCRIPT = 'https://appleid.cdn-apple.com/appleauth/static/jsapi/appleid/1/en_US/appleid.auth.js';
 
-const NONCE_KEY = 'jovia_social_nonce';
+const NONCE_KEY = 'fmx_social_nonce';
 
 /** A fresh random nonce per attempt, kept for this tab only (the token must carry it back). */
 export function newNonce(): string {

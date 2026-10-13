@@ -72,16 +72,16 @@ describe('Phase 22 — order changes, phone orders, door refusals, pickups, refu
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF', maxOrderMinor: null, maxOpenOrders: null, refusalLimit: 5, driverCashLimitMinor: null });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined as never);
     slotsBefore = (await prisma.country.findUniqueOrThrow({ where: { code: 'QA' } })).deliverySlots;
-    s.admin = await login('admin@demo.jovia.test');
-    s.ops = await login('ops@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
-    s.finance2 = await login('finance2@demo.jovia.test');
-    s.courier = await login('courier@demo.jovia.test');
-    s.owner = await login('owner@jovia.test', 'Owner-Pass-2026');
-    s.adminId = await idOf('admin@demo.jovia.test');
-    s.financeId = await idOf('finance@demo.jovia.test');
-    s.finance2Id = await idOf('finance2@demo.jovia.test');
-    s.courierId = await idOf('courier@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.ops = await login('ops@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
+    s.finance2 = await login('finance2@demo.fastmovex.test');
+    s.courier = await login('courier@demo.fastmovex.test');
+    s.owner = await login('owner@fastmovex.test', 'Owner-Pass-2026');
+    s.adminId = await idOf('admin@demo.fastmovex.test');
+    s.financeId = await idOf('finance@demo.fastmovex.test');
+    s.finance2Id = await idOf('finance2@demo.fastmovex.test');
+    s.courierId = await idOf('courier@demo.fastmovex.test');
     s.mug = await product('Change Mug', '4000');
     s.bowl = await product('Change Bowl', '2500');
   });
@@ -222,7 +222,7 @@ describe('Phase 22 — order changes, phone orders, door refusals, pickups, refu
     const again = await api().post('/api/v1/admin/phone-orders').set(bearer(s.ops)).set('Idempotency-Key', key).send(body).expect(201);
     expect(again.body.orderNumber).toBe(placed.body.orderNumber);
     const o = await prisma.order.findUniqueOrThrow({ where: { orderNumber: placed.body.orderNumber }, include: { payments: true, user: true } });
-    expect(o.placedById).toBe(await idOf('ops@demo.jovia.test'));
+    expect(o.placedById).toBe(await idOf('ops@demo.fastmovex.test'));
     expect(o.payments[0].method).toBe('COD');
     expect(o.user).toMatchObject({ phone: caller, isGuest: true, fullName: 'Phone Caller' });
     expect(await prisma.cart.count({ where: { guestToken: { startsWith: 'phone_' }, items: { some: {} } } })).toBe(0); // no leftover carts

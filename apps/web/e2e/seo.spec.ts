@@ -4,7 +4,7 @@ import { apiCall, apiToken } from './helpers';
 /** Phase 24: what search engines and shoppers see — category text and questions, brand pages, Google feed, the search box. */
 
 test('a category page has its own Google title, the intro text and questions (with FAQ data), in both languages', async ({ page }) => {
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   const cats = await apiCall<{ id: string; slug: string }[]>(admin, 'GET', '/admin/categories');
   const g = cats.find((c) => c.slug === 'groceries')!;
   await apiCall(admin, 'PATCH', `/admin/categories/${g.id}`, {
@@ -62,7 +62,7 @@ test('Google Shopping feed, image sitemap and the Search Console code are served
   expect(products).toContain('<image:image>');
   const pages = await (await request.get('/sitemaps/pages.xml')).text();
   expect(pages).toContain('/en/brand/');
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   await apiCall(admin, 'PATCH', '/admin/countries/QA', { seoSettings: { googleVerification: 'e2e-verify-code-1' } });
   await expect.poll(async () => { await page.goto('/en/help'); return page.locator('meta[name="google-site-verification"]').getAttribute('content'); }, { timeout: 15_000 }).toBe('e2e-verify-code-1');
 });

@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 import { ADMIN, apiCall, apiToken, fleetOrder, placeOrder, run, signIn } from './helpers';
 
 /** Phase 21: drivers' live map and performance, profit & margin, customer tags and notes, staff alerts. */
-const COURIER = 'courier@demo.jovia.test';
-const OPS = 'ops@demo.jovia.test';
+const COURIER = 'courier@demo.fastmovex.test';
+const OPS = 'ops@demo.fastmovex.test';
 
 test('live map: the driver on the map with their jobs; the drivers tab lists performance', async ({ page }) => {
   const t = await apiToken(ADMIN);

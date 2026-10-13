@@ -284,7 +284,7 @@ On Vercel: root directory `apps/admin`.
 **Checklist for the panel:**
 
 - its own hostname, e.g. `https://admin.fastmovex.qa`, added to the API's `CORS_ORIGINS`;
-- same site as the API (`*.fastmovex.qa`) so its session cookie (`jovia_admin_rt`, SameSite=Strict) is sent;
+- same site as the API (`*.fastmovex.qa`) so its session cookie (`fmx_admin_rt`, SameSite=Strict) is sent;
 - restrict who can reach it on top of the staff login: Cloudflare Access / Zero Trust, a VPN, or an IP allow-list;
 - never cached by a CDN (the panel already sends `Cache-Control: no-store`) and never indexed (`X-Robots-Tag: noindex`);
 - the drivers' live map: OpenStreetMap's own tiles are the default and fine for a few screens; for daily use pick a
@@ -305,7 +305,7 @@ On Vercel: root directory `apps/admin`.
 - [ ] Database backups / PITR enabled and a restore tested once.
 - [ ] `FIELD_ENCRYPTION_KEY` backed up offline.
 - [ ] **Delivery times** set in Settings (windows, orders per window, Friday/holidays) — or left off for "as soon as possible"; **cart reminders** switched on if wanted.
-- [ ] WhatsApp: chat number set; for order updates the Cloud API keys set and the templates approved (above — `fastmovex_out_for_delivery_code` replaces `jovia_out_for_delivery`: it carries the delivery code).
+- [ ] WhatsApp: chat number set; for order updates the Cloud API keys set and the templates approved (above — `fastmovex_out_for_delivery_code` carries the delivery code).
 - [ ] 2+ website instances behind the load balancer; `STOREFRONT_URL` + `INTERNAL_API_KEY` on the API so staff changes appear at once.
 - [ ] **Dibsy** merchant account approved (needs the company CR and a Qatari bank account; KYC in the Dibsy dashboard). On staging: `DIBSY_SECRET_KEY` = test key, pay with Dibsy's test cards, check the order turns *Paid*, try a decline and a refund. Then production: live key, `API_PUBLIC_URL=https://api.fastmovex.qa`, website origin in `STOREFRONT_URL`/`CORS_ORIGINS`. Ask Dibsy to enable Apple Pay (they register the domain), Google Pay and Himyan on the account. Place one real order and refund it.
 - [ ] Email domain verified; SMS sender approved (or SMS off).

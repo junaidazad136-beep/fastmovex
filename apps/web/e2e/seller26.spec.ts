@@ -1,7 +1,7 @@
 import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, freshCustomer, signIn } from './helpers';
 
-const SELLER = 'seller.gadgets@demo.jovia.test';
+const SELLER = 'seller.gadgets@demo.fastmovex.test';
 
 /** A signed-in customer buys one of Doha Gadgets Hub's products, cash on delivery. Returns the order number. */
 async function orderFromGadgets(): Promise<string> {

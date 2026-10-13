@@ -22,7 +22,7 @@ export function campaignState(c: Campaign): { label: string; tone: 'green' | 'gr
 export const CAMPAIGN_TYPES = [
   { value: 'FLASH_DEAL', label: 'Flash deal (countdown on the home page)' },
   { value: 'SEASONAL', label: 'Seasonal sale (Eid, Ramadan, National Day…)' },
-  { value: 'JOVIA_EXCLUSIVE', label: 'FastMoveX exclusive' },
+  { value: 'FASTMOVEX_EXCLUSIVE', label: 'FastMoveX exclusive' },
   { value: 'PRICE_CAMPAIGN', label: 'Price campaign' },
 ];
 

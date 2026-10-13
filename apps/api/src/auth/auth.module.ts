@@ -19,8 +19,8 @@ import { SocialAuthService } from './social-auth';
       inject: [ConfigService],
       useFactory: (config: ConfigService<Env, true>) => ({
         secret: config.get('JWT_ACCESS_SECRET', { infer: true }),
-        signOptions: { algorithm: 'HS256', issuer: 'jovia-api' },
-        verifyOptions: { algorithms: ['HS256'], issuer: 'jovia-api' },
+        signOptions: { algorithm: 'HS256', issuer: 'fastmovex-api' },
+        verifyOptions: { algorithms: ['HS256'], issuer: 'fastmovex-api' },
       }),
     }),
   ],

@@ -12,7 +12,7 @@ test('customers cannot sign in to the admin panel', async ({ page }) => {
 
 test('a wrong password is refused without saying which part was wrong', async ({ page }) => {
   await page.goto('/login');
-  await page.getByLabel('Email or phone').fill('admin@demo.jovia.test');
+  await page.getByLabel('Email or phone').fill('admin@demo.fastmovex.test');
   await page.getByLabel('Password').fill('not-the-password');
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page.locator('form').getByRole('alert')).toHaveText('Incorrect email/phone or password.');
@@ -21,7 +21,7 @@ test('a wrong password is refused without saying which part was wrong', async ({
 test('staff sign in, land on the dashboard, stay signed in on reload, and sign out', async ({ page, context }) => {
   await page.goto('/orders');
   await expect(page).toHaveURL(/\/login\?next=%2Forders/);
-  await page.getByLabel('Email or phone').fill('admin@demo.jovia.test');
+  await page.getByLabel('Email or phone').fill('admin@demo.fastmovex.test');
   await page.getByLabel('Password').fill(DEMO_PASSWORD);
   await page.getByRole('button', { name: 'Sign in' }).click();
   await expect(page).toHaveURL(/\/orders$/);
@@ -29,8 +29,8 @@ test('staff sign in, land on the dashboard, stay signed in on reload, and sign o
 
   // The refresh token lives in the panel's own httpOnly cookie, never readable by scripts.
   const cookies = await context.cookies('http://localhost:4000/api/v1/auth');
-  expect(cookies.find((c) => c.name === 'jovia_admin_rt')?.httpOnly).toBe(true);
-  expect(cookies.find((c) => c.name === 'jovia_rt')).toBeUndefined();
+  expect(cookies.find((c) => c.name === 'fmx_admin_rt')?.httpOnly).toBe(true);
+  expect(cookies.find((c) => c.name === 'fmx_rt')).toBeUndefined();
 
   await page.reload();
   await expect(page.getByRole('heading', { name: 'Orders' })).toBeVisible();

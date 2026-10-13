@@ -3,9 +3,9 @@ import { expect, type Page } from '@playwright/test';
 
 export const API = process.env.API_URL || 'http://localhost:4000/api/v1';
 export const DEMO_PASSWORD = 'Demo-Pass-2026';
-export const ADMIN = 'admin@demo.jovia.test';
-export const SUPER = { email: process.env.SUPER_ADMIN_EMAIL || 'owner@jovia.test', password: process.env.SUPER_ADMIN_PASSWORD || 'Owner-Pass-2026' };
-export const CUSTOMER = 'customer@demo.jovia.test';
+export const ADMIN = 'admin@demo.fastmovex.test';
+export const SUPER = { email: process.env.SUPER_ADMIN_EMAIL || 'owner@fastmovex.test', password: process.env.SUPER_ADMIN_PASSWORD || 'Owner-Pass-2026' };
+export const CUSTOMER = 'customer@demo.fastmovex.test';
 /** 1×1 PNG, enough for a product photo. */
 export const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==', 'base64');
 

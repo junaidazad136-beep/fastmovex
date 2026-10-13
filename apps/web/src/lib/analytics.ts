@@ -10,9 +10,9 @@ import { apiCountry, apiUrl } from './api/client';
 export type EventType = 'page_view' | 'product_view' | 'add_to_cart' | 'checkout_start';
 export interface Touch { utmSource?: string; utmMedium?: string; utmCampaign?: string; referrerHost?: string; click?: 'gclid' | 'fbclid' | 'ttclid' | 'msclkid' }
 
-const SID = 'jovia.sid';
-const TOUCH = 'jovia.touch';
-const LAST = 'jovia.lastTouch'; // last visit that came from somewhere (not direct), for 30 days
+const SID = 'fmx.sid';
+const TOUCH = 'fmx.touch';
+const LAST = 'fmx.lastTouch'; // last visit that came from somewhere (not direct), for 30 days
 const KEEP_MS = 30 * 86_400_000;
 
 let memorySid: string | null = null;

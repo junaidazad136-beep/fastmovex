@@ -23,7 +23,7 @@ test('a visit from an Instagram campaign is followed to its order and shows in t
   await page.getByTestId('place-order').click();
   await expect(page).toHaveURL(/\/en\/track\?order=/, { timeout: 20_000 });
 
-  const login = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }) });
+  const login = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }) });
   const token = ((await login.json()) as { accessToken: string }).accessToken;
   await expect.poll(async () => {
     const r = (await (await fetch(`${API}/admin/analytics/traffic?range=today`, { headers: { authorization: `Bearer ${token}` } })).json()) as { sources: { source: string; sessions: number; carts: number; purchases: number; orders: number }[] };

@@ -43,11 +43,11 @@ export function Shell({ children }: { children: ReactNode }) {
     };
     load();
     const id = setInterval(load, 60_000);
-    window.addEventListener('jovia:summary-stale', load);
+    window.addEventListener('fmx:summary-stale', load);
     return () => {
       stop = true;
       clearInterval(id);
-      window.removeEventListener('jovia:summary-stale', load);
+      window.removeEventListener('fmx:summary-stale', load);
     };
   }, [status, driverOnly, mustSetUpTwoFactor]);
 
@@ -149,5 +149,5 @@ export function Shell({ children }: { children: ReactNode }) {
 
 /** Tell the shell that a change affects the menu counters (e.g. an order was shipped). */
 export function summaryStale() {
-  if (typeof window !== 'undefined') window.dispatchEvent(new Event('jovia:summary-stale'));
+  if (typeof window !== 'undefined') window.dispatchEvent(new Event('fmx:summary-stale'));
 }

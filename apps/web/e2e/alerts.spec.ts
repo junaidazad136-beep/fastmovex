@@ -5,7 +5,7 @@ const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR
 
 /** A sold-out product made through the admin API, so the test never depends on the demo stock. */
 async function soldOutProduct() {
-  const login = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }) });
+  const login = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }) });
   const auth = { authorization: `Bearer ${((await login.json()) as { accessToken: string }).accessToken}` };
   const categoryId = ((await (await fetch(`${API}/categories/home-kitchen`)).json()) as { id: string }).id;
   const tag = Date.now().toString(36);

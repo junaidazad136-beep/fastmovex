@@ -9,7 +9,7 @@ import { api } from '@/lib/api/client';
  */
 export function SearchLogger({ q, total, corrected }: { q: string; total: number; corrected: boolean }) {
   useEffect(() => {
-    const key = `jovia.searched:${q.toLowerCase()}`;
+    const key = `fmx.searched:${q.toLowerCase()}`;
     try {
       if (sessionStorage.getItem(key)) return;
       sessionStorage.setItem(key, '1');

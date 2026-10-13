@@ -4,7 +4,7 @@ import fs from 'node:fs';
 
 export const API = process.env.API_URL || 'http://localhost:4000/api/v1';
 export const DEMO_PASSWORD = 'Demo-Pass-2026';
-export const CUSTOMER = 'customer@demo.jovia.test';
+export const CUSTOMER = 'customer@demo.fastmovex.test';
 
 export async function signIn(page: Page, identifier = CUSTOMER, password = DEMO_PASSWORD, locale = 'en') {
   await page.goto(`/${locale}/login`);
@@ -100,7 +100,7 @@ export async function apiCall<T>(token: string | null, method: string, path: str
 
 /** Delivery time slots for the Qatar market (admin setting). Tests that turn them on turn them off again. */
 export async function setDeliverySlots(deliverySlots: Record<string, unknown>) {
-  await apiCall(await apiToken('admin@demo.jovia.test'), 'PATCH', '/admin/countries/QA', { deliverySlots });
+  await apiCall(await apiToken('admin@demo.fastmovex.test'), 'PATCH', '/admin/countries/QA', { deliverySlots });
 }
 
 /**
@@ -116,7 +116,7 @@ export async function missedDeliveryOrder(customerToken: string, reason = 'Custo
   await apiCall(customerToken, 'POST', '/cart/items', { variantId: product.variants[0].id, quantity: 1 });
   const { orderNumber } = await apiCall<{ orderNumber: string }>(customerToken, 'POST', '/checkout', { addressId, paymentMethod: 'COD' }, { 'idempotency-key': `missed-${Date.now()}-${Math.random()}` });
 
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   const shipmentId = (await apiCall<{ sellerOrders: { id: string }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`)).sellerOrders[0].id;
   for (const status of ['PREPARING', 'READY_FOR_PICKUP']) await apiCall(admin, 'POST', `/admin/orders/shipments/${shipmentId}/status`, { status });
   let deliveryId: string | undefined;
@@ -129,7 +129,7 @@ export async function missedDeliveryOrder(customerToken: string, reason = 'Custo
   const couriers = await apiCall<{ id: string; fullName: string }[]>(admin, 'GET', '/admin/deliveries/couriers');
   const courierUserId = (couriers.find((c) => c.fullName === 'Khalid Courier') ?? couriers[0]).id;
   await apiCall(admin, 'POST', `/admin/deliveries/${deliveryId}/assign`, { courierUserId });
-  const driver = await apiToken('courier@demo.jovia.test');
+  const driver = await apiToken('courier@demo.fastmovex.test');
   await apiCall(driver, 'POST', `/courier/jobs/${deliveryId}/pickup`);
   await apiCall(driver, 'POST', `/courier/jobs/${deliveryId}/out-for-delivery`);
   await apiCall(driver, 'POST', `/courier/jobs/${deliveryId}/fail`, { reason, refused, lat: 25.2854, lng: 51.531 });

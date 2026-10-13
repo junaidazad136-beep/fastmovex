@@ -28,7 +28,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const socialLinks = Object.values(market.seo?.social ?? {}).filter((u): u is string => typeof u === 'string' && u.startsWith('https://'));
 
   // Titles set in the admin panel win; otherwise the built-in title for the section.
-  const known = ['trending', 'best_sellers', 'featured', 'new_arrivals', 'recommended', 'jovia_exclusive', 'flash_deals', 'featured_sellers', 'recently_viewed'] as const;
+  const known = ['trending', 'best_sellers', 'featured', 'new_arrivals', 'recommended', 'fastmovex_exclusive', 'flash_deals', 'featured_sellers', 'recently_viewed'] as const;
   const titleOf = (s: HomeSection, fallback: string) =>
     s.title ? pick(locale, s.title, s.titleAr) : (known as readonly string[]).includes(s.key) ? t(`home.${s.key as (typeof known)[number]}`) : fallback;
 

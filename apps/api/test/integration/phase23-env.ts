@@ -11,4 +11,4 @@ process.env.GOOGLE_JWKS_URL = `http://127.0.0.1:${JWKS_PORT}/certs`;
 const keys = webpush.generateVAPIDKeys();
 process.env.VAPID_PUBLIC_KEY = keys.publicKey;
 process.env.VAPID_PRIVATE_KEY = keys.privateKey;
-process.env.VAPID_SUBJECT = 'mailto:tests@jovia.test';
+process.env.VAPID_SUBJECT = 'mailto:tests@fastmovex.test';

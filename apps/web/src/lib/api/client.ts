@@ -19,9 +19,9 @@ let accessToken: string | null = null;
 let expiresAt = 0;
 let refreshInFlight: Promise<boolean> | null = null;
 
-const SESSION_HINT_KEY = 'jovia_session';
-const CART_TOKEN_KEY = 'jovia_cart';
-const REFRESH_LOCK = 'jovia-auth-refresh';
+const SESSION_HINT_KEY = 'fmx_session';
+const CART_TOKEN_KEY = 'fmx_cart';
+const REFRESH_LOCK = 'fastmovex-auth-refresh';
 const EARLY_REFRESH_MS = 60_000;
 
 type AuthListener = (signedIn: boolean) => void;
@@ -31,7 +31,7 @@ let channel: BroadcastChannel | null = null;
 function getChannel(): BroadcastChannel | null {
   if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return null;
   if (!channel) {
-    channel = new BroadcastChannel('jovia-auth');
+    channel = new BroadcastChannel('fastmovex-auth');
     channel.onmessage = (e: MessageEvent<{ type: 'token'; token: string; expiresAt: number } | { type: 'signed-out' }>) => {
       if (e.data.type === 'token') {
         accessToken = e.data.token;
@@ -122,7 +122,7 @@ export function refreshSession(force = false): Promise<boolean> {
       res = await fetch(`${config.apiUrl}/auth/refresh`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'content-type': 'application/json', 'x-requested-with': 'jovia-web' },
+        headers: { 'content-type': 'application/json', 'x-requested-with': 'fastmovex-web' },
         body: '{}',
       });
     } catch (e) {
@@ -331,7 +331,7 @@ export async function logoutRequest(everywhere = false): Promise<void> {
       await fetch(`${config.apiUrl}/auth/logout`, {
         method: 'POST',
         credentials: 'include',
-        headers: { 'content-type': 'application/json', 'x-requested-with': 'jovia-web' },
+        headers: { 'content-type': 'application/json', 'x-requested-with': 'fastmovex-web' },
         body: '{}',
       });
     }

@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { forwardApi } from './lib/edge-forward';
 import { isLocale, LOCALE_COOKIE, negotiateLocale } from './lib/i18n/config';
 
 function origin(url: string | undefined): string {
@@ -34,6 +35,8 @@ export function buildCsp(nonce: string, opts: { dev: boolean; apiOrigin: string;
 
 export function proxy(request: NextRequest) {
   const { pathname, search } = request.nextUrl;
+  // the API under this site's address: passed on with the shopper's own IP (see lib/edge-forward.ts)
+  if (pathname.startsWith('/api/v1/')) return forwardApi(request) ?? NextResponse.next();
   const first = pathname.split('/')[1];
 
   // No language in the URL: send the visitor to their language (saved choice first, then the browser's).
@@ -55,7 +58,7 @@ export function proxy(request: NextRequest) {
   });
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-nonce', nonce);
-  requestHeaders.set('x-jovia-locale', first); // lets not-found pages (which get no params) speak the right language
+  requestHeaders.set('x-fmx-locale', first); // lets not-found pages (which get no params) speak the right language
   requestHeaders.set('Content-Security-Policy', csp);
   const response = NextResponse.next({ request: { headers: requestHeaders } });
   response.headers.set('Content-Security-Policy', csp);
@@ -67,6 +70,7 @@ export function proxy(request: NextRequest) {
 
 export const config = {
   matcher: [
+    '/api/v1/:path*',
     {
       // Pages only: not Next internals, not files with an extension (sw.js, robots.txt, sitemap.xml, icons…)
       source: '/((?!_next/|api/|.*\\..*).*)',

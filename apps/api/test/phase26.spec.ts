@@ -5,7 +5,7 @@ const pages = (pdf: Buffer) => (pdf.toString('latin1').match(/\/Type \/Page\b/g)
 
 const label = (over: Partial<ShippingLabel> = {}): ShippingLabel => ({
   shipmentId: ID, orderNumber: 'FMX-QA-261013-ABC123', shipmentNo: 'FMX-QA-261013-ABC123-2', placedAt: new Date('2026-10-13T08:00:00Z'),
-  slot: { start: new Date('2026-10-13T14:00:00Z'), end: new Date('2026-10-13T16:00:00Z') }, deliveryMethod: 'JOVIA',
+  slot: { start: new Date('2026-10-13T14:00:00Z'), end: new Date('2026-10-13T16:00:00Z') }, deliveryMethod: 'FASTMOVEX',
   from: { store: 'Doha Gadgets Hub', phone: '+97455550000' },
   customer: { name: 'سارة أحمد', phone: '+97455551234', address: ['Zone 45, Street 901, Building 12', 'Al Waab, Doha'] },
   note: 'Call before coming', cash: { amountMinor: 14900n, currencyCode: 'QAR' },

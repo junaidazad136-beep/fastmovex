@@ -275,7 +275,7 @@ const en = {
     new_arrivals: 'New arrivals',
     recently_viewed: 'Recently viewed',
     recommended: 'Recommended for you',
-    jovia_exclusive: 'FastMoveX exclusives',
+    fastmovex_exclusive: 'FastMoveX exclusives',
     endsIn: 'Ends in',
     promo: 'Promotion',
     valueDelivery: 'Qatar Delivery',
@@ -451,7 +451,7 @@ const en = {
     shipmentFrom: 'Shipment from {store}',
     deliveredBy: {
       SELLER: 'Delivered by the seller',
-      JOVIA: 'Delivered by FastMoveX',
+      FASTMOVEX: 'Delivered by FastMoveX',
       THIRD_PARTY: 'Delivered by a courier partner',
       PICKUP: 'Pickup',
     },

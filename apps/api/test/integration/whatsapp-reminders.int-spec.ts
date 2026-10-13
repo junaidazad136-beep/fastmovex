@@ -57,7 +57,7 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
     await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
     Object.assign(process.env, {
       WHATSAPP_DRIVER: 'cloud', WHATSAPP_TOKEN: 'EAAG-integration-token-0001', WHATSAPP_PHONE_NUMBER_ID: '9988776655',
-      WHATSAPP_API_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}/v22.0`, STOREFRONT_URL: 'https://shop.jovia.test',
+      WHATSAPP_API_URL: `http://127.0.0.1:${(server.address() as AddressInfo).port}/v22.0`, STOREFRONT_URL: 'https://shop.fastmovex.test',
     });
     const { AppModule } = await import('../../src/app.module');
     const { configureApp } = await import('../../src/app.setup');
@@ -75,7 +75,7 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
     jest.spyOn(notifications, 'sendDirect').mockResolvedValue(undefined);
     original = await prisma.country.findUniqueOrThrow({ where: { code: 'QA' }, select: { cartReminders: true, legalSettings: true } });
 
-    s.admin = await login('admin@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({
       title: `WA Teapot ${run}`, titleAr: 'إبريق شاي', categoryId: cat.id, variants: [{ sku: `WA-${run}`, priceMinor: '6500', initialStock: 50 }],
@@ -130,7 +130,7 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
   });
 
   it('an account without a mobile can opt in at checkout: the delivery mobile is used', async () => {
-    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Hamad Ali', email: `wa.acct.${run}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201);
+    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Hamad Ali', email: `wa.acct.${run}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201);
     s.acct = reg.body.accessToken;
     const settings = await api().patch('/api/v1/me/notification-settings').set(bearer(s.acct)).send({ whatsappOptIn: true });
     expect(settings.status).toBe(400);
@@ -160,11 +160,11 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
   it('a forgotten cart gets one reminder (email, in-app, WhatsApp) — only with consent, only once a day', async () => {
     const mk = async (tag: string, consent: boolean) => {
       const p = phone();
-      const reg = await api().post('/api/v1/auth/register').send({ fullName: `Noor ${tag}`, email: `wa.rem.${tag}.${run}@jovia.test`, phone: p, password: 'Buyer-Pass-123' }).expect(201);
+      const reg = await api().post('/api/v1/auth/register').send({ fullName: `Noor ${tag}`, email: `wa.rem.${tag}.${run}@fastmovex.test`, phone: p, password: 'Buyer-Pass-123' }).expect(201);
       const token = reg.body.accessToken as string;
       await api().patch('/api/v1/me/notification-settings').set(bearer(token)).send({ marketingOptIn: consent, whatsappOptIn: true }).expect(200);
       await api().post('/api/v1/cart/items').set(bearer(token)).send({ variantId: s.variant, quantity: 2 }).expect(201);
-      const user = await prisma.user.findFirstOrThrow({ where: { email: `wa.rem.${tag}.${run}@jovia.test` } });
+      const user = await prisma.user.findFirstOrThrow({ where: { email: `wa.rem.${tag}.${run}@fastmovex.test` } });
       await prisma.cart.updateMany({ where: { userId: user.id }, data: { itemsChangedAt: new Date(Date.now() - 2 * 3600_000) } });
       return { token, p, userId: user.id };
     };
@@ -177,7 +177,7 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
     await flush();
     const wa = to(yes.p).filter((m) => m.template === 'fastmovex_cart_reminder');
     expect(wa).toHaveLength(1);
-    expect(wa[0].params).toEqual(['Noor', `"WA Teapot ${run}"`, 'https://shop.jovia.test/en/cart']);
+    expect(wa[0].params).toEqual(['Noor', `"WA Teapot ${run}"`, 'https://shop.fastmovex.test/en/cart']);
     expect(await prisma.notification.count({ where: { userId: yes.userId, type: 'CART_REMINDER', channel: { in: ['IN_APP', 'EMAIL'] } } })).toBe(2);
     expect(to(no.p)).toHaveLength(0);
     expect(await prisma.notification.count({ where: { userId: no.userId, type: 'CART_REMINDER' } })).toBe(0);
@@ -216,10 +216,10 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
 
   it('quiet hours and the off switch stop reminders', async () => {
     const p = phone();
-    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Late Shopper', email: `wa.late.${run}@jovia.test`, phone: p, password: 'Buyer-Pass-123' }).expect(201);
+    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Late Shopper', email: `wa.late.${run}@fastmovex.test`, phone: p, password: 'Buyer-Pass-123' }).expect(201);
     await api().patch('/api/v1/me/notification-settings').set(bearer(reg.body.accessToken)).send({ marketingOptIn: true }).expect(200);
     await api().post('/api/v1/cart/items').set(bearer(reg.body.accessToken)).send({ variantId: s.variant, quantity: 1 }).expect(201);
-    const user = await prisma.user.findFirstOrThrow({ where: { email: `wa.late.${run}@jovia.test` } });
+    const user = await prisma.user.findFirstOrThrow({ where: { email: `wa.late.${run}@fastmovex.test` } });
     await prisma.cart.updateMany({ where: { userId: user.id }, data: { itemsChangedAt: new Date(Date.now() - 2 * 3600_000) } });
 
     // 23:00 in Doha with quiet hours 21–09
@@ -246,9 +246,9 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
 
     const watcher = async (tag: string, locale: 'en' | 'ar', whatsapp: boolean) => {
       const p = phone();
-      const reg = await api().post('/api/v1/auth/register').send({ fullName: `Fatima ${tag}`, email: `wa.alert.${tag}.${run}@jovia.test`, phone: p, password: 'Buyer-Pass-123' }).expect(201);
+      const reg = await api().post('/api/v1/auth/register').send({ fullName: `Fatima ${tag}`, email: `wa.alert.${tag}.${run}@fastmovex.test`, phone: p, password: 'Buyer-Pass-123' }).expect(201);
       const token = reg.body.accessToken as string;
-      await prisma.user.updateMany({ where: { email: `wa.alert.${tag}.${run}@jovia.test` }, data: { locale } });
+      await prisma.user.updateMany({ where: { email: `wa.alert.${tag}.${run}@fastmovex.test` }, data: { locale } });
       if (whatsapp) await api().patch('/api/v1/me/notification-settings').set(bearer(token)).send({ whatsappOptIn: true }).expect(200);
       await api().post('/api/v1/wishlists/items').set(bearer(token)).send({ productId: prod.body.id }).expect(201);
       await api().patch(`/api/v1/wishlists/items/${prod.body.id}/alerts`).set(bearer(token)).send({ notifyBackInStock: true, notifyPriceDrop: true }).expect(200);
@@ -260,10 +260,10 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
 
     await api().post(`/api/v1/admin/variants/${variant}/stock`).set(bearer(s.admin)).send({ delta: 5, reason: 'RESTOCK' }).expect(200);
     await flush();
-    expect(to(en).filter((m) => m.template === 'fastmovex_back_in_stock').map((m) => m.params)).toEqual([['Fatima', `WA Lamp ${run}`, `https://shop.jovia.test/en/p/${slug}`]]);
-    expect(to(ar).filter((m) => m.template === 'fastmovex_back_in_stock')).toEqual([{ to: ar.replace('+', ''), template: 'fastmovex_back_in_stock', lang: 'ar', params: ['Fatima', `مصباح ${run}`, `https://shop.jovia.test/ar/p/${slug}`] }]);
+    expect(to(en).filter((m) => m.template === 'fastmovex_back_in_stock').map((m) => m.params)).toEqual([['Fatima', `WA Lamp ${run}`, `https://shop.fastmovex.test/en/p/${slug}`]]);
+    expect(to(ar).filter((m) => m.template === 'fastmovex_back_in_stock')).toEqual([{ to: ar.replace('+', ''), template: 'fastmovex_back_in_stock', lang: 'ar', params: ['Fatima', `مصباح ${run}`, `https://shop.fastmovex.test/ar/p/${slug}`] }]);
     expect(to(quiet)).toHaveLength(0);
-    const quietUser = await prisma.user.findFirstOrThrow({ where: { email: `wa.alert.off.${run}@jovia.test` } });
+    const quietUser = await prisma.user.findFirstOrThrow({ where: { email: `wa.alert.off.${run}@fastmovex.test` } });
     expect(await prisma.notification.count({ where: { userId: quietUser.id, type: 'BACK_IN_STOCK', channel: { in: ['IN_APP', 'EMAIL'] } } })).toBe(2);
 
     // more stock while it is already available is not news
@@ -275,8 +275,8 @@ describe('WhatsApp and cart reminders — real database, stand-in WhatsApp API',
     expect(drop).toHaveLength(1);
     expect(drop[0].params[0]).toBe('Fatima');
     expect(drop[0].params[2]).toMatch(/95\.00/);
-    expect(drop[0].params[3]).toBe(`https://shop.jovia.test/en/p/${slug}`);
-    expect(to(ar).filter((m) => m.template === 'fastmovex_price_drop')[0].params[3]).toBe(`https://shop.jovia.test/ar/p/${slug}`);
+    expect(drop[0].params[3]).toBe(`https://shop.fastmovex.test/en/p/${slug}`);
+    expect(to(ar).filter((m) => m.template === 'fastmovex_price_drop')[0].params[3]).toBe(`https://shop.fastmovex.test/ar/p/${slug}`);
 
     // a price going up, or the same drop again, says nothing
     await api().patch(`/api/v1/admin/variants/${variant}`).set(bearer(s.admin)).send({ priceMinor: '11000' }).expect(200);

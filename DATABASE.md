@@ -153,9 +153,9 @@ The sixth migration adds the `WHATSAPP` notification channel, `User.whatsappOptI
 reminder clock) and `Order.cartReminderAt` (set when the customer had been reminded within 7 days — the order is credited
 to the reminder).
 
-The seventh migration (search) adds the immutable SQL function `jovia_search_norm()` (Arabic alef forms → ا, ة → ه,
+The seventh migration (search) adds the immutable SQL function `fastmovex_search_norm()` (Arabic alef forms → ا, ة → ه,
 ى → ي, harakat and tatweel removed, the article "ال" dropped from the front of words), regenerates
-`Product.searchVector` with it and indexes `jovia_search_norm("titleAr")` for typo matching; the API applies the same
+`Product.searchVector` with it and indexes `fastmovex_search_norm("titleAr")` for typo matching; the API applies the same
 rules to what is typed (`search-text.ts`, unit-tested against the SQL). It also adds `SearchLog` (one row per market,
 day and search text: searches, distinct visitors, found-nothing count, spelling corrections — no user ids) and
 `Country.searchSettings` (pinned / hidden popular searches, synonym groups).
@@ -200,13 +200,13 @@ The twelfth (security, delivery proof, stock control, payments) adds:
   Admin: all four; Finance: reconcile; Operations: approve stock and purchasing; Inventory manager: receive goods).
 
 The thirteenth (documents and privacy) adds `Refund.creditNoteNo` (unique) and `creditNoteAt` with the sequence
-`jovia_credit_note_seq` and a trigger: the moment a refund becomes `SUCCEEDED` it gets `CN-<country>-<YYMMDD Qatar>-<6
+`fastmovex_credit_note_seq` and a trigger: the moment a refund becomes `SUCCEEDED` it gets `CN-<country>-<YYMMDD Qatar>-<6
 digits>`; the number and date can never change, and only a successful refund can have one (existing paid refunds were
 numbered in payment order). It adds `ReturnRequest.receivedAt`, `User.deletionRequestedAt` / `deletionScheduledFor`
 (CHECK: both or neither, indexed) / `deletionReason`, and an index on `WarehouseStock(warehouseId, bin)` for picking.
 
 The fourteenth (insights, notes and alerts) adds `OrderItem.unitCostMinor` (CHECK ≥ 0) with a `BEFORE INSERT`
-trigger `jovia_item_cost` that copies the variant's cost price onto every new order line — whichever checkout path
+trigger `fastmovex_item_cost` that copies the variant's cost price onto every new order line — whichever checkout path
 created it — so the margin report always uses the cost at the moment of the sale (existing lines were backfilled from
 today's cost); `DeliveryOrder.lastLocationAt` (+ index on courier, time) for the live map; `Inventory.lowStockAlertedAt`
 (low-stock alert sent; cleared when restocked above the level); `User.tags` (text array, GIN index) and
@@ -214,7 +214,7 @@ today's cost); `DeliveryOrder.lastLocationAt` (+ index on courier, time) for the
 deleted with the account); and the permission `reports.margin` (Super Admin, Admin, Finance).
 
 The fifteenth (order changes and return logistics) adds `OrderChange` (CHECKs on kind, role and a non-negative amount;
-`BEFORE UPDATE` trigger `jovia_order_change_immutable`: the history can never be edited), `DoorReturn` (CHECK quantity
+`BEFORE UPDATE` trigger `fastmovex_order_change_immutable`: the history can never be edited), `DoorReturn` (CHECK quantity
 > 0; received time, person and condition are all set together or not at all), `ReturnPickup` (one per return, enum
 `PickupStatus`; CHECK: collected ⇔ `collectedAt`), `Order.placedById` (FK, phone orders), `User.refundLimitMinor`
 (CHECK ≥ 0) and the permission `orders.create` (Super Admin, Admin, Operations, Order manager, Support). Removed order

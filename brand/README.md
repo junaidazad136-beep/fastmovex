@@ -29,6 +29,6 @@ speed lines; on photos use the dark or light version, whichever reads better. Th
 The SVGs were traced from the original artwork (`fmx-logo.png`), so curves follow the original drawing. For print at
 large sizes (shop sign, van), ask a designer to redraw it from these files in Illustrator.
 
-Technical names that still say "jovia" (never shown to customers): the sign-in cookies (`jovia_rt`, `jovia_admin_rt`),
-the local database name, the demo/test accounts (`@demo.jovia.test`), the delivery-method code `JOVIA` and database
-function names. Renaming them would sign everyone out or need a database migration for no visible gain.
+The old working name "JOVIA" is gone from the code, the settings and the database (migration
+`20261014010000_fastmovex_names` renamed its codes, functions, triggers and demo accounts). It only remains in the old
+migration files themselves, which are history and are never edited.

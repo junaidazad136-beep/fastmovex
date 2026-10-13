@@ -111,7 +111,7 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
   const payment = o.payments[0];
   const canCancelOrder = can('orders.cancel') && o.sellerOrders.some((s) => CANCELLABLE.includes(s.status));
 
-  const needsCode = !!step && step.to === 'DELIVERED' && step.shipment.delivery?.method === 'JOVIA';
+  const needsCode = !!step && step.to === 'DELIVERED' && step.shipment.delivery?.method === 'FASTMOVEX';
   async function setStatus() {
     if (!step) return;
     if (needsCode && !noCode && !/^\d{4}$/.test(code)) { toast.error('Enter the 4-digit code the customer received'); return; }

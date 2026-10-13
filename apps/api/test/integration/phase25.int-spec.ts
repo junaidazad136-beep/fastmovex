@@ -30,7 +30,7 @@ describe('Phase 25 — storefront look (real database)', () => {
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
-    admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken;
+    admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken;
   });
 
   afterAll(async () => {

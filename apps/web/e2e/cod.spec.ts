@@ -22,8 +22,8 @@ test('the customer sees the code to give the driver, and where the driver is whi
   const addresses = await call<{ id: string }[]>(c.token, 'GET', '/addresses');
   const order = await call<{ orderNumber: string }>(c.token, 'POST', '/checkout', { addressId: addresses[0].id, paymentMethod: 'COD' }, { 'idempotency-key': `code-${Date.now()}` });
 
-  const admin = await login('admin@demo.jovia.test');
-  const courier = await login('courier@demo.jovia.test');
+  const admin = await login('admin@demo.fastmovex.test');
+  const courier = await login('courier@demo.fastmovex.test');
   const detail = await call<{ sellerOrders: { id: string }[] }>(admin, 'GET', `/admin/orders/${order.orderNumber}`);
   for (const status of ['PREPARING', 'READY_FOR_PICKUP']) await call(admin, 'POST', `/admin/orders/shipments/${detail.sellerOrders[0].id}/status`, { status });
   let job: { id: string } | undefined;
@@ -64,7 +64,7 @@ test('the customer sees the code to give the driver, and where the driver is whi
 });
 
 test('cash on delivery is offered only up to the market limit', async ({ page }) => {
-  const admin = await login('admin@demo.jovia.test');
+  const admin = await login('admin@demo.fastmovex.test');
   const before = (await call<{ code: string; codRules: Record<string, unknown> }[]>(admin, 'GET', '/admin/countries')).find((c) => c.code === 'QA')!.codRules;
   await call(admin, 'PATCH', '/admin/countries/QA', { codRules: { maxOrderMinor: '5000' } }); // QAR 50
   try {

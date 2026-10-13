@@ -174,8 +174,8 @@ Render ke 750 free ghante mein aa jata hai (doosri free service mat banayein, wa
    yaad rakhein (bhool gaye to naya account bana lein).
 
 **Demo accounts** (agar `DEMO_SEED_ALLOW=yes` tha) — sab ka password = aap ka `DEMO_PASSWORD`:
-`customer@demo.jovia.test`, `admin@demo.jovia.test`, `ops@demo.jovia.test`, `finance@demo.jovia.test`,
-`support@demo.jovia.test`, `courier@demo.jovia.test`, `seller.gadgets@demo.jovia.test` (aur `seller.oud`,
+`customer@demo.fastmovex.test`, `admin@demo.fastmovex.test`, `ops@demo.fastmovex.test`, `finance@demo.fastmovex.test`,
+`support@demo.fastmovex.test`, `courier@demo.fastmovex.test`, `seller.gadgets@demo.fastmovex.test` (aur `seller.oud`,
 `seller.home`). Yeh password kisi ko na dein jis ko admin access nahi dena.
 
 ---

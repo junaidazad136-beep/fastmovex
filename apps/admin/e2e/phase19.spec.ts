@@ -2,7 +2,7 @@ import { devices, expect, test } from '@playwright/test';
 import { ADMIN, apiCall, apiToken, DEMO_PASSWORD, fleetOrder, freshTotp, run, signIn, SUPER } from './helpers';
 
 /** Phase 19: staff two-step sign-in, failed-delivery proof, stock control (suppliers, POs, stocktake, expiry), payment checks. */
-const OPS = 'ops@demo.jovia.test';
+const OPS = 'ops@demo.fastmovex.test';
 
 /** A FastMoveX-store product (the warehouses belong to the FastMoveX store). */
 async function houseVariant(token: string): Promise<{ id: string; sku: string }> {
@@ -14,7 +14,7 @@ async function houseVariant(token: string): Promise<{ id: string; sku: string }>
 async function stockUp(token: string, variantId: string, n: number, warehouseId?: string) {
   await apiCall(token, 'POST', `/admin/variants/${variantId}/stock`, { delta: n, reason: 'RESTOCK', note: 'e2e', warehouseId });
 }
-const FINANCE = 'finance@demo.jovia.test';
+const FINANCE = 'finance@demo.fastmovex.test';
 
 test.describe.serial('Staff two-step sign-in', () => {
   const email = `staff2fa.${Date.now().toString(36)}@example.com`;
@@ -95,13 +95,13 @@ test('a failed delivery carries the driver’s location and photo; far from the 
   const deliveryId = order.sellerOrders[0].delivery!.id;
   const couriers = await apiCall<{ id: string; fullName: string }[]>(t, 'GET', '/admin/deliveries/couriers');
   await apiCall(t, 'POST', `/admin/deliveries/${deliveryId}/assign`, { courierUserId: couriers.find((c) => c.fullName === 'Khalid Courier')!.id });
-  const driverApi = await apiToken('courier@demo.jovia.test');
+  const driverApi = await apiToken('courier@demo.fastmovex.test');
   await apiCall(driverApi, 'POST', `/courier/jobs/${deliveryId}/pickup`);
   await apiCall(driverApi, 'POST', `/courier/jobs/${deliveryId}/out-for-delivery`);
 
   const phone = await browser.newContext({ ...devices['Pixel 7'], geolocation: { latitude: 25.3040, longitude: 51.5310 }, permissions: ['geolocation'] });
   const page = await phone.newPage();
-  await signIn(page, 'courier@demo.jovia.test', DEMO_PASSWORD).catch(() => undefined);
+  await signIn(page, 'courier@demo.fastmovex.test', DEMO_PASSWORD).catch(() => undefined);
   const job = page.getByTestId('driver-job').filter({ hasText: o.orderNumber });
   await job.getByTestId('job-fail').click();
   const dialog = page.getByRole('dialog');
@@ -265,7 +265,7 @@ test.describe('Payments', () => {
     await (await popup).close();
 
     await page.getByRole('tab', { name: 'Gateway settlement' }).click();
-    await page.getByTestId('settlement-file').setInputFiles({ name: 'dibsy-settlement.csv', mimeType: 'text/csv', buffer: Buffer.from('reference,amount,date\nnot-a-jovia-ref,99.00,2026-10-04\nbad-row,abc,2026-10-04\n') });
+    await page.getByTestId('settlement-file').setInputFiles({ name: 'dibsy-settlement.csv', mimeType: 'text/csv', buffer: Buffer.from('reference,amount,date\nnot-a-fmx-ref,99.00,2026-10-04\nbad-row,abc,2026-10-04\n') });
     await expect(page.getByText(/0 of 1 rows match/)).toBeVisible();
     const result = page.getByTestId('settlement-result');
     await expect(result).toContainText('Not in FastMoveX');

@@ -2,7 +2,7 @@
  * Orders placed without an account, remembered on this device so the shopper can reopen them from "Track order".
  * Only the order number and its access token are kept (never personal details). Storage failures are ignored.
  */
-const KEY = 'jovia_guest_orders';
+const KEY = 'fmx_guest_orders';
 const MAX = 10;
 
 export interface GuestOrderRef { orderNumber: string; token: string; placedAt: string }

@@ -47,7 +47,7 @@ describe('Warehouses — real database', () => {
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF' }); // not what this file tests
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
-    s.admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken;
+    s.admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken;
   });
 
   afterAll(async () => { await restoreCod?.();
@@ -160,7 +160,7 @@ describe('Warehouses — real database', () => {
     const list = (await api().get('/api/v1/admin/warehouses').set(bearer(s.admin)).expect(200)).body.items;
     expect(list.find((w: { id: string }) => w.id === s.wak)).toMatchObject({ units: 1, openShipments: 1 });
     // a customer cannot see any of it
-    const buyer = (await api().post('/api/v1/auth/register').send({ fullName: 'WH Buyer', email: `wh.b.${run.toLowerCase()}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201)).body.accessToken;
+    const buyer = (await api().post('/api/v1/auth/register').send({ fullName: 'WH Buyer', email: `wh.b.${run.toLowerCase()}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201)).body.accessToken;
     await api().get('/api/v1/admin/warehouses').set(bearer(buyer)).expect(403);
   });
 });

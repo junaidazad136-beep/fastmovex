@@ -34,7 +34,7 @@ describe('Delivery time slots — real database', () => {
     return res.body.accessToken as string;
   }
   async function customer(tag: string) {
-    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Slot Buyer', email: `slots.${tag}.${run}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201);
+    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Slot Buyer', email: `slots.${tag}.${run}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201);
     const token = reg.body.accessToken as string;
     const address = (await api().post('/api/v1/addresses').set(bearer(token)).send({ recipientName: 'Buyer', phone: '+97455500044', city: 'Doha', zone: '60', street: '800', building: '3' }).expect(201)).body.id as string;
     return { token, address };
@@ -58,7 +58,7 @@ describe('Delivery time slots — real database', () => {
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF' }); // not what this file tests
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
     original = (await prisma.country.findUniqueOrThrow({ where: { code: 'QA' } })).deliverySlots;
-    s.admin = await login('admin@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
 
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     for (const [key, price] of [['variant', '4500'], ['pendingVariant', '4501']] as const) {
@@ -84,7 +84,7 @@ describe('Delivery time slots — real database', () => {
     await api().patch('/api/v1/admin/countries/QA').set(bearer(s.admin)).send({
       deliverySlots: { enabled: true, required: true, daysAhead: 3, leadMinutes: 0, closedWeekdays: [], closedDates: [], windows: [{ start: '08:00', end: '14:00', capacity: 1000 }, { start: '14:00', end: '20:00', capacity: 1 }] },
     }).expect(200);
-    const support = await login('support@demo.jovia.test');
+    const support = await login('support@demo.fastmovex.test');
     await api().patch('/api/v1/admin/countries/QA').set(bearer(support)).send({ deliverySlots: { enabled: false } }).expect(403);
   });
 

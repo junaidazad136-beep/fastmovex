@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { ADMIN, API, apiCall, apiToken, CUSTOMER, DEMO_PASSWORD, PNG, run, signIn, SUPER } from './helpers';
 
 /** Phase 22: phone orders, changing an order, items refused at the door, return pickups, refund limits. */
-const COURIER = 'courier@demo.jovia.test';
+const COURIER = 'courier@demo.fastmovex.test';
 
 async function houseVariants(t: string, n = 2) {
   // fresh products of our own store with plenty of stock, so the test never depends on leftovers

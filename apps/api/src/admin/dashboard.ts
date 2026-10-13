@@ -44,7 +44,7 @@ export class DashboardService {
     }
     if (can('refunds.approve')) add('refundsToApprove', () => this.prisma.refund.count({ where: { status: 'PENDING' } }));
     if (can('reviews.moderate')) add('reviewsPending', () => this.prisma.review.count({ where: { status: 'PENDING' } }));
-    if (can('delivery.read')) add('deliveriesToAssign', () => this.prisma.deliveryOrder.count({ where: { method: 'JOVIA', courierUserId: null, status: 'CREATED' } }));
+    if (can('delivery.read')) add('deliveriesToAssign', () => this.prisma.deliveryOrder.count({ where: { method: 'FASTMOVEX', courierUserId: null, status: 'CREATED' } }));
     if (can('reviews.moderate')) add('questionsPending', () => this.prisma.productQuestion.count({ where: { status: 'PENDING' } }));
     if (can('tickets.read')) {
       add('openTickets', () => this.prisma.supportTicket.count({ where: { status: { in: ['OPEN', 'PENDING_SELLER'] } } }));

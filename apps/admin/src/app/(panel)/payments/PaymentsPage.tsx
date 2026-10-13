@@ -15,7 +15,7 @@ interface Exceptions { counts: Record<Kind, number>; items: Exception[] }
 interface Settlement {
   id: string; provider: string; fileName: string; currencyCode: string; rows: number; matched: number; mismatched: number; missing: number; extra: number; fileTotalMinor: string; createdAt: string;
   result?: {
-    lines: { line: number; reference: string; fileAmountMinor: string; joviaAmountMinor: string | null; orderNumber: string | null; status: string | null; result: string; note?: string }[];
+    lines: { line: number; reference: string; fileAmountMinor: string; shopAmountMinor: string | null; orderNumber: string | null; status: string | null; result: string; note?: string }[];
     extra: { reference: string | null; orderNumber: string; amountMinor: string; capturedAt: string }[];
     errors: { line: number; message: string }[];
   };
@@ -209,7 +209,7 @@ function SettlementResult({ s }: { s: Settlement }) {
                   <td className="td font-mono text-xs">{l.reference}</td>
                   <td className="td">{l.orderNumber ? <Link href={`/orders/${l.orderNumber}`} className="link">{l.orderNumber}</Link> : '—'}</td>
                   <td className="td text-end tabular">{formatMoney(l.fileAmountMinor, s.currencyCode)}</td>
-                  <td className="td text-end tabular">{l.joviaAmountMinor ? formatMoney(l.joviaAmountMinor, s.currencyCode) : '—'}</td>
+                  <td className="td text-end tabular">{l.shopAmountMinor ? formatMoney(l.shopAmountMinor, s.currencyCode) : '—'}</td>
                   <td className="td"><Badge tone={l.result === 'MISSING' ? 'red' : 'amber'}>{l.result === 'MISSING' ? 'Not in FastMoveX' : l.result === 'DUPLICATE' ? 'Duplicate' : 'Differs'}</Badge>{l.note ? <p className="text-xs text-ink-500">{l.note}</p> : null}</td>
                 </tr>
               ))}

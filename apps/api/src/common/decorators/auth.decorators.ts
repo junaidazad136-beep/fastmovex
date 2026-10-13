@@ -1,11 +1,11 @@
 import { createParamDecorator, ExecutionContext, SetMetadata } from '@nestjs/common';
 import { AuthUser, SellerContext } from '../auth-user';
 
-export const IS_PUBLIC_KEY = 'jovia:isPublic';
-export const PERMISSIONS_KEY = 'jovia:permissions';
-export const ROLES_KEY = 'jovia:roles';
-export const ALLOW_PENDING_SELLER_KEY = 'jovia:allowPendingSeller';
-export const ALLOW_WITHOUT_2FA_KEY = 'jovia:allowWithout2fa';
+export const IS_PUBLIC_KEY = 'fmx:isPublic';
+export const PERMISSIONS_KEY = 'fmx:permissions';
+export const ROLES_KEY = 'fmx:roles';
+export const ALLOW_PENDING_SELLER_KEY = 'fmx:allowPendingSeller';
+export const ALLOW_WITHOUT_2FA_KEY = 'fmx:allowWithout2fa';
 
 /** Route needs no login. If a valid token is sent anyway, req.user is still filled (for personalization). */
 export const Public = () => SetMetadata(IS_PUBLIC_KEY, true);

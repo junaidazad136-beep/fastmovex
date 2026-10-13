@@ -2,7 +2,7 @@ import { BadRequestException } from '@nestjs/common';
 
 /**
  * Text rules shared by search, spelling and the search log. Pure functions (unit-tested).
- * normalizeSearch() must match jovia_search_norm() in the database (migration 20261003000000_search_insights).
+ * normalizeSearch() must match fastmovex_search_norm() in the database (migration 20261003000000_search_insights).
  */
 export function normalizeSearch(s: string): string {
   return s

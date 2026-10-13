@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 import { ADMIN, apiCall, apiToken, fleetOrder, signIn } from './helpers';
 
 /** Phase 18: closing a driver delivery needs the customer's code, cash is counted in, refunds need two people, returns are inspected. */
-const OPS = 'ops@demo.jovia.test';
-const FINANCE = 'finance@demo.jovia.test';
+const OPS = 'ops@demo.fastmovex.test';
+const FINANCE = 'finance@demo.fastmovex.test';
 
 test.describe.serial('Cash and fraud controls', () => {
   let opsOrder = '';

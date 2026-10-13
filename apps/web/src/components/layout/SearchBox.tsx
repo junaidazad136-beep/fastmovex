@@ -23,7 +23,7 @@ function speechRecognition(): (new () => Recognition) | null {
 type Kind = 'recent' | 'popular' | 'query' | 'product' | 'category' | 'brand' | 'all';
 type Option = { key: string; label: string; href: string; kind: Kind; term?: string; imageUrl?: string | null; price?: string; sub?: string; soldOut?: boolean };
 
-const RECENT_KEY = 'jovia.recentSearches';
+const RECENT_KEY = 'fmx.recentSearches';
 function readRecent(): string[] {
   try {
     const v = JSON.parse(localStorage.getItem(RECENT_KEY) ?? '[]');

@@ -63,8 +63,8 @@ export function buildBaseQuery(p: SearchParams): Prisma.Sql {
     if (p.matchMode === 'any') {
       // Wide net for rare queries and typos. Every arm is GIN-indexed, so Postgres does a bitmap OR, not a scan.
       where.push(codeHit
-        ? sql`(p."searchVector" @@ ${tsMatch} OR ${p.q} <% p."title" OR jovia_search_norm(${p.q}) <% jovia_search_norm(p."titleAr") OR ${codeHit})`
-        : sql`(p."searchVector" @@ ${tsMatch} OR ${p.q} <% p."title" OR jovia_search_norm(${p.q}) <% jovia_search_norm(p."titleAr"))`);
+        ? sql`(p."searchVector" @@ ${tsMatch} OR ${p.q} <% p."title" OR fastmovex_search_norm(${p.q}) <% fastmovex_search_norm(p."titleAr") OR ${codeHit})`
+        : sql`(p."searchVector" @@ ${tsMatch} OR ${p.q} <% p."title" OR fastmovex_search_norm(${p.q}) <% fastmovex_search_norm(p."titleAr"))`);
     } else {
       // precise: every word present (the common, fast path)
       where.push(codeHit ? sql`(p."searchVector" @@ ${tsAll} OR ${codeHit})` : sql`p."searchVector" @@ ${tsAll}`);
@@ -205,7 +205,7 @@ export class PostgresSearchEngine extends SearchEngine {
         JOIN "Store" s ON s."id" = p."storeId" JOIN "Seller" se ON se."id" = s."sellerId"
         WHERE p."status" = 'ACTIVE' AND p."deletedAt" IS NULL AND s."isActive" = true AND se."status" = 'APPROVED'
           AND p."countryCode" = ${countryCode}
-          AND (p."title" ILIKE ${prefix} OR ${q} <% p."title" OR jovia_search_norm(p."titleAr") LIKE jovia_search_norm(${prefix}))
+          AND (p."title" ILIKE ${prefix} OR ${q} <% p."title" OR fastmovex_search_norm(p."titleAr") LIKE fastmovex_search_norm(${prefix}))
         ORDER BY (p."title" ILIKE ${prefix}) DESC, word_similarity(${q}, p."title") DESC, p."soldCount" DESC
         LIMIT 6`),
       this.prisma.$queryRaw<Suggestions['categories']>(sql`

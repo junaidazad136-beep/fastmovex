@@ -81,7 +81,7 @@ test('while the driver is on the way, the order page says when they should arriv
   const product = await apiCall<{ variants: { id: string }[] }>(null, 'GET', '/products/premium-khalas-dates-1kg');
   await apiCall(c.token, 'POST', '/cart/items', { variantId: product.variants[0].id, quantity: 1 });
   const { orderNumber } = await apiCall<{ orderNumber: string }>(c.token, 'POST', '/checkout', { addressId, paymentMethod: 'COD' }, { 'idempotency-key': `eta-${Date.now()}` });
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   const shipment = (await apiCall<{ sellerOrders: { id: string }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`)).sellerOrders[0].id;
   for (const status of ['PREPARING', 'READY_FOR_PICKUP']) await apiCall(admin, 'POST', `/admin/orders/shipments/${shipment}/status`, { status });
   let deliveryId: string | undefined;
@@ -91,7 +91,7 @@ test('while the driver is on the way, the order page says when they should arriv
   }
   const couriers = await apiCall<{ id: string; fullName: string }[]>(admin, 'GET', '/admin/deliveries/couriers');
   await apiCall(admin, 'POST', `/admin/deliveries/${deliveryId}/assign`, { courierUserId: (couriers.find((x) => x.fullName === 'Khalid Courier') ?? couriers[0]).id });
-  const driver = await apiToken('courier@demo.jovia.test');
+  const driver = await apiToken('courier@demo.fastmovex.test');
   await apiCall(driver, 'POST', `/courier/jobs/${deliveryId}/pickup`);
   await apiCall(driver, 'POST', `/courier/jobs/${deliveryId}/out-for-delivery`);
   await apiCall(driver, 'POST', `/courier/jobs/${deliveryId}/location`, { lat: 25.3154, lng: 51.531 });

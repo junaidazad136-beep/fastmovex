@@ -42,9 +42,9 @@ describe('Phase 29 — size guides (real database)', () => {
     configureApp(app);
     await app.init();
     prisma = app.get(PrismaService);
-    s.admin = await login('admin@demo.jovia.test');
-    s.gadgets = await login('seller.gadgets@demo.jovia.test');
-    s.oud = await login('seller.oud@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.gadgets = await login('seller.gadgets@demo.fastmovex.test');
+    s.oud = await login('seller.oud@demo.fastmovex.test');
   });
 
   afterAll(async () => {
@@ -102,9 +102,9 @@ describe('Phase 29 — size guides (real database)', () => {
     await api().patch(`/api/v1/seller/size-charts/${SHOES}`).set(bearer(s.gadgets)).send({ name: 'Mine now' }).expect(404);
 
     // using it: fine on the store's own product, refused for another store's product
-    const gadgetProduct = await prisma.product.findFirstOrThrow({ where: { store: { seller: { owner: { email: 'seller.gadgets@demo.jovia.test' } } }, deletedAt: null } });
+    const gadgetProduct = await prisma.product.findFirstOrThrow({ where: { store: { seller: { owner: { email: 'seller.gadgets@demo.fastmovex.test' } } }, deletedAt: null } });
     await api().patch(`/api/v1/seller/products/${gadgetProduct.id}`).set(bearer(s.gadgets)).send({ sizeChartId: own.body.id }).expect(200);
-    const oudProduct = await prisma.product.findFirstOrThrow({ where: { store: { seller: { owner: { email: 'seller.oud@demo.jovia.test' } } }, deletedAt: null } });
+    const oudProduct = await prisma.product.findFirstOrThrow({ where: { store: { seller: { owner: { email: 'seller.oud@demo.fastmovex.test' } } }, deletedAt: null } });
     await api().patch(`/api/v1/seller/products/${oudProduct.id}`).set(bearer(s.oud)).send({ sizeChartId: own.body.id }).expect(400);
     const shoes = await prisma.category.findUniqueOrThrow({ where: { slug: 'shoes' } });
     await api().patch(`/api/v1/admin/categories/${shoes.id}`).set(bearer(s.admin)).send({ sizeChartId: own.body.id }).expect(400);

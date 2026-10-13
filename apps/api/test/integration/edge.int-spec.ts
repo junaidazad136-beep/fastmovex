@@ -62,15 +62,15 @@ describe('FastMoveX edge cases — real database', () => {
     prisma = app.get(PrismaService);
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
 
-    const email = `edge.${run}@jovia.test`;
+    const email = `edge.${run}@fastmovex.test`;
     const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Edge Case', email, password: 'Edge-Pass-123' }).expect(201);
     t.customer = reg.body.accessToken;
     const addr = await api().post('/api/v1/addresses').set(bearer(t.customer)).send({ recipientName: 'Edge Case', phone: '+97455500011', city: 'Doha', zone: '52', street: '220', building: '7' }).expect(201);
     t.address = addr.body.id;
-    t.home = await login('seller.home@demo.jovia.test');
-    t.gadgets = await login('seller.gadgets@demo.jovia.test');
-    t.finance = await login('finance@demo.jovia.test');
-    t.admin = await login('admin@demo.jovia.test');
+    t.home = await login('seller.home@demo.fastmovex.test');
+    t.gadgets = await login('seller.gadgets@demo.fastmovex.test');
+    t.finance = await login('finance@demo.fastmovex.test');
+    t.admin = await login('admin@demo.fastmovex.test');
     v.blocks = await variantBySku('PKB-28');
     v.yogaBlack = await variantBySku('PYM-BLK');
     v.yogaPurple = await variantBySku('PYM-PRP');
@@ -248,7 +248,7 @@ describe('FastMoveX edge cases — real database', () => {
     const seller = await api().get('/api/v1/seller/analytics/overview').query({ range: '30d' }).set(bearer(t.gadgets)).expect(200);
     expect(seller.body.orders).toBeGreaterThan(0);
 
-    const support = await login('support@demo.jovia.test');
+    const support = await login('support@demo.fastmovex.test');
     await api().get('/api/v1/admin/analytics/overview').set(bearer(support)).expect(403);
     await api().get('/api/v1/admin/finance/summary').set(bearer(support)).expect(403);
     const summary = await api().get('/api/v1/admin/finance/summary').set(bearer(t.finance)).expect(200);
@@ -271,7 +271,7 @@ describe('FastMoveX edge cases — real database', () => {
   });
 
   it('admin changes the market delivery pricing; carts use it immediately; a support admin cannot', async () => {
-    const support = await login('support@demo.jovia.test');
+    const support = await login('support@demo.fastmovex.test');
     await api().patch('/api/v1/admin/countries/QA').set(bearer(support)).send({ deliveryConfig: { flatFeeMinor: '0' } }).expect(403);
     await api().patch('/api/v1/admin/countries/QA').set(bearer(t.admin)).send({ paymentMethods: [] }).expect(400);
     await api().patch('/api/v1/admin/countries/QA').set(bearer(t.admin)).send({ deliveryConfig: { flatFeeMinor: '1500' } }).expect(200);

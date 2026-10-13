@@ -74,11 +74,11 @@ describe('Phase 23 — social sign-in, browser push, buy again, add items, phone
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF', maxOrderMinor: null, maxOpenOrders: null, refusalLimit: 5, driverCashLimitMinor: null });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined as never);
-    s.admin = await login('admin@demo.jovia.test');
-    s.ops = await login('ops@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
-    s.courier = await login('courier@demo.jovia.test');
-    s.courierId = await idOf('courier@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.ops = await login('ops@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
+    s.courier = await login('courier@demo.fastmovex.test');
+    s.courierId = await idOf('courier@demo.fastmovex.test');
     const a = await product('Again Cup', '3000');
     const b = await product('Again Plate', '2000');
     const c = await product('Extra Spoon', '500');
@@ -100,7 +100,7 @@ describe('Phase 23 — social sign-in, browser push, buy again, add items, phone
     const email = `social.${run}@example.com`;
     const first = await api().post('/api/v1/auth/social').send({ provider: 'GOOGLE', idToken: await googleToken(sub, { email, email_verified: true, name: 'Hamad Social', nonce: 'nonce-one-1' }), nonce: 'nonce-one-1', locale: 'ar' }).expect(200);
     expect(first.body).toMatchObject({ created: true });
-    expect(String(first.headers['set-cookie'])).toMatch(/jovia_rt=/);
+    expect(String(first.headers['set-cookie'])).toMatch(/fmx_rt=/);
     const me = (await api().get('/api/v1/auth/me').set(bearer(first.body.accessToken)).expect(200)).body;
     expect(me).toMatchObject({ fullName: 'Hamad Social', email, hasPassword: false, signIns: ['GOOGLE'], locale: 'ar' });
     expect(me.emailVerifiedAt).toBeTruthy();
@@ -118,7 +118,7 @@ describe('Phase 23 — social sign-in, browser push, buy again, add items, phone
     expect((await api().delete('/api/v1/auth/social/google').set(bearer(c.token)).expect(200)).body).toEqual([]); // has a password: fine
     // unconfirmed email: no account; staff email: refused; the admin panel never accepts it
     expect((await api().post('/api/v1/auth/social').send({ provider: 'GOOGLE', idToken: await googleToken(`g3-${run}`, { email: `x.${run}@example.com`, email_verified: false }) }).expect(400)).body.reason).toBe('SOCIAL_NO_EMAIL');
-    expect((await api().post('/api/v1/auth/social').send({ provider: 'GOOGLE', idToken: await googleToken(`g4-${run}`, { email: 'admin@demo.jovia.test', email_verified: true }) }).expect(403)).body.reason).toBe('STAFF_ACCOUNT');
+    expect((await api().post('/api/v1/auth/social').send({ provider: 'GOOGLE', idToken: await googleToken(`g4-${run}`, { email: 'admin@demo.fastmovex.test', email_verified: true }) }).expect(403)).body.reason).toBe('STAFF_ACCOUNT');
     await api().post('/api/v1/auth/social').set('x-client-type', 'admin').send({ provider: 'GOOGLE', idToken: await googleToken(sub, { email, email_verified: true }) }).expect(403);
     await api().post('/api/v1/auth/social').send({ provider: 'APPLE', idToken: 'x'.repeat(40) }).expect(400); // Apple not set up
     const audit = await prisma.auditLog.findMany({ where: { entityId: me.id, action: { in: ['auth.social_signup', 'auth.social_linked'] } } });

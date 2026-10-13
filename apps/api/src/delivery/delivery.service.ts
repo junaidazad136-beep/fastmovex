@@ -67,12 +67,12 @@ export class DeliveryService {
         await this.prisma.$transaction([
           this.prisma.deliveryOrder.create({
             data: {
-              sellerOrderId, method: fleet ? 'JOVIA' : 'SELLER', providerCode: fleet ? 'jovia_fleet' : 'seller', status: target,
+              sellerOrderId, method: fleet ? 'FASTMOVEX' : 'SELLER', providerCode: fleet ? 'fastmovex_fleet' : 'seller', status: target,
               deliveryCode: fleet ? newDeliveryCode() : null, pickedUpAt: fleet ? null : new Date(),
               events: { create: { status: target, note: fleet ? 'Waiting for a FastMoveX courier' : 'Seller is delivering' } },
             },
           }),
-          this.prisma.sellerOrder.update({ where: { id: sellerOrderId }, data: { deliveryMethod: fleet ? 'JOVIA' : 'SELLER' } }),
+          this.prisma.sellerOrder.update({ where: { id: sellerOrderId }, data: { deliveryMethod: fleet ? 'FASTMOVEX' : 'SELLER' } }),
         ]);
       } catch (e) {
         // the same change reached us twice at once (event listener + direct call): the other one made the record
@@ -103,7 +103,7 @@ export class DeliveryService {
 
   async list(status?: DeliveryStatus, unassignedOnly = false) {
     return this.prisma.deliveryOrder.findMany({
-      where: { status: status ?? { in: ACTIVE }, ...(unassignedOnly && { courierUserId: null, method: 'JOVIA' }) },
+      where: { status: status ?? { in: ACTIVE }, ...(unassignedOnly && { courierUserId: null, method: 'FASTMOVEX' }) },
       orderBy: { createdAt: 'asc' },
       take: 200,
       omit: { deliveryCode: true }, // the customer's proof: staff never see it
@@ -130,7 +130,7 @@ export class DeliveryService {
   async assign(deliveryId: string, courierUserId: string, adminId: string) {
     const d = await this.prisma.deliveryOrder.findUnique({ where: { id: deliveryId }, select: { status: true, method: true } });
     if (!d) throw new NotFoundException('Delivery not found');
-    if (d.method !== 'JOVIA') throw new BadRequestException('Only FastMoveX-fleet deliveries can be assigned to a courier');
+    if (d.method !== 'FASTMOVEX') throw new BadRequestException('Only FastMoveX-fleet deliveries can be assigned to a courier');
     if (!['CREATED', 'ASSIGNED', 'FAILED'].includes(d.status)) throw new BadRequestException(`Cannot assign a ${d.status.toLowerCase()} delivery`);
     const courier = await this.prisma.user.findFirst({
       where: { id: courierUserId, status: 'ACTIVE', roles: { some: { role: { code: 'DELIVERY_AGENT' } } } },

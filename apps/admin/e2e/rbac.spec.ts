@@ -3,7 +3,7 @@ import { apiCall, apiToken, run, signIn, SUPER } from './helpers';
 
 test('each role sees only its own sections, and the API enforces it', async ({ page }) => {
   const sup = await apiToken(SUPER.email, SUPER.password);
-  const email = `stock.${run().toLowerCase()}@jovia.test`;
+  const email = `stock.${run().toLowerCase()}@fastmovex.test`;
   const password = 'Stock-Keeper-2026';
   await apiCall(sup, 'POST', '/admin/staff', { fullName: 'Stock Keeper', email, password, roles: ['INVENTORY_MANAGER'] });
 

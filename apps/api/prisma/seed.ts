@@ -111,7 +111,7 @@ async function main() {
     const data = {
       ...c,
       paymentMethods: [PaymentMethod.CARD, PaymentMethod.APPLE_PAY, PaymentMethod.GOOGLE_PAY, PaymentMethod.COD],
-      deliveryProviders: ['seller', 'jovia_fleet'],
+      deliveryProviders: ['seller', 'fastmovex_fleet'],
       // Starting defaults only — admin changes these from the dashboard. Minor units: 1000 = QAR 10.00
       deliveryConfig: c.code === 'QA' ? { flatFeeMinor: '1000', freeOverMinor: '10000', label: 'Standard delivery' } : {},
     };
@@ -199,10 +199,10 @@ async function ensureHouseStore() {
   const existing = await prisma.seller.findFirst({ where: { isHouse: true }, select: { id: true } });
   if (existing) return;
   const owner = await prisma.user.upsert({
-    where: { email: 'house-store@system.jovia.invalid' },
+    where: { email: 'house-store@system.fastmovex.invalid' },
     update: {},
     // No password: this account can never sign in. ".invalid" is a reserved domain, so no mail can reach it.
-    create: { email: 'house-store@system.jovia.invalid', fullName: `${name} (system)`, countryCode: country },
+    create: { email: 'house-store@system.fastmovex.invalid', fullName: `${name} (system)`, countryCode: country },
   });
   const seller = await prisma.seller.create({
     data: {

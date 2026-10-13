@@ -55,9 +55,9 @@ This starts:
 
 | Service | Address | Notes |
 |---|---|---|
-| PostgreSQL 16 | `localhost:5432` (jovia / jovia) | created as **UTF8** — required for Arabic |
+| PostgreSQL 16 | `localhost:5432` (fastmovex / fastmovex) | created as **UTF8** — required for Arabic |
 | Redis 7 | `localhost:6379` | optional cache |
-| MinIO (S3) | API `localhost:9000`, console `http://localhost:9001` (jovia / jovia-minio-secret) | buckets `jovia-public` (public read) and `jovia-private` are created automatically |
+| MinIO (S3) | API `localhost:9000`, console `http://localhost:9001` (fastmovex / fastmovex-minio-secret) | buckets `fastmovex-public` (public read) and `fastmovex-private` are created automatically |
 
 ## 5. Database
 
@@ -114,7 +114,7 @@ npm run dev                    # http://localhost:3001
 
 The API must allow the panel's origin: `CORS_ORIGINS=http://localhost:3000,http://localhost:3001` in `apps/api/.env`.
 Sign in with a staff account: the super admin from `SEED_SUPERADMIN_EMAIL` / `SEED_SUPERADMIN_PASSWORD` (base seed), or
-`admin@demo.jovia.test` from the demo seed. Customer accounts are refused.
+`admin@demo.fastmovex.test` from the demo seed. Customer accounts are refused.
 
 FastMoveX's own store (the "house" store every staff-created product goes into) is created by the base seed; set
 `HOUSE_STORE_NAME`, `HOUSE_STORE_NAME_AR`, `HOUSE_STORE_EMAIL`, `HOUSE_STORE_PHONE` before seeding to change its details
@@ -162,16 +162,16 @@ Password for all: **`Demo-Pass-2026`** (override with `DEMO_PASSWORD`). The `.te
 
 | Role | Login | Use it to try |
 |---|---|---|
-| Customer | `customer@demo.jovia.test` | the website: browse, cart, checkout (address in Doha pre-filled) |
-| Seller — Doha Gadgets Hub | `seller.gadgets@demo.jovia.test` | electronics, FastMoveX-fleet delivery |
-| Seller — Al Dana Oud & Perfumes | `seller.oud@demo.jovia.test` | perfumes, seller-funded coupon `DANA20` |
-| Seller — Pearl Home Living | `seller.home@demo.jovia.test` | home, groceries |
-| Admin | `admin@demo.jovia.test` | the admin panel: products, orders, marketing, settings, analytics |
-| Finance | `finance@demo.jovia.test` | refunds, payout approval |
-| Finance (second approver) | `finance2@demo.jovia.test` | marks payouts paid (four-eyes rule) |
-| Operations | `ops@demo.jovia.test` | deliveries, courier assignment |
-| Support | `support@demo.jovia.test` | tickets, returns |
-| Courier | `courier@demo.jovia.test` | the **driver page**: sign in to the admin panel on a phone (`http://localhost:3001/driver`) |
+| Customer | `customer@demo.fastmovex.test` | the website: browse, cart, checkout (address in Doha pre-filled) |
+| Seller — Doha Gadgets Hub | `seller.gadgets@demo.fastmovex.test` | electronics, FastMoveX-fleet delivery |
+| Seller — Al Dana Oud & Perfumes | `seller.oud@demo.fastmovex.test` | perfumes, seller-funded coupon `DANA20` |
+| Seller — Pearl Home Living | `seller.home@demo.fastmovex.test` | home, groceries |
+| Admin | `admin@demo.fastmovex.test` | the admin panel: products, orders, marketing, settings, analytics |
+| Finance | `finance@demo.fastmovex.test` | refunds, payout approval |
+| Finance (second approver) | `finance2@demo.fastmovex.test` | marks payouts paid (four-eyes rule) |
+| Operations | `ops@demo.fastmovex.test` | deliveries, courier assignment |
+| Support | `support@demo.fastmovex.test` | tickets, returns |
+| Courier | `courier@demo.fastmovex.test` | the **driver page**: sign in to the admin panel on a phone (`http://localhost:3001/driver`) |
 
 Demo data also includes 24 products (34 variants, with generated images when MinIO is running), a live
 "Weekend Flash Deals" campaign, home banners, FAQ and three coupons:
@@ -206,7 +206,7 @@ Product questions; Admin → Catalogue → Warehouses (add one with zones, Move 
 
 | Symptom | Fix |
 |---|---|
-| `FastMoveX needs a UTF8 database` during migration | The database was created with another encoding. Recreate it: `CREATE DATABASE jovia ENCODING 'UTF8' LC_COLLATE 'C.UTF-8' LC_CTYPE 'C.UTF-8' TEMPLATE template0;` |
+| `FastMoveX needs a UTF8 database` during migration | The database was created with another encoding. Recreate it: `CREATE DATABASE fastmovex ENCODING 'UTF8' LC_COLLATE 'C.UTF-8' LC_CTYPE 'C.UTF-8' TEMPLATE template0;` |
 | `Invalid environment variables` on start | The message lists every missing/invalid variable. Compare with `.env.example`. |
 | `Unsafe production configuration` on start | You set `NODE_ENV=production` with a development-only value (log drivers, localhost CORS, placeholder secret). See [ENVIRONMENT.md](ENVIRONMENT.md#production-guard-rails). |
 | Product images don't upload | MinIO not running or buckets missing: `docker compose up -d minio minio-init`. |

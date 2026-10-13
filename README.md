@@ -71,8 +71,8 @@ npm install
 npm run dev                     # http://localhost:3001
 ```
 
-Demo logins (password `Demo-Pass-2026`): `customer@demo.jovia.test`, `seller.gadgets@demo.jovia.test`,
-`admin@demo.jovia.test`, `finance@demo.jovia.test` — full list in [SETUP.md](SETUP.md).
+Demo logins (password `Demo-Pass-2026`): `customer@demo.fastmovex.test`, `seller.gadgets@demo.fastmovex.test`,
+`admin@demo.fastmovex.test`, `finance@demo.fastmovex.test` — full list in [SETUP.md](SETUP.md).
 
 ## Documentation
 

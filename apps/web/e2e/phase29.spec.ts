@@ -7,7 +7,7 @@ let slug = '';
 
 /** Sandals in the Shoes category with sizes 41–43: the shoe guide comes from the category. */
 test.beforeAll(async () => {
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   const cats = await apiCall<{ id: string; slug: string }[]>(admin, 'GET', '/admin/categories');
   const p = await apiCall<{ id: string; slug: string }>(admin, 'POST', '/admin/products', {
     title: `E2E Sandals ${run}`, categoryId: cats.find((c) => c.slug === 'shoes')!.id,

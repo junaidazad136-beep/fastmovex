@@ -7,7 +7,7 @@ import { isLocale } from '@/lib/i18n/config';
 
 export default async function NotFound() {
   // not-found has no params; the language comes from the URL the proxy saw.
-  const seg = (await headers()).get('x-jovia-locale');
+  const seg = (await headers()).get('x-fmx-locale');
   const locale = isLocale(seg) ? seg : 'en';
   const t = getT(locale);
   return (

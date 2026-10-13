@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { forwardApi } from './lib/edge-forward';
 import { env, tileOrigin } from './lib/env';
 
 function origin(url: string | undefined): string {
@@ -27,6 +28,8 @@ export function buildCsp(nonce: string, opts: { dev: boolean; apiOrigin: string;
 }
 
 export function proxy(request: NextRequest) {
+  // the API under this site's address: passed on with the staff member's own IP (see lib/edge-forward.ts)
+  if (request.nextUrl.pathname.startsWith('/api/v1/')) return forwardApi(request) ?? NextResponse.next();
   const nonce = Buffer.from(crypto.randomUUID()).toString('base64');
   const csp = buildCsp(nonce, {
     dev: process.env.NODE_ENV !== 'production',

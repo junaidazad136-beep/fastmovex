@@ -71,7 +71,7 @@ production. It uses the demo accounts, so it needs `npm run db:seed:demo`.
 - staff create a product in it; it cannot go live without a photo; published products are public while cost price and staff-only fields never are
 - a customer buys it; it appears under "to ship"; staff move the shipment step by step (no skipping); stock is committed when it ships; support staff cannot move orders
 - stock cannot go below what open orders reserved; every change is in the history; changing only the low-stock alert level moves no stock
-- admin panel sessions: customers refused (no cookie set), staff get the separate `jovia_admin_rt` cookie, the shop's refresh ignores it
+- admin panel sessions: customers refused (no cookie set), staff get the separate `fmx_admin_rt` cookie, the shop's refresh ignores it
 - the audit log names who made each change; support staff cannot read it
 - CSV: export → edit → dry run changes nothing → import updates in place; bad rows reported by line
 - dashboard counters show only what the caller may act on
@@ -226,12 +226,12 @@ production. It uses the demo accounts, so it needs `npm run db:seed:demo`.
 cd apps/admin
 npm run build && cp -r public .next/standalone/public && cp -r .next/static .next/standalone/.next/static
 PORT=3001 node .next/standalone/server.js &
-SUPER_ADMIN_EMAIL=owner@jovia.test SUPER_ADMIN_PASSWORD=… npm run test:e2e
+SUPER_ADMIN_EMAIL=owner@fastmovex.test SUPER_ADMIN_PASSWORD=… npm run test:e2e
 ```
 
 | Spec | Proves |
 |---|---|
-| `auth` | customers refused; wrong password message; deep link → sign in → back to the page; httpOnly `jovia_admin_rt` cookie and no shop cookie; session survives reload; sign out; dashboard sections |
+| `auth` | customers refused; wrong password message; deep link → sign in → back to the page; httpOnly `fmx_admin_rt` cookie and no shop cookie; session survives reload; sign out; dashboard sections |
 | `rbac` | a new *Inventory* staff member sees only Products/Inventory, cannot edit prices but can edit stock, and gets "No access" on other addresses |
 | `catalog` | product with two colour variants and a photo → published → on the public API without cost price → edit survives reload; inventory table edit → history shows who and why; CSV checked then imported |
 | `content` | new page written in English + Arabic with live preview → published → public via the API; reserved address refused; deleted. Home page editor: add a tag collection, move it up, hide "New arrivals", save → the home feed follows; back to the standard layout. Contact message opened, noted and marked handled. Guest checkout switched off and on in Settings |

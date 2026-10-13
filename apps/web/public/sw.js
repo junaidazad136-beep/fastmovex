@@ -1,5 +1,5 @@
 /* FastMoveX service worker — offline support without ever caching personal or payment pages. */
-const VERSION = 'fastmovex-v3'; // new name: old caches (jovia-v2-*) are deleted on activate
+const VERSION = 'fastmovex-v3'; // caches of older versions are deleted on activate
 const STATIC = `${VERSION}-static`;
 const PAGES = `${VERSION}-pages`;
 const IMAGES = `${VERSION}-images`;

@@ -16,7 +16,7 @@ The API must allow this origin: add `http://localhost:3001` (production: the pan
 ## Sign-in and access
 
 - Only staff accounts can sign in (the API refuses customers and delivery drivers for the panel).
-- The panel's session is separate from the shop's: its refresh token is an httpOnly cookie named `jovia_admin_rt`,
+- The panel's session is separate from the shop's: its refresh token is an httpOnly cookie named `fmx_admin_rt`,
   so a staff member can be signed in to the shop as a customer and to the panel at the same time.
 - The menu shows only what the staff member's role allows; every call is checked again by the API.
 - Role changes apply within one access-token lifetime (15 minutes) or at the next sign-in.

@@ -28,7 +28,7 @@ export interface PickListInput {
   lines: PickLine[];
 }
 
-const METHOD: Record<string, string> = { JOVIA: 'FastMoveX driver', SELLER: 'Seller delivers', COURIER: 'Courier', PICKUP: 'Customer pick-up' };
+const METHOD: Record<string, string> = { FASTMOVEX: 'FastMoveX driver', SELLER: 'Seller delivers', COURIER: 'Courier', PICKUP: 'Customer pick-up' };
 
 /** Shelf order for walking the warehouse: by bin (A-01 < A-02 < B-01, numbers compared as numbers), no bin last, then SKU. Exported for tests. */
 export function binOrder(a: { bin: string | null; sku: string }, b: { bin: string | null; sku: string }): number {

@@ -226,25 +226,25 @@ export class ReconciliationService {
     const pay = new Map(payments.map((p) => [p.providerRef!, p]));
     const ref = new Map(refunds.map((r) => [r.providerRef!, r]));
     const seen = new Set<string>();
-    type Line = { line: number; reference: string; fileAmountMinor: string; joviaAmountMinor: string | null; orderNumber: string | null; status: string | null; result: 'MATCHED' | 'MISMATCHED' | 'MISSING' | 'DUPLICATE'; note?: string };
+    type Line = { line: number; reference: string; fileAmountMinor: string; shopAmountMinor: string | null; orderNumber: string | null; status: string | null; result: 'MATCHED' | 'MISMATCHED' | 'MISSING' | 'DUPLICATE'; note?: string };
     const lines: Line[] = [];
     let fileTotal = 0n;
     for (const r of rows) {
       fileTotal += r.amountMinor;
       const base = { line: r.line, reference: r.reference, fileAmountMinor: r.amountMinor.toString() };
-      if (seen.has(r.reference)) { lines.push({ ...base, joviaAmountMinor: null, orderNumber: null, status: null, result: 'DUPLICATE', note: 'This reference is in the file more than once' }); continue; }
+      if (seen.has(r.reference)) { lines.push({ ...base, shopAmountMinor: null, orderNumber: null, status: null, result: 'DUPLICATE', note: 'This reference is in the file more than once' }); continue; }
       seen.add(r.reference);
       const p = pay.get(r.reference);
       const f = ref.get(r.reference);
       if (p) {
         const paid = (CAPTURED as readonly string[]).includes(p.status);
         const ok = paid && p.amountMinor === r.amountMinor;
-        lines.push({ ...base, joviaAmountMinor: p.amountMinor.toString(), orderNumber: p.order.orderNumber, status: p.status, result: ok ? 'MATCHED' : 'MISMATCHED', ...(!ok && { note: !paid ? `FastMoveX has this payment as ${p.status.toLowerCase()}` : 'Amounts differ' }) });
+        lines.push({ ...base, shopAmountMinor: p.amountMinor.toString(), orderNumber: p.order.orderNumber, status: p.status, result: ok ? 'MATCHED' : 'MISMATCHED', ...(!ok && { note: !paid ? `FastMoveX has this payment as ${p.status.toLowerCase()}` : 'Amounts differ' }) });
       } else if (f) {
         const ok = f.status === 'SUCCEEDED' && -f.amountMinor === r.amountMinor;
-        lines.push({ ...base, joviaAmountMinor: (-f.amountMinor).toString(), orderNumber: f.order.orderNumber, status: `REFUND_${f.status}`, result: ok ? 'MATCHED' : 'MISMATCHED', ...(!ok && { note: f.status !== 'SUCCEEDED' ? `Refund is ${f.status.toLowerCase()} in FastMoveX` : 'Refund amount differs (refunds should be negative)' }) });
+        lines.push({ ...base, shopAmountMinor: (-f.amountMinor).toString(), orderNumber: f.order.orderNumber, status: `REFUND_${f.status}`, result: ok ? 'MATCHED' : 'MISMATCHED', ...(!ok && { note: f.status !== 'SUCCEEDED' ? `Refund is ${f.status.toLowerCase()} in FastMoveX` : 'Refund amount differs (refunds should be negative)' }) });
       } else {
-        lines.push({ ...base, joviaAmountMinor: null, orderNumber: null, status: null, result: 'MISSING', note: 'Not found in FastMoveX' });
+        lines.push({ ...base, shopAmountMinor: null, orderNumber: null, status: null, result: 'MISSING', note: 'Not found in FastMoveX' });
       }
     }
     // the file's period: its own dates, or the dates of the payments it matched

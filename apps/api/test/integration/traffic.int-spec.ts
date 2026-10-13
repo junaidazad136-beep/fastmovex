@@ -38,7 +38,7 @@ describe('Visit analytics — real database', () => {
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF' }); // not what this file tests
     traffic = app.get(TrafficService);
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
-    s.admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken;
+    s.admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken;
     s.variant = (await api().get('/api/v1/products/premium-khalas-dates-1kg').expect(200)).body.variants[0].id;
   });
 
@@ -110,7 +110,7 @@ describe('Visit analytics — real database', () => {
     expect(r.devices.map((d: { device: string }) => d.device)).toEqual(expect.arrayContaining(['mobile', 'desktop']));
     expect(r.daily.length).toBeGreaterThanOrEqual(1);
     // customers cannot read it
-    const buyer = (await api().post('/api/v1/auth/register').send({ fullName: 'Traffic Buyer', email: `traffic.b.${run}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201)).body.accessToken;
+    const buyer = (await api().post('/api/v1/auth/register').send({ fullName: 'Traffic Buyer', email: `traffic.b.${run}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201)).body.accessToken;
     await api().get('/api/v1/admin/analytics/traffic').set(bearer(buyer)).expect(403);
   });
 });

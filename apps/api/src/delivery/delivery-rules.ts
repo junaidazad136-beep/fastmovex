@@ -9,7 +9,7 @@ import { randomInt, timingSafeEqual } from 'crypto';
 export function deliveryStatusFor(so: OrderStatus, hasRecord: boolean, method?: DeliveryMethod): DeliveryStatus | null {
   switch (so) {
     case 'READY_FOR_PICKUP': return 'CREATED';
-    case 'SHIPPED': return hasRecord && method === 'JOVIA' ? 'PICKED_UP' : 'IN_TRANSIT';
+    case 'SHIPPED': return hasRecord && method === 'FASTMOVEX' ? 'PICKED_UP' : 'IN_TRANSIT';
     case 'OUT_FOR_DELIVERY': return 'OUT_FOR_DELIVERY';
     case 'DELIVERED': return 'DELIVERED';
     case 'CANCELLED': return 'CANCELLED';

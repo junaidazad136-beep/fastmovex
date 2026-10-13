@@ -57,10 +57,10 @@ describe('Phase 20 — documents and privacy (real database)', () => {
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF', maxOrderMinor: null, maxOpenOrders: null, refusalLimit: 5, driverCashLimitMinor: null });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined as never);
-    s.admin = await login('admin@demo.jovia.test');
-    s.ops = await login('ops@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
-    s.finance2 = await login('finance2@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.ops = await login('ops@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
+    s.finance2 = await login('finance2@demo.fastmovex.test');
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({ title: `Docs Kettle ${run}`, titleAr: `غلاية ${run}`, categoryId: cat.id, variants: [{ sku: `DOC-${run}`, barcode: `629${run}`, priceMinor: '9000', initialStock: 200 }] }).expect(201);
     await api().post(`/api/v1/admin/products/${p.body.id}/images`).set(bearer(s.admin)).attach('file', PNG, 'p.png').expect(201);

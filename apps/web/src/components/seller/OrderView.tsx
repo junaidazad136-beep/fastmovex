@@ -24,7 +24,7 @@ import type { SellerOrderDetail } from './types';
  * the main button.
  */
 function nextSteps(o: SellerOrderDetail): { to: OrderStatus; key: 'start' | 'ready' | 'shipped' | 'out' | 'delivered' }[] {
-  const fleet = o.deliveryMethod === 'JOVIA' && !!o.delivery;
+  const fleet = o.deliveryMethod === 'FASTMOVEX' && !!o.delivery;
   switch (o.status) {
     case 'CONFIRMED': return [{ to: 'PREPARING', key: 'start' }];
     case 'PREPARING': return [{ to: 'READY_FOR_PICKUP', key: 'ready' }, { to: 'SHIPPED', key: 'shipped' }];

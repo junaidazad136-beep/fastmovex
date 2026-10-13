@@ -36,7 +36,7 @@ describe('Search SQL builder (injection safety + correctness)', () => {
   it('fallback mode: any word + trigram typo matching (all arms index-backed, no coalesce)', () => {
     const q = buildBaseQuery({ ...base, q: 'wirless chargr', matchMode: 'any' });
     expect(q.sql).toContain('<% p."title"');
-    expect(q.sql).toContain('jovia_search_norm(?) <% jovia_search_norm(p."titleAr")'); // Arabic letter forms normalised, expression index
+    expect(q.sql).toContain('fastmovex_search_norm(?) <% fastmovex_search_norm(p."titleAr")'); // Arabic letter forms normalised, expression index
     expect(q.sql).not.toMatch(/coalesce\(p\."titleAr"/);
     expect(q.values).toContain("'wirless' | 'chargr'");
   });

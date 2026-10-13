@@ -44,8 +44,8 @@ describe('Phase 24 — SEO content, brand pages, Google feed, better search (rea
     prisma = app.get(PrismaService);
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined as never);
     seoBefore = (await prisma.country.findUniqueOrThrow({ where: { code: 'QA' } })).seoSettings;
-    s.admin = await login('admin@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
   });
 
   afterAll(async () => {

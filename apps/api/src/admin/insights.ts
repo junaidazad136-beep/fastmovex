@@ -89,7 +89,7 @@ export class InsightsService {
         }),
       };
     });
-    const waiting = await this.prisma.deliveryOrder.count({ where: { method: 'JOVIA', courierUserId: null, status: 'CREATED' } });
+    const waiting = await this.prisma.deliveryOrder.count({ where: { method: 'FASTMOVEX', courierUserId: null, status: 'CREATED' } });
     return { at: now, drivers, waitingForDriver: waiting, warehouses };
   }
 

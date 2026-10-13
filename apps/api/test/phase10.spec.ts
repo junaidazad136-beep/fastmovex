@@ -62,7 +62,7 @@ describe('delivery rules', () => {
   it('maps shipment status to delivery status', () => {
     expect(deliveryStatusFor('READY_FOR_PICKUP', false)).toBe('CREATED');
     expect(deliveryStatusFor('SHIPPED', false)).toBe('IN_TRANSIT'); // seller delivers
-    expect(deliveryStatusFor('SHIPPED', true, 'JOVIA')).toBe('PICKED_UP'); // courier collected
+    expect(deliveryStatusFor('SHIPPED', true, 'FASTMOVEX')).toBe('PICKED_UP'); // courier collected
     expect(deliveryStatusFor('PREPARING', false)).toBeNull();
   });
   it('courier can only move forward', () => {
@@ -92,13 +92,13 @@ describe('DeliveryService', () => {
     };
     await make(prisma).sync('so');
     const data = create.mock.calls[0][0].data;
-    expect(data).toMatchObject({ method: 'JOVIA', providerCode: 'jovia_fleet', status: 'CREATED' });
+    expect(data).toMatchObject({ method: 'FASTMOVEX', providerCode: 'fastmovex_fleet', status: 'CREATED' });
     expect(data.deliveryCode).toMatch(/^\d{4}$/);
   });
 
   it('no-op when already in sync (no event loop with courier actions)', async () => {
     const update = jest.fn();
-    const prisma = { sellerOrder: { findUnique: jest.fn().mockResolvedValue({ id: 'so', status: 'OUT_FOR_DELIVERY', delivery: { id: 'd', status: 'OUT_FOR_DELIVERY', method: 'JOVIA' } }) }, deliveryOrder: { update } };
+    const prisma = { sellerOrder: { findUnique: jest.fn().mockResolvedValue({ id: 'so', status: 'OUT_FOR_DELIVERY', delivery: { id: 'd', status: 'OUT_FOR_DELIVERY', method: 'FASTMOVEX' } }) }, deliveryOrder: { update } };
     await make(prisma).sync('so');
     expect(update).not.toHaveBeenCalled();
   });
@@ -127,14 +127,14 @@ describe('DeliveryService', () => {
   });
 
   it('only active delivery agents can be assigned', async () => {
-    const prisma = { deliveryOrder: { findUnique: jest.fn().mockResolvedValue({ status: 'CREATED', method: 'JOVIA' }) }, user: { findFirst: jest.fn().mockResolvedValue(null) } };
+    const prisma = { deliveryOrder: { findUnique: jest.fn().mockResolvedValue({ status: 'CREATED', method: 'FASTMOVEX' }) }, user: { findFirst: jest.fn().mockResolvedValue(null) } };
     await expect(make(prisma).assign('d', 'random-user', 'admin')).rejects.toThrow('not an active delivery agent');
   });
 
   it('tracking: courier location only while out for delivery; code hidden after delivery', async () => {
     const shipment = (status: string) => ({
       status: 'X', seller: { store: { name: 'S' } },
-      delivery: { method: 'JOVIA', status, trackingUrl: null, etaAt: null, courierName: 'Ahmed Khan', lastLat: 25.3, lastLng: 51.5, deliveryCode: '4821', deliveredAt: null, events: [] },
+      delivery: { method: 'FASTMOVEX', status, trackingUrl: null, etaAt: null, courierName: 'Ahmed Khan', lastLat: 25.3, lastLng: 51.5, deliveryCode: '4821', deliveredAt: null, events: [] },
     });
     const prisma = { order: { findFirst: jest.fn().mockResolvedValue({ orderNumber: 'JV', status: 'SHIPPED', sellerOrders: [shipment('PICKED_UP'), shipment('OUT_FOR_DELIVERY'), shipment('DELIVERED')] }) } };
     const t = await make(prisma).tracking('u', 'JV');

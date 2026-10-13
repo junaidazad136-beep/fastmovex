@@ -55,7 +55,7 @@ describe('Dibsy card payments — real database, stand-in Dibsy API', () => {
         seen.push({ auth: req.headers.authorization, version: req.headers['dibsy-version'] as string });
         const send = (code: number, body: unknown) => { res.writeHead(code, { 'content-type': 'application/json' }); res.end(JSON.stringify(body)); };
         const url = req.url ?? '';
-        if (req.headers.authorization !== 'Bearer sk_test_jovia_integration_key') return send(401, { status: 401, details: 'bad key' });
+        if (req.headers.authorization !== 'Bearer sk_test_fmx_integration_key') return send(401, { status: 401, details: 'bad key' });
         if (req.method === 'POST' && url === '/v2/payments') {
           const b = JSON.parse(data) as { amount: FakePayment['amount']; metadata: Record<string, unknown> };
           const id = `pt_${randomBytes(6).toString('hex')}`;
@@ -74,9 +74,9 @@ describe('Dibsy card payments — real database, stand-in Dibsy API', () => {
       });
     });
     await new Promise<void>((r) => server.listen(0, '127.0.0.1', r));
-    process.env.DIBSY_SECRET_KEY = 'sk_test_jovia_integration_key';
+    process.env.DIBSY_SECRET_KEY = 'sk_test_fmx_integration_key';
     process.env.DIBSY_API_URL = `http://127.0.0.1:${(server.address() as AddressInfo).port}/v2`;
-    process.env.API_PUBLIC_URL = 'https://api.jovia.test';
+    process.env.API_PUBLIC_URL = 'https://api.fastmovex.test';
 
     // Imported only now, so the configuration is read with the Dibsy settings above.
     const { AppModule } = await import('../../src/app.module');
@@ -90,7 +90,7 @@ describe('Dibsy card payments — real database, stand-in Dibsy API', () => {
     prisma = app.get(PrismaService);
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
 
-    s.admin = await login('admin@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({
       title: `Dibsy Lamp ${run}`, titleAr: 'مصباح', categoryId: cat.id, variants: [{ sku: `DL-${run}`, priceMinor: '12950', initialStock: 50 }],
@@ -100,7 +100,7 @@ describe('Dibsy card payments — real database, stand-in Dibsy API', () => {
     await api().post(`/api/v1/admin/products/${s.product}/images`).set(bearer(s.admin)).attach('file', PNG, 'p.png').expect(201);
     await api().post(`/api/v1/admin/products/${s.product}/status`).set(bearer(s.admin)).send({ status: 'ACTIVE' }).expect(200);
 
-    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Card Buyer', email: `dibsy.${run.toLowerCase()}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201);
+    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Card Buyer', email: `dibsy.${run.toLowerCase()}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201);
     s.customer = reg.body.accessToken;
     s.address = (await api().post('/api/v1/addresses').set(bearer(s.customer)).send({ recipientName: 'Buyer', phone: '+97455500033', city: 'Doha', zone: '60', street: '800', building: '3' }).expect(201)).body.id;
   });
@@ -204,23 +204,23 @@ describe('Dibsy card payments — real database, stand-in Dibsy API', () => {
   });
 
   it('the payment page can only send the customer back to our website', async () => {
-    const count = await prisma.order.count({ where: { user: { email: `dibsy.${run.toLowerCase()}@jovia.test` } } });
+    const count = await prisma.order.count({ where: { user: { email: `dibsy.${run.toLowerCase()}@fastmovex.test` } } });
     const evil = await order(1, 'https://evil.example/steal');
     expect(evil.status).toBe(400);
     const none = await api().post('/api/v1/checkout').set(bearer(s.customer)).set('Idempotency-Key', `dib-${run}-none`).send({ addressId: s.address, paymentMethod: 'CARD' });
     expect(none.status).toBe(400);
-    expect(await prisma.order.count({ where: { user: { email: `dibsy.${run.toLowerCase()}@jovia.test` } } })).toBe(count);
+    expect(await prisma.order.count({ where: { user: { email: `dibsy.${run.toLowerCase()}@fastmovex.test` } } })).toBe(count);
   });
 
   it('finance refunds through Dibsy: the exact amount goes back and the ledger stays balanced', async () => {
     const o = await prisma.order.findUniqueOrThrow({ where: { orderNumber: s.order1 }, include: { sellerOrders: true } });
-    const finance = await login('finance@demo.jovia.test');
+    const finance = await login('finance@demo.fastmovex.test');
     const r = await api().post('/api/v1/admin/refunds').set(bearer(finance))
       .send({ orderNumber: s.order1, sellerOrderId: o.sellerOrders[0].id, amountMinor: '5000', reason: 'Goodwill refund for a late delivery' });
     expect([200, 201]).toContain(r.status);
     // four-eyes: the person who created the refund cannot approve it
     await api().post(`/api/v1/admin/refunds/${r.body.id}/approve`).set(bearer(finance)).expect(403);
-    const finance2 = await login('finance2@demo.jovia.test');
+    const finance2 = await login('finance2@demo.fastmovex.test');
     const approve = await api().post(`/api/v1/admin/refunds/${r.body.id}/approve`).set(bearer(finance2));
     expect(approve.status).toBe(200);
     expect(refunds.at(-1)).toEqual({ paymentId: s.ref1, body: { amount: '50.00', description: 'Goodwill refund for a late delivery' } });

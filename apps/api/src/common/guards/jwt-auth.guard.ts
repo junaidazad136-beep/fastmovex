@@ -24,7 +24,7 @@ export class JwtAuthGuard implements CanActivate {
     }
 
     try {
-      const payload = await this.jwt.verifyAsync<AccessTokenPayload>(token, { algorithms: ['HS256'], issuer: 'jovia-api' });
+      const payload = await this.jwt.verifyAsync<AccessTokenPayload>(token, { algorithms: ['HS256'], issuer: 'fastmovex-api' });
       if (payload.typ !== 'access' || !payload.sub) throw new Error('wrong token type');
       req.user = { id: payload.sub, roles: payload.roles ?? [], permissions: payload.perms ?? [], mfa: payload.mfa === true, sessionId: payload.sid };
       return true;

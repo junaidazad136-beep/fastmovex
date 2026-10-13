@@ -32,9 +32,9 @@ export function useUnreadCount() {
     load();
     const id = window.setInterval(load, 120_000);
     const onEvt = () => load();
-    window.addEventListener('jovia:notifications-changed', onEvt);
+    window.addEventListener('fmx:notifications-changed', onEvt);
     document.addEventListener('visibilitychange', onEvt);
-    return () => { stop = true; window.clearInterval(id); window.removeEventListener('jovia:notifications-changed', onEvt); document.removeEventListener('visibilitychange', onEvt); };
+    return () => { stop = true; window.clearInterval(id); window.removeEventListener('fmx:notifications-changed', onEvt); document.removeEventListener('visibilitychange', onEvt); };
   }, [status]);
   return unread;
 }

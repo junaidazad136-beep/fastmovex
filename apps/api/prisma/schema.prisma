@@ -208,7 +208,7 @@ enum FundedBy {
 enum CampaignType {
   FLASH_DEAL
   SEASONAL
-  JOVIA_EXCLUSIVE
+  FASTMOVEX_EXCLUSIVE
   PRICE_CAMPAIGN
 }
 
@@ -248,7 +248,7 @@ enum TicketPriority {
 
 enum DeliveryMethod {
   SELLER
-  JOVIA
+  FASTMOVEX
   THIRD_PARTY
   PICKUP
 }
@@ -1588,7 +1588,7 @@ model DeliveryOrder {
   sellerOrderId    String          @unique @db.Uuid
   sellerOrder      SellerOrder     @relation(fields: [sellerOrderId], references: [id], onDelete: Cascade)
   method           DeliveryMethod
-  providerCode     String // "seller", "jovia_fleet", or 3rd-party code
+  providerCode     String // "seller", "fastmovex_fleet", or 3rd-party code
   providerRef      String?
   status           DeliveryStatus  @default(CREATED)
   courierUserId    String?         @db.Uuid // DELIVERY_AGENT for FastMoveX fleet

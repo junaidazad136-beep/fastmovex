@@ -1,7 +1,7 @@
 export const LOCALES = ['en', 'ar'] as const;
 export type Locale = (typeof LOCALES)[number];
 export const DEFAULT_LOCALE: Locale = 'en';
-export const LOCALE_COOKIE = 'jovia_locale';
+export const LOCALE_COOKIE = 'fmx_locale';
 
 export function isLocale(v: string | undefined | null): v is Locale {
   return !!v && (LOCALES as readonly string[]).includes(v);

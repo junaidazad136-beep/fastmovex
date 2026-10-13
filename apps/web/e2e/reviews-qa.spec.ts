@@ -11,7 +11,7 @@ async function call<T>(token: string, method: string, path: string, body?: unkno
   return (text ? JSON.parse(text) : undefined) as T;
 }
 async function admin() {
-  const r = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }) });
+  const r = await fetch(`${API}/auth/login`, { method: 'POST', headers: { 'content-type': 'application/json', 'x-client-type': 'mobile' }, body: JSON.stringify({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }) });
   return ((await r.json()) as { accessToken: string }).accessToken;
 }
 

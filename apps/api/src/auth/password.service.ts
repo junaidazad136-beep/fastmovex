@@ -26,7 +26,7 @@ export class PasswordService {
 
   /** Run a real verify even when the user does not exist, so response time does not reveal valid accounts. */
   async burnTime(plain: string): Promise<void> {
-    this.dummyHash ??= this.hash('jovia-timing-equalizer-password-1');
+    this.dummyHash ??= this.hash('fmx-timing-equalizer-password-1');
     await this.verify(await this.dummyHash, plain);
   }
 }

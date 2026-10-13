@@ -30,8 +30,8 @@ export function AlertsBell() {
     };
     load();
     const id = setInterval(load, 60_000);
-    window.addEventListener('jovia:summary-stale', load);
-    return () => { stop = true; clearInterval(id); window.removeEventListener('jovia:summary-stale', load); };
+    window.addEventListener('fmx:summary-stale', load);
+    return () => { stop = true; clearInterval(id); window.removeEventListener('fmx:summary-stale', load); };
   }, []);
 
   useEffect(() => {

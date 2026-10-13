@@ -11,9 +11,9 @@ REST, JSON, versioned. **380 operations** across 62 groups.
 
 | Client | Login / register response | Refresh |
 |---|---|---|
-| **Web** (default) | `{ accessToken, expiresIn }` + `jovia_rt` refresh cookie (httpOnly, Secure in production, SameSite=Strict, path `/api/v1/auth`) | `POST /auth/refresh` with the cookie **and** header `X-Requested-With: jovia-web` (CSRF guard) |
+| **Web** (default) | `{ accessToken, expiresIn }` + `fmx_rt` refresh cookie (httpOnly, Secure in production, SameSite=Strict, path `/api/v1/auth`) | `POST /auth/refresh` with the cookie **and** header `X-Requested-With: fastmovex-web` (CSRF guard) |
 | **Mobile** (send `X-Client-Type: mobile`) | `{ accessToken, refreshToken, expiresIn }` — store the refresh token in the Keychain/Keystore | `POST /auth/refresh` with `{ "refreshToken": "…" }` |
-| **Admin panel** (send `X-Client-Type: admin`) | Staff and FastMoveX drivers (drivers only get the `/driver` page; every API call still checks permissions) — `403` for customers. `{ accessToken, expiresIn }` + its own `jovia_admin_rt` cookie, so the panel and the shop never replace each other's session | `POST /auth/refresh` with the cookie, `X-Client-Type: admin` and `X-Requested-With: jovia-web`; refused once the account has neither a staff permission nor the driver role |
+| **Admin panel** (send `X-Client-Type: admin`) | Staff and FastMoveX drivers (drivers only get the `/driver` page; every API call still checks permissions) — `403` for customers. `{ accessToken, expiresIn }` + its own `fmx_admin_rt` cookie, so the panel and the shop never replace each other's session | `POST /auth/refresh` with the cookie, `X-Client-Type: admin` and `X-Requested-With: fastmovex-web`; refused once the account has neither a staff permission nor the driver role |
 
 Send the access token as `Authorization: Bearer <token>` (15 minutes). Refresh tokens are single-use and rotate;
 reusing an old one revokes that whole login on every device. After `POST /seller/apply`, refresh once so the token
@@ -474,7 +474,7 @@ refusal at the door.
 
 `GET /admin/orders?slotDate=YYYY-MM-DD` lists the orders delivered in a window on that day.
 
-**Closing a FastMoveX-driver delivery** (`status: DELIVERED` on a shipment whose delivery `method` is `JOVIA`) needs the
+**Closing a FastMoveX-driver delivery** (`status: DELIVERED` on a shipment whose delivery `method` is `FASTMOVEX`) needs the
 customer's 4-digit code: `{ "status": "DELIVERED", "code": "4821" }` (wrong codes count towards the same 5-try lock as
 the driver's). Without the code, only staff with `delivery.override` may close it, with
 `{ "status": "DELIVERED", "overrideReason": "…at least 10 characters" }` — stored on the delivery (`overrideById`,

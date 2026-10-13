@@ -31,7 +31,7 @@ The API pins every connection to `TimeZone=UTC`; the migrations also set the dat
 | `JWT_ACCESS_TTL_SECONDS` | *opt* | `900` | Access-token lifetime (60–3600). Role changes apply at the next refresh. | `900` |
 | `REFRESH_TTL_DAYS` | *opt* | `30` | Refresh-token lifetime (1–90). Tokens rotate on every refresh. | `30` |
 | `CORS_ORIGINS` | *opt* | `http://localhost:3000` | Comma-separated browser origins allowed to call the API with credentials. | `https://fastmovex.qa,https://seller.fastmovex.qa,https://admin.fastmovex.qa` |
-| `COOKIE_DOMAIN` | *opt* | — | Domain of the refresh-token cookies (`jovia_rt` for the shop, `jovia_admin_rt` for the admin panel). | `.fastmovex.qa` |
+| `COOKIE_DOMAIN` | *opt* | — | Domain of the refresh-token cookies (`fmx_rt` for the shop, `fmx_admin_rt` for the admin panel). | `.fastmovex.qa` |
 | `STAFF_TWO_FACTOR` | *opt* | `required` in production, `optional` elsewhere | `required`: every staff account must use two-step sign-in (authenticator app) before using staff tools; `optional`: staff may turn it on. Customers, sellers and drivers are never asked. | leave unset (= `required`) |
 | `DEFAULT_COUNTRY` | *opt* | `QA` | Market used when a request has no `X-Country` header. Must be an active country. | `QA` |
 

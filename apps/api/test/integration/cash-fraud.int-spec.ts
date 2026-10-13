@@ -75,13 +75,13 @@ describe('Cash and fraud controls — real database', () => {
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF', maxOrderMinor: null, maxOpenOrders: null, refusalLimit: 2, driverCashLimitMinor: null });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockImplementation(async (_c, to, _t, body) => { sent.push({ to, body }); });
-    s.admin = await login('admin@demo.jovia.test');
-    s.ops = await login('ops@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
-    s.finance2 = await login('finance2@demo.jovia.test');
-    s.courier = await login('courier@demo.jovia.test');
-    s.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.jovia.test' } })).id;
-    s.adminId = (await prisma.user.findFirstOrThrow({ where: { email: 'admin@demo.jovia.test' } })).id;
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.ops = await login('ops@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
+    s.finance2 = await login('finance2@demo.fastmovex.test');
+    s.courier = await login('courier@demo.fastmovex.test');
+    s.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.fastmovex.test' } })).id;
+    s.adminId = (await prisma.user.findFirstOrThrow({ where: { email: 'admin@demo.fastmovex.test' } })).id;
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({ title: `Cash Teapot ${run}`, categoryId: cat.id, variants: [{ sku: `CASH-${run}`, priceMinor: '6000', initialStock: 200 }] }).expect(201);
     await api().post(`/api/v1/admin/products/${p.body.id}/images`).set(bearer(s.admin)).attach('file', PNG, 'p.png').expect(201);
@@ -104,7 +104,7 @@ describe('Cash and fraud controls — real database', () => {
     await onTheWay(d.delivery);
 
     const mine = (await api().get(`/api/v1/orders/${o.body.orderNumber}`).set(bearer(c.token)).expect(200)).body;
-    expect(mine.sellerOrders[0].delivery).toMatchObject({ method: 'JOVIA', status: 'OUT_FOR_DELIVERY', deliveryCode: d.code, courierName: 'Khalid' });
+    expect(mine.sellerOrders[0].delivery).toMatchObject({ method: 'FASTMOVEX', status: 'OUT_FOR_DELIVERY', deliveryCode: d.code, courierName: 'Khalid' });
 
     const staff = (await api().get(`/api/v1/admin/orders/${o.body.orderNumber}`).set(bearer(s.admin)).expect(200)).body;
     expect(JSON.stringify(staff)).not.toContain('"deliveryCode"');

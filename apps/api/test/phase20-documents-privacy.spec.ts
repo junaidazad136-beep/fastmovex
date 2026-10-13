@@ -40,7 +40,7 @@ describe('printed documents', () => {
     expect(isPdf(pdf)).toBe(true);
   });
   it('packing slips (one page each, cash to collect) and the picking list', async () => {
-    const slip = { orderNumber: 'FMX-1', shipmentNo: 'FMX-1', placedAt: new Date(), slot: { start: new Date(), end: new Date(Date.now() + 4 * 3_600_000) }, deliveryMethod: 'JOVIA', warehouse: 'Main', customer: { name: 'Noora', phone: '+974 5555 1234', address: ['Zone 66', 'Doha'] }, note: 'Ring twice', cash: { amountMinor: 17900n, currencyCode: 'QAR' }, items: [{ title: 'Lamp', sku: 'L-1', barcode: '629100', options: 'Black', quantity: 2, bin: 'A-02' }] };
+    const slip = { orderNumber: 'FMX-1', shipmentNo: 'FMX-1', placedAt: new Date(), slot: { start: new Date(), end: new Date(Date.now() + 4 * 3_600_000) }, deliveryMethod: 'FASTMOVEX', warehouse: 'Main', customer: { name: 'Noora', phone: '+974 5555 1234', address: ['Zone 66', 'Doha'] }, note: 'Ring twice', cash: { amountMinor: 17900n, currencyCode: 'QAR' }, items: [{ title: 'Lamp', sku: 'L-1', barcode: '629100', options: 'Black', quantity: 2, bin: 'A-02' }] };
     expect(isPdf(await renderPackingSlips([slip, { ...slip, shipmentNo: 'FMX-2', cash: null, slot: null }], 'Asia/Qatar'))).toBe(true);
     expect(isPdf(await renderPickList({ warehouse: 'Main', date: '2026-10-06', slotLabel: null, tz: 'Asia/Qatar', printedBy: 'Ops', shipments: 2, lines: [{ sku: 'L-1', barcode: null, title: 'Lamp', options: null, bin: 'A-02', quantity: 4, orders: [{ orderNumber: 'FMX-1', quantity: 2 }, { orderNumber: 'FMX-2', quantity: 2 }] }] }))).toBe(true);
     expect(isPdf(await renderPickList({ warehouse: 'Main', date: null, slotLabel: null, tz: 'Asia/Qatar', printedBy: 'Ops', shipments: 0, lines: [] }))).toBe(true);

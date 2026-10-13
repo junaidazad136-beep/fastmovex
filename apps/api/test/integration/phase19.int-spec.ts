@@ -16,7 +16,7 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 import { setCodRules } from './cod-helper';
 
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'Demo-Pass-2026';
-const SUPER = { email: process.env.SUPER_ADMIN_EMAIL || 'owner@jovia.test', password: process.env.SUPER_ADMIN_PASSWORD || 'Owner-Pass-2026' };
+const SUPER = { email: process.env.SUPER_ADMIN_EMAIL || 'owner@fastmovex.test', password: process.env.SUPER_ADMIN_PASSWORD || 'Owner-Pass-2026' };
 const run = randomBytes(3).toString('hex');
 const PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==', 'base64');
 const phone = () => `+9746${String(Math.floor(1_000_000 + Math.random() * 8_999_999))}`;
@@ -58,11 +58,11 @@ describe('Phase 19 — security, delivery proof, stock control, payments (real d
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF', maxOrderMinor: null, maxOpenOrders: null, refusalLimit: 5, driverCashLimitMinor: null });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined as never);
     s.super = await login(SUPER.email, SUPER.password);
-    s.admin = await login('admin@demo.jovia.test');
-    s.ops = await login('ops@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
-    s.courier = await login('courier@demo.jovia.test');
-    s.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.jovia.test' } })).id;
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.ops = await login('ops@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
+    s.courier = await login('courier@demo.fastmovex.test');
+    s.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.fastmovex.test' } })).id;
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const mk = async (title: string, sku: string, price: string, tracksExpiry = false) => {
       const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({ title, categoryId: cat.id, tracksExpiry, variants: [{ sku, priceMinor: price, costPriceMinor: price === '6000' ? '4000' : undefined, initialStock: 0 }] }).expect(201);

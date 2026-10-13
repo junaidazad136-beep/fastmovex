@@ -17,7 +17,7 @@ const LiveMap = dynamic(() => import('./LiveMap').then((m) => m.LiveMap), { ssr:
 interface Delivery {
   id: string;
   status: string;
-  method: 'JOVIA' | 'SELLER' | string;
+  method: 'FASTMOVEX' | 'SELLER' | string;
   courierUserId: string | null;
   courierName: string | null;
   attempts: number;
@@ -115,7 +115,7 @@ export function DeliveriesPage() {
             {!list.data && !list.error ? <SkeletonRows cols={6} /> : null}
             {list.data?.map((d) => {
               const a = d.sellerOrder.order.shippingAddress ?? {};
-              const fleet = d.method === 'JOVIA';
+              const fleet = d.method === 'FASTMOVEX';
               return (
                 <tr key={d.id} data-testid="delivery-row">
                   <td className="td"><Link href={`/orders/${d.sellerOrder.order.orderNumber}`} className="font-mono text-sm font-semibold hover:text-brand-700">{d.sellerOrder.order.orderNumber}</Link><p className="text-xs text-ink-500">{formatDateTime(d.createdAt)}</p></td>

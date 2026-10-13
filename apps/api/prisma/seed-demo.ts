@@ -4,7 +4,7 @@
  *   npm run db:seed         # base config first (countries, roles, categories)
  *   npm run db:seed:demo    # then this
  *
- * Refuses to run when NODE_ENV=production. Every demo account uses the @demo.jovia.test domain
+ * Refuses to run when NODE_ENV=production. Every demo account uses the @demo.fastmovex.test domain
  * (".test" is a reserved TLD, so these can never be real inboxes). Demo sellers use a fake IBAN.
  * Safe to run repeatedly: everything is upserted.
  */
@@ -38,7 +38,7 @@ if (process.env.NODE_ENV === 'production') {
 
 const prisma = new PrismaClient({ adapter: new PrismaPg({ ...poolTls(process.env.DATABASE_URL ?? '', process.env.DATABASE_CA_CERT), options: '-c TimeZone=UTC' }) });
 const PASSWORD = process.env.DEMO_PASSWORD || 'Demo-Pass-2026';
-const DOMAIN = 'demo.jovia.test';
+const DOMAIN = 'demo.fastmovex.test';
 const COUNTRY = 'QA';
 const CURRENCY = 'QAR';
 const DAY = 86_400_000;

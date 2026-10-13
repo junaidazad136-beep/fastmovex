@@ -53,7 +53,7 @@ export function Notifications() {
   const l = t.locale;
   const [items, setItems] = useState<Notification[] | null>(null);
   const [cursor, setCursor] = useState<string | null>(null);
-  const changed = () => window.dispatchEvent(new Event('jovia:notifications-changed'));
+  const changed = () => window.dispatchEvent(new Event('fmx:notifications-changed'));
 
   const load = useCallback(async (after: string | null) => {
     const page = await api<Paged<Notification>>(`/me/notifications${after ? `?cursor=${encodeURIComponent(after)}` : ''}`);

@@ -66,14 +66,14 @@ describe('Phase 21 — insights, notes and staff alerts (real database)', () => 
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF', maxOrderMinor: null, maxOpenOrders: null, refusalLimit: 5, driverCashLimitMinor: null });
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined as never);
-    s.admin = await login('admin@demo.jovia.test');
-    s.ops = await login('ops@demo.jovia.test');
-    s.finance = await login('finance@demo.jovia.test');
-    s.courier = await login('courier@demo.jovia.test');
-    s.adminId = await idOf('admin@demo.jovia.test');
-    s.opsId = await idOf('ops@demo.jovia.test');
-    s.financeId = await idOf('finance@demo.jovia.test');
-    s.courierId = await idOf('courier@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.ops = await login('ops@demo.fastmovex.test');
+    s.finance = await login('finance@demo.fastmovex.test');
+    s.courier = await login('courier@demo.fastmovex.test');
+    s.adminId = await idOf('admin@demo.fastmovex.test');
+    s.opsId = await idOf('ops@demo.fastmovex.test');
+    s.financeId = await idOf('finance@demo.fastmovex.test');
+    s.courierId = await idOf('courier@demo.fastmovex.test');
     s.category = (await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } })).id;
     // start every staff member on the default alert choices
     await prisma.user.updateMany({ where: { id: { in: [s.adminId, s.opsId, s.financeId] } }, data: { alertPrefs: {} } });

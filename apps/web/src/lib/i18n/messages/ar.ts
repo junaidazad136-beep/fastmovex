@@ -275,7 +275,7 @@ const ar: Localized<Messages> = {
     new_arrivals: 'وصل حديثاً',
     recently_viewed: 'شاهدتها مؤخراً',
     recommended: 'مقترحات لك',
-    jovia_exclusive: 'حصرياً على فاست موف إكس',
+    fastmovex_exclusive: 'حصرياً على فاست موف إكس',
     endsIn: 'ينتهي خلال',
     promo: 'عرض ترويجي',
     valueDelivery: 'توصيل في قطر',
@@ -451,7 +451,7 @@ const ar: Localized<Messages> = {
     shipmentFrom: 'شحنة من {store}',
     deliveredBy: {
       SELLER: 'يوصلها البائع',
-      JOVIA: 'توصيل فاست موف إكس',
+      FASTMOVEX: 'توصيل فاست موف إكس',
       THIRD_PARTY: 'يوصلها شريك شحن',
       PICKUP: 'استلام من المتجر',
     },

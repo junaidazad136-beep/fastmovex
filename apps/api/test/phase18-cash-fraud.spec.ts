@@ -58,7 +58,7 @@ describe('COD checks at checkout', () => {
 });
 
 describe('who sees the delivery code', () => {
-  const d = { method: 'JOVIA', status: 'OUT_FOR_DELIVERY', trackingUrl: null, etaAt: null, courierName: 'Khalid Al Marri', deliveryCode: '4821', lastLat: 25.3, lastLng: 51.5 };
+  const d = { method: 'FASTMOVEX', status: 'OUT_FOR_DELIVERY', trackingUrl: null, etaAt: null, courierName: 'Khalid Al Marri', deliveryCode: '4821', lastLat: 25.3, lastLng: 51.5 };
   it('the customer: the code until delivered, the driver’s first name, and where the driver is while on the way', () => {
     expect(customerDelivery(d)).toMatchObject({ deliveryCode: '4821', courierName: 'Khalid', location: { lat: 25.3, lng: 51.5, mapUrl: expect.stringContaining('25.3,51.5') } });
     expect(customerDelivery({ ...d, status: 'DELIVERED' })).toMatchObject({ deliveryCode: null, location: null });

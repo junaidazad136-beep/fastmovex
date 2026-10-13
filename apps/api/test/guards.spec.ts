@@ -9,7 +9,7 @@ import { SellerGuard } from '../src/common/guards/seller.guard';
 import { assertOwnedBy } from '../src/common/utils/ownership';
 import { fakeContext, fakeReflector } from './helpers';
 
-const jwt = new JwtService({ secret: 's'.repeat(40), signOptions: { issuer: 'jovia-api' } });
+const jwt = new JwtService({ secret: 's'.repeat(40), signOptions: { issuer: 'fastmovex-api' } });
 
 describe('JwtAuthGuard', () => {
   it('protected route without token -> 401', async () => {
@@ -30,7 +30,7 @@ describe('JwtAuthGuard', () => {
   });
 
   it('token signed with another secret -> 401', async () => {
-    const forged = await new JwtService({ secret: 'z'.repeat(40) }).signAsync({ sub: 'u1', roles: ['SUPER_ADMIN'], perms: [], typ: 'access' }, { issuer: 'jovia-api' });
+    const forged = await new JwtService({ secret: 'z'.repeat(40) }).signAsync({ sub: 'u1', roles: ['SUPER_ADMIN'], perms: [], typ: 'access' }, { issuer: 'fastmovex-api' });
     const g = new JwtAuthGuard(jwt, fakeReflector({}));
     await expect(g.canActivate(fakeContext({ headers: { authorization: `Bearer ${forged}` } }))).rejects.toBeInstanceOf(UnauthorizedException);
   });

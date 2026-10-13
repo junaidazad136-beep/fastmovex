@@ -54,7 +54,7 @@ describe('Guest checkout, content and home layout — real database', () => {
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockImplementation(async (_channel, to, _title, body) => {
       sent.push({ to, body });
     });
-    s.admin = await login('admin@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
     await prisma.country.update({ where: { code: 'QA' }, data: { guestCheckout: true } });
 
     // a product in FastMoveX's own store, with 5 in stock
@@ -141,7 +141,7 @@ describe('Guest checkout, content and home layout — real database', () => {
   it('an email that belongs to an account must sign in instead', async () => {
     const token = await guestCart();
     const res = await api().post('/api/v1/checkout/guest').set('x-cart-token', token)
-      .send(order({ contact: { fullName: 'Someone', email: 'customer@demo.jovia.test', phone: phone() } }));
+      .send(order({ contact: { fullName: 'Someone', email: 'customer@demo.fastmovex.test', phone: phone() } }));
     expect(res.status).toBe(409);
     expect(res.body.reason).toBe('ACCOUNT_EXISTS');
   });
@@ -214,7 +214,7 @@ describe('Guest checkout, content and home layout — real database', () => {
     const dup = await api().post('/api/v1/admin/pages').set(bearer(s.admin)).send({ slug, title: 'X page', titleAr: 'X page', body: 'x', bodyAr: 'x' });
     expect(dup.status).toBe(409);
     // support staff cannot edit pages
-    const support = await login('support@demo.jovia.test');
+    const support = await login('support@demo.fastmovex.test');
     await api().post('/api/v1/admin/pages').set(bearer(support)).send({ slug: `x-${run}`, title: 'X page', titleAr: 'X page', body: 'x', bodyAr: 'x' }).expect(403);
 
     await api().delete(`/api/v1/admin/pages/${s.page}`).set(bearer(s.admin)).expect((r) => expect([200, 204]).toContain(r.status));
@@ -228,7 +228,7 @@ describe('Guest checkout, content and home layout — real database', () => {
     await api().post('/api/v1/contact').send({ name: 'Ali', email: 'nope', message: 'hi' }).expect(400);
     expect(await prisma.contactMessage.count({ where: { email: `bot.${run}@example.com` } })).toBe(0);
 
-    const support = await login('support@demo.jovia.test');
+    const support = await login('support@demo.fastmovex.test');
     const list = await api().get('/api/v1/admin/contact-messages').query({ status: 'NEW' }).set(bearer(support)).expect(200);
     const msg = list.body.items.find((m: { email: string }) => m.email === who);
     expect(msg).toBeTruthy();
@@ -269,7 +269,7 @@ describe('Guest checkout, content and home layout — real database', () => {
     await api().put('/api/v1/admin/home-sections').set(bearer(s.admin)).send({ countryCode: 'QA', sections: [{ key: 'collection', config: { source: 'tag' } }] }).expect(400);
     await api().put('/api/v1/admin/home-sections').set(bearer(s.admin)).send({ countryCode: 'QA', sections: [{ key: 'nonsense' }] }).expect(400);
     // support staff cannot change the home page
-    const support = await login('support@demo.jovia.test');
+    const support = await login('support@demo.fastmovex.test');
     await api().put('/api/v1/admin/home-sections').set(bearer(support)).send({ countryCode: 'QA', sections }).expect(403);
 
     await api().post('/api/v1/admin/home-sections/reset').set(bearer(s.admin)).send({ countryCode: 'QA' }).expect((r) => expect([200, 201, 204]).toContain(r.status));

@@ -17,12 +17,12 @@ import {
 import { IssuedTokens } from './token.service';
 import { SocialAuthService } from './social-auth';
 
-export const REFRESH_COOKIE = 'jovia_rt';
+export const REFRESH_COOKIE = 'fmx_rt';
 /** The admin panel keeps its own session cookie, so signing in to the shop never replaces a staff session (or the reverse). */
-export const ADMIN_REFRESH_COOKIE = 'jovia_admin_rt';
+export const ADMIN_REFRESH_COOKIE = 'fmx_admin_rt';
 const REFRESH_COOKIE_PATH = '/api/v1/auth';
 export const WEB_CSRF_HEADER = 'x-requested-with';
-export const WEB_CSRF_VALUE = 'jovia-web';
+export const WEB_CSRF_VALUE = 'fastmovex-web';
 
 function cookieName(req: Request): string {
   return isAdminClient(req) ? ADMIN_REFRESH_COOKIE : REFRESH_COOKIE;

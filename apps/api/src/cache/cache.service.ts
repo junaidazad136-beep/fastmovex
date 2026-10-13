@@ -47,7 +47,7 @@ export class RedisCacheService extends CacheService implements OnModuleDestroy {
   /** Cache must never take the site down: Redis errors degrade to cache-miss. */
   async get<T>(key: string) {
     try {
-      const raw = await this.redis.get(`jovia:${key}`);
+      const raw = await this.redis.get(`fmx:${key}`);
       return raw ? (JSON.parse(raw) as T) : undefined;
     } catch (e) {
       this.logger.warn(`get failed: ${(e as Error).message}`);
@@ -55,11 +55,11 @@ export class RedisCacheService extends CacheService implements OnModuleDestroy {
     }
   }
   async set(key: string, value: unknown, ttl: number) {
-    try { await this.redis.set(`jovia:${key}`, serialize(value), 'EX', ttl); } catch (e) { this.logger.warn(`set failed: ${(e as Error).message}`); }
+    try { await this.redis.set(`fmx:${key}`, serialize(value), 'EX', ttl); } catch (e) { this.logger.warn(`set failed: ${(e as Error).message}`); }
   }
   async del(...keys: string[]) {
     if (!keys.length) return;
-    try { await this.redis.del(...keys.map((k) => `jovia:${k}`)); } catch (e) { this.logger.warn(`del failed: ${(e as Error).message}`); }
+    try { await this.redis.del(...keys.map((k) => `fmx:${k}`)); } catch (e) { this.logger.warn(`del failed: ${(e as Error).message}`); }
   }
   async onModuleDestroy() {
     await this.redis.quit().catch(() => undefined);

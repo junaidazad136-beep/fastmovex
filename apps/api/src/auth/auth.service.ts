@@ -171,7 +171,7 @@ export class AuthService {
     const client = opts.client ?? 'web';
     let sub: string;
     try {
-      const p = await this.jwt!.verifyAsync<{ sub: string; typ: string; cli: string }>(dto.challenge, { algorithms: ['HS256'], issuer: 'jovia-api' });
+      const p = await this.jwt!.verifyAsync<{ sub: string; typ: string; cli: string }>(dto.challenge, { algorithms: ['HS256'], issuer: 'fastmovex-api' });
       if (p.typ !== 'mfa' || p.cli !== client) throw new Error('wrong challenge');
       sub = p.sub;
     } catch {

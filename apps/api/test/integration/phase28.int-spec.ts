@@ -40,7 +40,7 @@ describe('Phase 28 — Buy Now and bought together (real database)', () => {
     token = reg.body.accessToken;
     address = (await api().post('/api/v1/addresses').set(bearer(token)).send({ recipientName: 'Buy Now Test', phone: `+9746${String(1_000_000 + Math.floor(Math.random() * 8_999_999))}`, countryCode: 'QA', city: 'Doha', zone: '31', street: '230', building: '7', isDefault: true }).expect(201)).body.id;
     // two new products nobody has ordered yet, so "bought together" depends on this test only
-    const admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.jovia.test', password: process.env.DEMO_PASSWORD || 'Demo-Pass-2026' }).expect(200)).body.accessToken as string;
+    const admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: process.env.DEMO_PASSWORD || 'Demo-Pass-2026' }).expect(200)).body.accessToken as string;
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const make = async (name: string, price: string): Promise<Card> => {
       const p = await api().post('/api/v1/admin/products').set(bearer(admin)).send({ title: `${name} ${run}`, categoryId: cat.id, variants: [{ sku: `P28-${name.slice(0, 3).toUpperCase()}-${run}`, priceMinor: price, initialStock: 50 }] }).expect(201);

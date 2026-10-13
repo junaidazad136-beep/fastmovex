@@ -39,7 +39,7 @@ describe('Search — real database', () => {
     prisma = app.get(PrismaService);
     insights = app.get(SearchInsights);
     original = (await prisma.country.findUniqueOrThrow({ where: { code: 'QA' } })).searchSettings;
-    s.admin = await (async () => (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.jovia.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken as string)();
+    s.admin = await (async () => (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD }).expect(200)).body.accessToken as string)();
 
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({
@@ -135,7 +135,7 @@ describe('Search — real database', () => {
     expect(report.top.find((x: { query: string }) => x.query === `zorvex ${tag}`)).toMatchObject({ searches: 44, visitors: 43, hidden: true });
     expect(report.settings.synonyms[0]).toContain(`glimmer${tag}`);
     // staff without the analytics permission cannot read it
-    const buyer = (await api().post('/api/v1/auth/register').send({ fullName: 'Search Buyer', email: `search.${tag}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201)).body.accessToken;
+    const buyer = (await api().post('/api/v1/auth/register').send({ fullName: 'Search Buyer', email: `search.${tag}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201)).body.accessToken;
     await api().get('/api/v1/admin/search/report').set(bearer(buyer)).expect(403);
   });
 });

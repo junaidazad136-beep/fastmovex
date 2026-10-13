@@ -31,7 +31,7 @@ describe('Phase 24 — search engine settings', () => {
   it('takes the code out of a pasted meta tag; social links must be the network’s own https page', () => {
     const s = parseSeoSettings({ googleVerification: '<meta name="google-site-verification" content="AbC_123-xyz" />', bingVerification: '1234567890ABCDEF', social: { instagram: 'https://www.instagram.com/fastmovex.qa', x: 'https://twitter.com/fastmovex' } });
     expect(s).toEqual({ googleVerification: 'AbC_123-xyz', bingVerification: '1234567890ABCDEF', social: { instagram: 'https://www.instagram.com/fastmovex.qa', x: 'https://twitter.com/fastmovex' }, merchantFeed: true });
-    expect(() => parseSeoSettings({ social: { instagram: 'https://evil.example/jovia' } })).toThrow(BadRequestException);
+    expect(() => parseSeoSettings({ social: { instagram: 'https://evil.example/fmx' } })).toThrow(BadRequestException);
     expect(() => parseSeoSettings({ social: { facebook: 'javascript:alert(1)' } })).toThrow(BadRequestException);
     expect(() => parseSeoSettings({ googleVerification: '"><script>' })).toThrow(BadRequestException);
     // stored values are read leniently (a bad old value is dropped, never an error on the shop)
@@ -66,7 +66,7 @@ describe('Hosted database TLS (free test deploy)', () => {
     expect(normalizePem('not a pem')).toBe('not a pem');
   });
   it('without it the URL is used as it is (local Postgres)', () => {
-    expect(poolTls('postgresql://jovia:x@localhost:5432/jovia', undefined)).toEqual({ connectionString: 'postgresql://jovia:x@localhost:5432/jovia' });
-    expect(poolTls('postgresql://jovia:x@localhost:5432/jovia', '  ')).toEqual({ connectionString: 'postgresql://jovia:x@localhost:5432/jovia' });
+    expect(poolTls('postgresql://fastmovex:x@localhost:5432/fastmovex', undefined)).toEqual({ connectionString: 'postgresql://fastmovex:x@localhost:5432/fastmovex' });
+    expect(poolTls('postgresql://fastmovex:x@localhost:5432/fastmovex', '  ')).toEqual({ connectionString: 'postgresql://fastmovex:x@localhost:5432/fastmovex' });
   });
 });

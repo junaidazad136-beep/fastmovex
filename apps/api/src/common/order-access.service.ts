@@ -12,7 +12,7 @@ export class OrderAccessService {
   constructor(private readonly config: ConfigService<Env, true>) {}
 
   private key(): Buffer {
-    return createHmac('sha256', this.config.get('JWT_ACCESS_SECRET', { infer: true })).update('jovia:order-access:v1').digest();
+    return createHmac('sha256', this.config.get('JWT_ACCESS_SECRET', { infer: true })).update('fmx:order-access:v1').digest();
   }
 
   sign(orderId: string): string {

@@ -40,9 +40,9 @@ describe('Admin dashboard API — real database', () => {
     await app.init();
     prisma = app.get(PrismaService);
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
-    t.admin = await login('admin@demo.jovia.test');
-    t.support = await login('support@demo.jovia.test');
-    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Admin Flow Buyer', email: `adminflow.${run.toLowerCase()}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201);
+    t.admin = await login('admin@demo.fastmovex.test');
+    t.support = await login('support@demo.fastmovex.test');
+    const reg = await api().post('/api/v1/auth/register').send({ fullName: 'Admin Flow Buyer', email: `adminflow.${run.toLowerCase()}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201);
     t.customer = reg.body.accessToken;
     t.address = (await api().post('/api/v1/addresses').set(bearer(t.customer)).send({ recipientName: 'Buyer', phone: '+97455500022', city: 'Doha', zone: '60', street: '800', building: '3' }).expect(201)).body.id;
   });
@@ -136,22 +136,22 @@ describe('Admin dashboard API — real database', () => {
   it('admin panel sessions: staff only, in their own cookie, never mixed with the shop session', async () => {
     const asPanel = (identifier: string, password: string) =>
       api().post('/api/v1/auth/login').set('X-Client-Type', 'admin').send({ identifier, password });
-    const denied = await asPanel(`adminflow.${run.toLowerCase()}@jovia.test`, 'Buyer-Pass-123');
+    const denied = await asPanel(`adminflow.${run.toLowerCase()}@fastmovex.test`, 'Buyer-Pass-123');
     expect(denied.status).toBe(403);
     expect(denied.headers['set-cookie']).toBeUndefined();
 
-    const ok = await asPanel('admin@demo.jovia.test', DEMO_PASSWORD);
+    const ok = await asPanel('admin@demo.fastmovex.test', DEMO_PASSWORD);
     expect(ok.status).toBe(200);
     const cookie = String(ok.headers['set-cookie']);
-    expect(cookie).toMatch(/^jovia_admin_rt=/);
+    expect(cookie).toMatch(/^fmx_admin_rt=/);
     expect(cookie).toMatch(/HttpOnly/i);
     const pair = cookie.split(';')[0];
 
     // The shop's refresh endpoint ignores the admin cookie; the panel's refresh accepts it.
-    await api().post('/api/v1/auth/refresh').set('Cookie', pair).set('x-requested-with', 'jovia-web').send({}).expect(401);
-    const refreshed = await api().post('/api/v1/auth/refresh').set('Cookie', pair).set('X-Client-Type', 'admin').set('x-requested-with', 'jovia-web').send({});
+    await api().post('/api/v1/auth/refresh').set('Cookie', pair).set('x-requested-with', 'fastmovex-web').send({}).expect(401);
+    const refreshed = await api().post('/api/v1/auth/refresh').set('Cookie', pair).set('X-Client-Type', 'admin').set('x-requested-with', 'fastmovex-web').send({});
     expect(refreshed.status).toBe(200);
-    expect(String(refreshed.headers['set-cookie'])).toMatch(/^jovia_admin_rt=/);
+    expect(String(refreshed.headers['set-cookie'])).toMatch(/^fmx_admin_rt=/);
   });
 
   it('the audit log names who made each change', async () => {

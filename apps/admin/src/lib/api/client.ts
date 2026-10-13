@@ -3,7 +3,7 @@
  *
  * Session model:
  * - the API is told this is the admin panel ("X-Client-Type: admin"): only staff accounts can sign in, and the
- *   refresh token lives in its own httpOnly cookie (jovia_admin_rt), separate from the shop's customer session;
+ *   refresh token lives in its own httpOnly cookie (fmx_admin_rt), separate from the shop's customer session;
  * - the short-lived access token (15 min) lives only in memory;
  * - refreshing is serialized across tabs with the Web Locks API and the new token is shared over a BroadcastChannel,
  *   so two tabs never present the same single-use refresh token at the same time.
@@ -17,10 +17,10 @@ let accessToken: string | null = null;
 let expiresAt = 0;
 let refreshInFlight: Promise<boolean> | null = null;
 
-const SESSION_HINT_KEY = 'jovia_admin_session';
-const REFRESH_LOCK = 'jovia-admin-auth-refresh';
+const SESSION_HINT_KEY = 'fmx_admin_session';
+const REFRESH_LOCK = 'fastmovex-admin-auth-refresh';
 const EARLY_REFRESH_MS = 60_000;
-const CLIENT_HEADERS = { 'x-client-type': 'admin', 'x-requested-with': 'jovia-web' } as const;
+const CLIENT_HEADERS = { 'x-client-type': 'admin', 'x-requested-with': 'fastmovex-web' } as const;
 
 type AuthListener = (signedIn: boolean) => void;
 const listeners = new Set<AuthListener>();
@@ -29,7 +29,7 @@ let channel: BroadcastChannel | null = null;
 function getChannel(): BroadcastChannel | null {
   if (typeof window === 'undefined' || typeof BroadcastChannel === 'undefined') return null;
   if (!channel) {
-    channel = new BroadcastChannel('jovia-admin-auth');
+    channel = new BroadcastChannel('fastmovex-admin-auth');
     channel.onmessage = (e: MessageEvent<{ type: 'token'; token: string; expiresAt: number } | { type: 'signed-out' }>) => {
       if (e.data.type === 'token') {
         accessToken = e.data.token;

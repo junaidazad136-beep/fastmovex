@@ -91,7 +91,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
   // ---------------------------------------------------------------- accounts
 
   it('1. customer registers, verifies email, forgets and resets password', async () => {
-    const email = `flow.customer.${run}@jovia.test`;
+    const email = `flow.customer.${run}@fastmovex.test`;
     const t = await register(email);
     s.customer = t.accessToken;
 
@@ -120,7 +120,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
 
   it('2. unknown accounts get the same forgot-password answer and no code', async () => {
     sent.length = 0;
-    const res = await api().post('/api/v1/auth/password/forgot').send({ identifier: `nobody.${run}@jovia.test` }).expect(202);
+    const res = await api().post('/api/v1/auth/password/forgot').send({ identifier: `nobody.${run}@fastmovex.test` }).expect(202);
     expect(res.body.message).toContain('If an account exists');
     await new Promise((r) => setTimeout(r, 300));
     expect(sent).toHaveLength(0);
@@ -129,7 +129,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
   // ------------------------------------------------------------ seller onboarding
 
   it('3. a new seller applies, uploads documents and bank details, and is approved by admin', async () => {
-    const email = `flow.seller.${run}@jovia.test`;
+    const email = `flow.seller.${run}@fastmovex.test`;
     const t = await register(email, 'Seller-Pass-123');
     const apply = await api().post('/api/v1/seller/apply').set(bearer(t.accessToken))
       .send({ businessName: `Flow Traders ${run} WLL`, storeName: `Flow Store ${run}`, contactEmail: email, contactPhone: phone(), commercialRegNo: `CR-${run}` }).expect(201);
@@ -158,7 +158,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
     const submit = await api().post('/api/v1/seller/me/submit').set(bearer(s.seller)).expect(200);
     expect(submit.body.status).toBe('UNDER_REVIEW');
 
-    s.admin = (await login('admin@demo.jovia.test')).accessToken;
+    s.admin = (await login('admin@demo.fastmovex.test')).accessToken;
     const detail = await api().get(`/api/v1/admin/sellers/${s.sellerId}`).set(bearer(s.admin)).expect(200);
     await api().post(`/api/v1/admin/sellers/${s.sellerId}/approve`).set(bearer(s.admin)).expect(400); // document not approved yet
     await api().patch(`/api/v1/admin/sellers/documents/${detail.body.documents[0].id}`).set(bearer(s.admin)).send({ status: 'APPROVED' }).expect(200);
@@ -240,7 +240,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
 
     const again = await api().post('/api/v1/checkout').set(bearer(s.customer)).set('Idempotency-Key', key).send({ addressId: address.body.id, paymentMethod: 'CARD' });
     expect(again.body).toMatchObject({ orderNumber: s.orderNumber, reused: true }); // double tap = same order
-    expect(await prisma.order.count({ where: { user: { email: `flow.customer.${run}@jovia.test` } } })).toBe(1);
+    expect(await prisma.order.count({ where: { user: { email: `flow.customer.${run}@fastmovex.test` } } })).toBe(1);
 
     const order = await api().get(`/api/v1/orders/${s.orderNumber}`).set(bearer(s.customer)).expect(200);
     expect(order.body.sellerOrders).toHaveLength(2);
@@ -276,12 +276,12 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
   });
 
   it('8. sellers cannot see each other’s orders; customers cannot use admin routes', async () => {
-    const gadgets = (await login('seller.gadgets@demo.jovia.test')).accessToken;
+    const gadgets = (await login('seller.gadgets@demo.fastmovex.test')).accessToken;
     s.gadgets = gadgets;
     await api().get(`/api/v1/seller/orders/${s.myShipment}`).set(bearer(gadgets)).expect(404);
     await api().post(`/api/v1/seller/orders/${s.myShipment}/status`).set(bearer(gadgets)).send({ status: 'DELIVERED' }).expect(404);
     await api().get('/api/v1/admin/orders').set(bearer(s.customer)).expect(403);
-    const stranger = await register(`flow.stranger.${run}@jovia.test`);
+    const stranger = await register(`flow.stranger.${run}@fastmovex.test`);
     await api().get(`/api/v1/orders/${s.orderNumber}`).set(bearer(stranger.accessToken)).expect(404);
   });
 
@@ -289,7 +289,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
     await api().post(`/api/v1/seller/orders/${s.gadgetsShipment}/status`).set(bearer(s.gadgets)).send({ status: 'PREPARING' }).expect(200);
     await api().post(`/api/v1/seller/orders/${s.gadgetsShipment}/status`).set(bearer(s.gadgets)).send({ status: 'READY_FOR_PICKUP' }).expect(200);
 
-    const ops = (await login('ops@demo.jovia.test')).accessToken;
+    const ops = (await login('ops@demo.fastmovex.test')).accessToken;
     const job = await until(async () => {
       const list = await api().get('/api/v1/admin/deliveries').query({ unassigned: 'true' }).set(bearer(ops));
       return list.body.find((d: { sellerOrderId: string }) => d.sellerOrderId === s.gadgetsShipment);
@@ -298,13 +298,13 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
     const courierId = couriers.body.find((c: { fullName: string }) => c.fullName === 'Khalid Courier').id;
     await api().post(`/api/v1/admin/deliveries/${job.id}/assign`).set(bearer(ops)).send({ courierUserId: courierId }).expect(200);
 
-    const courier = (await login('courier@demo.jovia.test')).accessToken;
+    const courier = (await login('courier@demo.fastmovex.test')).accessToken;
     await api().get('/api/v1/courier/jobs').set(bearer(s.customer)).expect(403);
     await api().post(`/api/v1/courier/jobs/${job.id}/pickup`).set(bearer(courier)).expect(200);
     await api().post(`/api/v1/courier/jobs/${job.id}/out-for-delivery`).set(bearer(courier)).expect(200);
 
     const tracking = await api().get(`/api/v1/orders/${s.orderNumber}/tracking`).set(bearer(s.customer)).expect(200);
-    const shipment = tracking.body.shipments.find((x: { delivery: { method: string } | null }) => x.delivery?.method === 'JOVIA');
+    const shipment = tracking.body.shipments.find((x: { delivery: { method: string } | null }) => x.delivery?.method === 'FASTMOVEX');
     expect(shipment.delivery.courier).toBe('Khalid');
     const code: string = shipment.delivery.deliveryCode;
     const wrong = code === '0000' ? '1111' : '0000';
@@ -326,7 +326,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
     await api().post(`/api/v1/seller/returns/${ret.body.id}/decision`).set(bearer(s.gadgets)).send({ decision: 'APPROVED' }).expect(200);
     await api().post(`/api/v1/seller/returns/${ret.body.id}/received`).set(bearer(s.gadgets)).expect(200);
 
-    const finance = (await login('finance@demo.jovia.test')).accessToken;
+    const finance = (await login('finance@demo.fastmovex.test')).accessToken;
     s.finance = finance;
     const refunds = await api().get('/api/v1/admin/refunds').query({ status: 'PENDING' }).set(bearer(finance)).expect(200);
     const refund = refunds.body.items.find((r: { order: { orderNumber: string } }) => r.order.orderNumber === s.orderNumber);
@@ -358,7 +358,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
     await api().post(`/api/v1/admin/payouts/${payout.body.id}/approve`).set(bearer(s.finance)).expect(200);
     await api().post(`/api/v1/admin/payouts/${payout.body.id}/mark-paid`).set(bearer(s.finance)).send({ reference: `TRF-${run}` }).expect(403); // four-eyes
     await api().post(`/api/v1/admin/payouts/${payout.body.id}/mark-paid`).set(bearer(s.admin)).send({ reference: `TRF-${run}` }).expect(403); // ADMIN lacks payouts.mark_paid
-    const finance2 = (await login('finance2@demo.jovia.test')).accessToken;
+    const finance2 = (await login('finance2@demo.fastmovex.test')).accessToken;
     await api().post(`/api/v1/admin/payouts/${payout.body.id}/mark-paid`).set(bearer(finance2)).send({ reference: `TRF-${run}` }).expect(200);
 
     const final = await api().get('/api/v1/seller/finance/balance').set(bearer(s.seller)).expect(200);

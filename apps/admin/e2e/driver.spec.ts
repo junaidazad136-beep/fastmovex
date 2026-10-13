@@ -1,7 +1,7 @@
 import { devices, expect, test } from '@playwright/test';
 import { DEMO_PASSWORD, fleetOrder, signIn } from './helpers';
 
-const COURIER = 'courier@demo.jovia.test';
+const COURIER = 'courier@demo.fastmovex.test';
 
 test('staff give a job to a driver; on the phone the driver picks it up, delivers it with the customer’s code', async ({ browser }) => {
   const { orderNumber, code: customerCode } = await fleetOrder();

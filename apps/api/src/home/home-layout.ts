@@ -10,7 +10,7 @@ export const BUILTIN_SECTIONS: { key: string; label: string; description: string
   { key: 'recommended', label: 'Recommended for you', description: 'Based on what this shopper browses', personal: true },
   { key: 'sponsored', label: 'Sponsored', description: 'Products promoted with a sponsored period' },
   { key: 'trending', label: 'Trending now', description: 'Most bought and viewed in the last 60 days' },
-  { key: 'jovia_exclusive', label: 'FastMoveX exclusives', description: 'Products in live "FastMoveX exclusive" campaigns' },
+  { key: 'fastmovex_exclusive', label: 'FastMoveX exclusives', description: 'Products in live "FastMoveX exclusive" campaigns' },
   { key: 'nearby_sellers', label: 'Stores near you', description: 'When the app shares its location', personal: true },
   { key: 'best_sellers', label: 'Best sellers', description: 'Most sold, in stock' },
   { key: 'featured', label: 'Featured', description: 'Products marked "Feature on home page"' },

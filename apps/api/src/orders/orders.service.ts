@@ -275,7 +275,7 @@ export class OrdersService {
     const so = await this.prisma.sellerOrder.findFirst({ where: { id: sellerOrderId, sellerId }, select: { id: true, delivery: { select: { method: true } } } });
     if (!so) throw new NotFoundException('Order not found');
     // A FastMoveX driver delivers it: only the driver (with the customer's code) or FastMoveX staff can close it
-    if (to === 'DELIVERED' && so.delivery?.method === 'JOVIA') throw new ForbiddenException('A FastMoveX driver is delivering this order. It is marked delivered when the customer gives the driver their code.');
+    if (to === 'DELIVERED' && so.delivery?.method === 'FASTMOVEX') throw new ForbiddenException('A FastMoveX driver is delivering this order. It is marked delivered when the customer gives the driver their code.');
     await this.setSellerOrderStatus(sellerOrderId, to, 'SELLER', actorId, note);
     return this.detailForSeller(sellerId, sellerOrderId);
   }
@@ -368,7 +368,7 @@ export class OrdersService {
       ? await this.prisma.deliveryOrder.findUnique({ where: { sellerOrderId }, select: { id: true, method: true, status: true, deliveryCode: true, attempts: true } })
       : null;
     let override: string | null = null;
-    if (d && d.method === 'JOVIA' && d.status !== 'DELIVERED') {
+    if (d && d.method === 'FASTMOVEX' && d.status !== 'DELIVERED') {
       if (dto.code) {
         if (d.attempts >= 5) throw new ForbiddenException('Too many wrong codes on this delivery. A manager can close it with a reason.');
         if (!codeMatches(d.deliveryCode, dto.code)) {
@@ -386,7 +386,7 @@ export class OrdersService {
         await this.audit.log({ actorId: user.id, action: 'delivery.override', entityType: 'DeliveryOrder', entityId: d.id, after: { orderNumber, reason } });
       }
     }
-    const note = override ? `Delivered without the customer's code: ${override}` : dto.code && d?.method === 'JOVIA' ? 'Delivered, code verified by staff' : dto.note;
+    const note = override ? `Delivered without the customer's code: ${override}` : dto.code && d?.method === 'FASTMOVEX' ? 'Delivered, code verified by staff' : dto.note;
     await this.setSellerOrderStatus(sellerOrderId, dto.status, 'ADMIN', user.id, note);
     return this.detailForAdmin(orderNumber);
   }
@@ -477,7 +477,7 @@ export class OrdersService {
     });
     const country = await tx.country.findUnique({ where: { code: so.order.countryCode }, select: { pricesIncludeTax: true } });
     const amount = shipmentPaidTotal(so, country?.pricesIncludeTax ?? true);
-    const holderUserId = so.delivery?.method === 'JOVIA' && so.delivery.courierUserId ? so.delivery.courierUserId : actorId;
+    const holderUserId = so.delivery?.method === 'FASTMOVEX' && so.delivery.courierUserId ? so.delivery.courierUserId : actorId;
     await tx.codCollection.upsert({
       where: { sellerOrderId },
       update: {}, // recorded once
@@ -523,7 +523,7 @@ export function customerDelivery(d: { method: string; status: string; trackingUr
   return {
     method: d.method, status: d.status, trackingUrl: d.trackingUrl, etaAt: d.etaAt,
     courierName: firstName(d.courierName),
-    deliveryCode: d.method === 'JOVIA' && open ? d.deliveryCode : null,
+    deliveryCode: d.method === 'FASTMOVEX' && open ? d.deliveryCode : null,
     location: live && d.lastLat !== null && d.lastLng !== null ? { lat: d.lastLat, lng: d.lastLng, mapUrl: mapLink({ lat: d.lastLat, lng: d.lastLng }) } : null,
     // the last attempt failed: why (as a code the website words), and what the customer asked for since
     attempt: d.status === 'FAILED' && d.failedAt ? { failedAt: d.failedAt, kind: failureKind(d.failureReason), canReschedule: failureKind(d.failureReason) !== 'REFUSED' } : null,

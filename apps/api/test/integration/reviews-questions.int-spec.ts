@@ -30,7 +30,7 @@ describe('Review photos and product questions — real database', () => {
     return (await api().post('/api/v1/auth/login').send({ identifier, password }).expect(200)).body.accessToken as string;
   }
   async function customer(tag: string) {
-    const reg = await api().post('/api/v1/auth/register').send({ fullName: `Reem ${tag} Saleh`, email: `rq.${tag}.${run}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201);
+    const reg = await api().post('/api/v1/auth/register').send({ fullName: `Reem ${tag} Saleh`, email: `rq.${tag}.${run}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201);
     return reg.body.accessToken as string;
   }
 
@@ -45,7 +45,7 @@ describe('Review photos and product questions — real database', () => {
     const put = storage.put.bind(storage);
     jest.spyOn(storage, 'put').mockImplementation(async (v, key, body, type) => { stored.push({ key, body, type }); return put(v, key, body, type); });
 
-    s.admin = await login('admin@demo.jovia.test');
+    s.admin = await login('admin@demo.fastmovex.test');
     const cat = await prisma.category.findUniqueOrThrow({ where: { slug: 'home-kitchen' } });
     const p = await api().post('/api/v1/admin/products').set(bearer(s.admin)).send({
       title: `Review Kettle ${run}`, titleAr: 'غلاية', categoryId: cat.id, variants: [{ sku: `RQ-${run}`, priceMinor: '9000', initialStock: 20 }],
@@ -158,7 +158,7 @@ describe('Review photos and product questions — real database', () => {
     expect(pub.total).toBe(1);
     expect(pub.items[0]).toMatchObject({ question: 'Does it switch off by itself when the water boils?', answer: 'Yes — it switches off automatically and has boil-dry protection.', askedBy: 'Reem S.', answeredBy: { name: expect.any(String) } });
 
-    const asker = await prisma.user.findFirstOrThrow({ where: { email: `rq.asker.${run}@jovia.test` } });
+    const asker = await prisma.user.findFirstOrThrow({ where: { email: `rq.asker.${run}@fastmovex.test` } });
     const sent = await prisma.notification.findMany({ where: { userId: asker.id, type: 'QUESTION_ANSWERED' } });
     expect(sent.map((n) => n.channel).sort()).toEqual(['EMAIL', 'IN_APP']);
     expect(sent.find((n) => n.channel === 'IN_APP')!.body).toContain(`Review Kettle ${run}`);

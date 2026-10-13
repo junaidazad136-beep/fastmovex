@@ -1,9 +1,9 @@
 # syntax=docker/dockerfile:1.7
 # FastMoveX API — production image.
 #   docker build -t fastmovex-api .
-#   docker run --env-file .env -p 4000:4000 jovia-api                         # the API
-#   docker run --env-file .env jovia-api npx prisma migrate deploy            # release step: migrations
-#   docker run --env-file .env jovia-api npm run db:seed                      # first deploy only: base config
+#   docker run --env-file .env -p 4000:4000 fastmovex-api                         # the API
+#   docker run --env-file .env fastmovex-api npx prisma migrate deploy            # release step: migrations
+#   docker run --env-file .env fastmovex-api npm run db:seed                      # first deploy only: base config
 
 # ---------- build ----------
 FROM node:22-bookworm-slim AS build
@@ -25,14 +25,14 @@ ENV NODE_ENV=production \
 WORKDIR /app
 # openssl: used by the Prisma migrate engine; tini: correct signal handling (graceful shutdown)
 RUN apt-get update && apt-get install -y --no-install-recommends openssl ca-certificates tini && rm -rf /var/lib/apt/lists/* \
- && groupadd --system --gid 1001 jovia && useradd --system --uid 1001 --gid jovia --home /app jovia
-COPY --from=build --chown=jovia:jovia /app/node_modules ./node_modules
-COPY --from=build --chown=jovia:jovia /app/dist ./dist
-COPY --from=build --chown=jovia:jovia /app/prisma ./prisma
+ && groupadd --system --gid 1001 fastmovex && useradd --system --uid 1001 --gid fastmovex --home /app fastmovex
+COPY --from=build --chown=fastmovex:fastmovex /app/node_modules ./node_modules
+COPY --from=build --chown=fastmovex:fastmovex /app/dist ./dist
+COPY --from=build --chown=fastmovex:fastmovex /app/prisma ./prisma
 # fonts for PDFs (run sheets, cash receipts): Arabic + Latin
-COPY --chown=jovia:jovia assets ./assets
-COPY --chown=jovia:jovia package.json prisma.config.ts ./
-USER jovia
+COPY --chown=fastmovex:fastmovex assets ./assets
+COPY --chown=fastmovex:fastmovex package.json prisma.config.ts ./
+USER fastmovex
 EXPOSE 4000
 HEALTHCHECK --interval=30s --timeout=5s --start-period=20s --retries=3 \
   CMD node -e "fetch('http://127.0.0.1:'+(process.env.PORT||4000)+'/api/v1/health').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"

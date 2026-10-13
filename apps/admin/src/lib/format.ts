@@ -121,7 +121,7 @@ export function paymentMethodLabel(m: string | null | undefined): string {
   return m ? PAYMENT_METHODS[m] ?? humanize(m) : '—';
 }
 
-const DELIVERY_METHODS: Record<string, string> = { SELLER: 'Store delivery', JOVIA: 'FastMoveX courier', THIRD_PARTY: 'Courier partner', PICKUP: 'Customer pickup' };
+const DELIVERY_METHODS: Record<string, string> = { SELLER: 'Store delivery', FASTMOVEX: 'FastMoveX courier', THIRD_PARTY: 'Courier partner', PICKUP: 'Customer pickup' };
 export function deliveryMethodLabel(m: string | null | undefined): string {
   return m ? DELIVERY_METHODS[m] ?? humanize(m) : '—';
 }

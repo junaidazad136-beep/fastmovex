@@ -2,7 +2,7 @@ import { expect, test } from '@playwright/test';
 import { ADMIN, API, apiCall, apiToken, CUSTOMER, DEMO_PASSWORD, fleetOrder, PNG, run, signIn } from './helpers';
 
 /** Phase 23: adding an item to an order, promo codes on phone orders, the driver page without signal. */
-const COURIER = 'courier@demo.jovia.test';
+const COURIER = 'courier@demo.fastmovex.test';
 
 async function houseVariant(t: string, price = '1500') {
   const cats = await apiCall<{ id: string; slug: string }[] | { items: { id: string; slug: string }[] }>(t, 'GET', '/admin/categories');

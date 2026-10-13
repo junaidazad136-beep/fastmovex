@@ -31,7 +31,7 @@ export function parseLabelQr(text: string): string | null {
   return m ? m[1].toLowerCase() : null;
 }
 
-const METHOD: Record<string, string> = { JOVIA: 'FastMoveX driver', SELLER: 'Seller delivers', COURIER: 'Courier', PICKUP: 'Customer pick-up' };
+const METHOD: Record<string, string> = { FASTMOVEX: 'FastMoveX driver', SELLER: 'Seller delivers', COURIER: 'Courier', PICKUP: 'Customer pick-up' };
 const timeOf = (d: Date, tz: string) => new Intl.DateTimeFormat('en-GB', { timeZone: tz, hour: '2-digit', minute: '2-digit', hour12: false }).format(d);
 
 function drawQr(doc: Doc, text: string, x: number, y: number, size: number) {

@@ -9,7 +9,7 @@ async function placeCod(token: string): Promise<{ orderNumber: string; shipmentI
   const addressId = (Array.isArray(addresses) ? addresses : addresses.items)[0].id;
   await apiCall(token, 'POST', '/cart/items', { variantId: product.variants[0].id, quantity: 1 });
   const { orderNumber } = await apiCall<{ orderNumber: string }>(token, 'POST', '/checkout', { addressId, paymentMethod: 'COD' }, { 'idempotency-key': `docs-${Date.now()}-${Math.random()}` });
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   const shipmentId = (await apiCall<{ sellerOrders: { id: string }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`)).sellerOrders[0].id;
   return { orderNumber, shipmentId };
 }
@@ -26,9 +26,9 @@ test('the order page offers the invoice, and a credit note once a refund is paid
   expect((await download).suggestedFilename()).toBe(`FastMoveX-invoice-${o.orderNumber}.pdf`);
 
   // goodwill refund: asked by one finance person, paid by bank transfer by the other
-  const f1 = await apiToken('finance@demo.jovia.test');
-  const f2 = await apiToken('finance2@demo.jovia.test');
-  const admin = await apiToken('admin@demo.jovia.test');
+  const f1 = await apiToken('finance@demo.fastmovex.test');
+  const f2 = await apiToken('finance2@demo.fastmovex.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   for (const status of ['PREPARING', 'READY_FOR_PICKUP', 'SHIPPED']) await apiCall(admin, 'POST', `/admin/orders/shipments/${o.shipmentId}/status`, { status });
   await apiCall(admin, 'POST', `/admin/orders/shipments/${o.shipmentId}/status`, { status: 'DELIVERED', overrideReason: 'Handed over at the counter (test)' });
   await apiCall(f1, 'POST', '/admin/refunds', { orderNumber: o.orderNumber, sellerOrderId: o.shipmentId, amountMinor: '500', reason: 'Goodwill: box dented' });

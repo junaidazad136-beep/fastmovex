@@ -21,9 +21,9 @@ export interface OutboxEntry {
 }
 export interface DriverProfile { id: string; fullName: string; email: string | null; roles: string[]; perms: string[] }
 
-const RUN = 'jovia_driver_run';
-const OUTBOX = 'jovia_driver_outbox';
-const PROFILE = 'jovia_driver_profile';
+const RUN = 'fmx_driver_run';
+const OUTBOX = 'fmx_driver_outbox';
+const PROFILE = 'fmx_driver_profile';
 
 function read<T>(key: string): T | null {
   try {

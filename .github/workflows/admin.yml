@@ -19,47 +19,47 @@ jobs:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: jovia
-          POSTGRES_PASSWORD: jovia
-          POSTGRES_DB: jovia
+          POSTGRES_USER: fastmovex
+          POSTGRES_PASSWORD: fastmovex
+          POSTGRES_DB: fastmovex
           POSTGRES_INITDB_ARGS: "--encoding=UTF8 --locale=C.UTF-8"
         ports: ['5432:5432']
         options: >-
-          --health-cmd "pg_isready -U jovia -d jovia" --health-interval 5s --health-timeout 5s --health-retries 10
+          --health-cmd "pg_isready -U fastmovex -d fastmovex" --health-interval 5s --health-timeout 5s --health-retries 10
       minio:
         image: bitnami/minio:2024
         env:
-          MINIO_ROOT_USER: jovia
-          MINIO_ROOT_PASSWORD: jovia-minio-secret
-          MINIO_DEFAULT_BUCKETS: jovia-public:download,jovia-private
+          MINIO_ROOT_USER: fastmovex
+          MINIO_ROOT_PASSWORD: fastmovex-minio-secret
+          MINIO_DEFAULT_BUCKETS: fastmovex-public:download,fastmovex-private
         ports: ['9000:9000']
     env:
       # API (runs in the background for the browser tests)
       NODE_ENV: test
       PORT: 4000
-      DATABASE_URL: postgresql://jovia:jovia@localhost:5432/jovia
+      DATABASE_URL: postgresql://fastmovex:fastmovex@localhost:5432/fastmovex
       JWT_ACCESS_SECRET: ci-only-secret-0123456789abcdefghijklmnopqrstuvwxyz
       FIELD_ENCRYPTION_KEY: AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=
       S3_ENDPOINT: http://localhost:9000
       S3_REGION: us-east-1
-      S3_ACCESS_KEY_ID: jovia
-      S3_SECRET_ACCESS_KEY: jovia-minio-secret
+      S3_ACCESS_KEY_ID: fastmovex
+      S3_SECRET_ACCESS_KEY: fastmovex-minio-secret
       S3_FORCE_PATH_STYLE: 'true'
-      S3_BUCKET_PUBLIC: jovia-public
-      S3_BUCKET_PRIVATE: jovia-private
-      PUBLIC_MEDIA_BASE_URL: http://localhost:9000/jovia-public
+      S3_BUCKET_PUBLIC: fastmovex-public
+      S3_BUCKET_PRIVATE: fastmovex-private
+      PUBLIC_MEDIA_BASE_URL: http://localhost:9000/fastmovex-public
       CORS_ORIGINS: http://localhost:3001
       NOTIFY_EMAIL_DRIVER: log
       NOTIFY_SMS_DRIVER: log
       RATE_LIMIT_DISABLED: 'true'
       INTERNAL_API_KEY: ci-internal-key-0123456789abcdefghijkl
-      SEED_SUPERADMIN_EMAIL: owner@jovia.test
+      SEED_SUPERADMIN_EMAIL: owner@fastmovex.test
       SEED_SUPERADMIN_PASSWORD: Owner-Pass-2026
       # Admin panel
       PUBLIC_API_URL: http://localhost:4000/api/v1
       STOREFRONT_URL: http://localhost:3000
       MEDIA_URL: http://localhost:9000
-      SUPER_ADMIN_EMAIL: owner@jovia.test
+      SUPER_ADMIN_EMAIL: owner@fastmovex.test
       SUPER_ADMIN_PASSWORD: Owner-Pass-2026
       E2E_API_LOG: ${{ github.workspace }}/api.log
     steps:
@@ -126,6 +126,6 @@ jobs:
         with:
           context: apps/admin
           push: false
-          tags: jovia-admin:${{ github.sha }}
+          tags: fastmovex-admin:${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

@@ -2,8 +2,8 @@ import { expect, test } from '@playwright/test';
 import { ADMIN, apiCall, apiToken, fleetOrder, placeOrder, signIn } from './helpers';
 
 /** Phase 20: invoice PDF, packing slips and picking list, credit notes, return receipts, a customer's data on request. */
-const FINANCE = 'finance@demo.jovia.test';
-const FINANCE2 = 'finance2@demo.jovia.test';
+const FINANCE = 'finance@demo.fastmovex.test';
+const FINANCE2 = 'finance2@demo.fastmovex.test';
 
 test('picking & packing: the waiting shipments, what to pick in shelf order, packing slips and picking list print', async ({ page }) => {
   // a FastMoveX-store product (the warehouse is FastMoveX's), bought by the demo customer

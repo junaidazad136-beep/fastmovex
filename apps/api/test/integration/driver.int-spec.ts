@@ -54,9 +54,9 @@ describe('Driver page — real database', () => {
     prisma = app.get(PrismaService);
     restoreCod = await setCodRules(prisma, { phoneCheck: 'OFF' }); // not what this file tests
     jest.spyOn(app.get(NotificationsService), 'sendDirect').mockResolvedValue(undefined);
-    s.admin = await login('admin@demo.jovia.test');
-    s.courier = await login('courier@demo.jovia.test');
-    s.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.jovia.test' } })).id;
+    s.admin = await login('admin@demo.fastmovex.test');
+    s.courier = await login('courier@demo.fastmovex.test');
+    s.courierId = (await prisma.user.findFirstOrThrow({ where: { email: 'courier@demo.fastmovex.test' } })).id;
     // finish the demo courier's older jobs so this run starts clean
     await prisma.deliveryOrder.updateMany({ where: { courierUserId: s.courierId, status: { notIn: ['DELIVERED', 'CANCELLED'] } }, data: { courierUserId: null, status: 'CANCELLED' } });
 
@@ -74,7 +74,7 @@ describe('Driver page — real database', () => {
   afterAll(async () => { await restoreCod?.(); await app?.close(); });
 
   it('drivers may sign in to the panel app, but no staff screen answers them', async () => {
-    const panel = await api().post('/api/v1/auth/login').set('X-Client-Type', 'admin').send({ identifier: 'courier@demo.jovia.test', password: DEMO_PASSWORD });
+    const panel = await api().post('/api/v1/auth/login').set('X-Client-Type', 'admin').send({ identifier: 'courier@demo.fastmovex.test', password: DEMO_PASSWORD });
     expect(panel.status).toBe(200);
     await api().get('/api/v1/admin/orders').set(bearer(s.courier)).expect(403);
     await api().get('/api/v1/admin/deliveries').set(bearer(s.courier)).expect(403);
@@ -128,7 +128,7 @@ describe('Driver page — real database', () => {
   });
 
   it('a driver never sees or touches another driver’s jobs', async () => {
-    const other = await api().post('/api/v1/auth/register').send({ fullName: 'Other Person', email: `drv.other.${run}@jovia.test`, password: 'Buyer-Pass-123' }).expect(201);
+    const other = await api().post('/api/v1/auth/register').send({ fullName: 'Other Person', email: `drv.other.${run}@fastmovex.test`, password: 'Buyer-Pass-123' }).expect(201);
     await api().get('/api/v1/courier/jobs/run').set(bearer(other.body.accessToken)).expect(403); // not a driver at all
     const steal = await api().post(`/api/v1/courier/jobs/${s.far}/pickup`).set(bearer(other.body.accessToken));
     expect([403, 404]).toContain(steal.status);

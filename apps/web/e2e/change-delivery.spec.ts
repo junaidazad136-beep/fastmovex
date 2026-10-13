@@ -24,7 +24,7 @@ test('the customer changes the delivery address before packing, and sees staff c
   await expect(box).toContainText('2 changes left');
 
   // our team removes one unit: the customer sees it and the lower total
-  const admin = await apiToken('admin@demo.jovia.test');
+  const admin = await apiToken('admin@demo.fastmovex.test');
   const detail = await apiCall<{ sellerOrders: { items: { id: string }[] }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`);
   await apiCall(admin, 'PATCH', `/admin/orders/${orderNumber}/items`, { changes: [{ itemId: detail.sellerOrders[0].items[0].id, quantity: 1 }], reason: 'Customer asked for one box' });
   await page.reload();

@@ -25,9 +25,9 @@ import { Dialog } from '../ui/Dialog';
 import { Spinner } from '../ui/Spinner';
 import { PolicyLinks } from '../content/PolicyLinks';
 
-export const PENDING_ORDER_KEY = 'jovia_pending_order';
+export const PENDING_ORDER_KEY = 'fmx_pending_order';
 /** Guest checkout: the order's access token, so the payment return page can open the order without an account. */
-export const PENDING_TOKEN_KEY = 'jovia_pending_order_token';
+export const PENDING_TOKEN_KEY = 'fmx_pending_order_token';
 const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote, PAYLATER: CalendarClock };
 
 function newKey() {

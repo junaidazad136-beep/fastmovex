@@ -425,7 +425,7 @@ export interface OrderItem {
 export interface SellerOrder {
   id: string;
   status: OrderStatus;
-  deliveryMethod: 'SELLER' | 'JOVIA' | 'THIRD_PARTY' | 'PICKUP';
+  deliveryMethod: 'SELLER' | 'FASTMOVEX' | 'THIRD_PARTY' | 'PICKUP';
   subtotalMinor: Minor;
   discountMinor: Minor;
   deliveryFeeMinor: Minor;
