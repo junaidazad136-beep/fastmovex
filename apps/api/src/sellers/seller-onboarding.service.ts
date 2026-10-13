@@ -68,7 +68,8 @@ export class SellerOnboardingService {
         });
         return s;
       });
-      await this.audit.log({ actorId: userId, action: 'seller.apply', entityType: 'Seller', entityId: seller.id });
+      // the seller policy version they accepted is kept with the application, as proof of agreement
+      await this.audit.log({ actorId: userId, action: 'seller.apply', entityType: 'Seller', entityId: seller.id, ...(dto.acceptedPolicy && { after: { acceptedPolicy: dto.acceptedPolicy } }) });
       // Client must call POST /auth/refresh to receive a token that includes the SELLER role.
       return { ...seller, requiresTokenRefresh: true };
     } catch (err) {

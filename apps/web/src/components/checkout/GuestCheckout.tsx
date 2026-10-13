@@ -23,6 +23,7 @@ import { Spinner } from '../ui/Spinner';
 import { PENDING_ORDER_KEY, PENDING_TOKEN_KEY } from './Checkout';
 import { COD_REASONS, codAvailability, codErrorMessage, GuestPhoneCheck } from './cod';
 import { useMoney } from '@/lib/state/shop';
+import { PolicyLinks } from '../content/PolicyLinks';
 
 const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote };
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -332,7 +333,7 @@ export function GuestCheckout() {
           <button type="submit" disabled={busy || !method || !cart.canCheckout} className="btn-primary btn-lg w-full" data-testid="place-order">
             {busy && <Spinner />}{busy ? t('checkout.placing') : t('checkout.placeOrder')}
           </button>
-          <p className="text-xs leading-5 text-ink-500">{t('checkout.agree')}</p>
+          <p className="text-xs leading-5 text-ink-500">{t('checkout.agree')} <PolicyLinks returns /></p>
           <p className="text-xs leading-5 text-ink-500">{t('guest.saveLater')}</p>
         </aside>
       </div>

@@ -23,6 +23,7 @@ import { useSession } from '@/lib/state/session';
 import { FormError } from '../auth/fields';
 import { Dialog } from '../ui/Dialog';
 import { Spinner } from '../ui/Spinner';
+import { PolicyLinks } from '../content/PolicyLinks';
 
 export const PENDING_ORDER_KEY = 'jovia_pending_order';
 /** Guest checkout: the order's access token, so the payment return page can open the order without an account. */
@@ -229,7 +230,7 @@ export function Checkout() {
           <button type="button" onClick={place} disabled={busy || !addressId || !method || !cart.canCheckout} className="btn-primary btn-lg w-full" data-testid="place-order">
             {busy && <Spinner />}{busy ? t('checkout.placing') : t('checkout.placeOrder')}
           </button>
-          <p className="text-xs leading-5 text-ink-500">{t('checkout.agree')}</p>
+          <p className="text-xs leading-5 text-ink-500">{t('checkout.agree')} <PolicyLinks returns /></p>
         </aside>
       </div>
 

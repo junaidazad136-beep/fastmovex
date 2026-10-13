@@ -1,11 +1,13 @@
 'use client';
 
-import { CheckCircle2, Circle, Clock, Send, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Circle, Clock, FileText, Send, ShieldAlert } from 'lucide-react';
+import Link from 'next/link';
 import { useState } from 'react';
 import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
 import { useToast } from '@/lib/state/toast';
+import { paths } from '@/lib/urls';
 import { Spinner } from '../ui/Spinner';
 import { Field } from './BecomeSeller';
 import { BankForm, LogoBlock, UploadButton } from './StoreForms';
@@ -48,9 +50,12 @@ export function Onboarding({ me, reload }: { me: SellerMe; reload: () => Promise
   const StatusIcon = me.status === 'UNDER_REVIEW' ? Clock : me.status === 'PENDING' ? Circle : ShieldAlert;
   return (
     <div className="mx-auto max-w-3xl space-y-5" data-testid="seller-onboarding">
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{t('seller.onboarding.title')}</h1>
-        <p className="mt-1 text-sm text-ink-500">{me.store?.name ?? me.businessName}</p>
+      <div className="flex flex-wrap items-end justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold tracking-tight">{t('seller.onboarding.title')}</h1>
+          <p className="mt-1 text-sm text-ink-500">{me.store?.name ?? me.businessName}</p>
+        </div>
+        <Link href={paths.sellerPolicy(t.locale)} target="_blank" className="link inline-flex items-center gap-1.5 text-sm" data-testid="onboarding-policy"><FileText className="size-4" aria-hidden />{t('seller.nav.policy')}</Link>
       </div>
       <div className={`flex items-start gap-3 rounded-2xl p-4 ${tone}`} role="status" data-testid="seller-status">
         <StatusIcon className="mt-0.5 size-5 shrink-0" aria-hidden />

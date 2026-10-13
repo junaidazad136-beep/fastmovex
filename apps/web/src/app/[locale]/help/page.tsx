@@ -1,4 +1,4 @@
-import { MessageCircle, RotateCcw, Truck } from 'lucide-react';
+import { FileText, MessageCircle, RotateCcw, Truck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { notFound } from 'next/navigation';
@@ -27,10 +27,11 @@ export default async function HelpPage({ params }: PageProps<'/[locale]/help'>) 
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'FAQPage', mainEntity: faq.map((f) => ({ '@type': 'Question', name: pick(locale, f.question, f.questionAr), acceptedAnswer: { '@type': 'Answer', text: pick(locale, f.answer, f.answerAr) } })) }} />
       <h1 className="text-3xl font-bold tracking-tight">{t('help.title')}</h1>
       <p className="mt-2 text-ink-500">{t('help.subtitle')}</p>
-      <div className="mt-6 grid gap-3 sm:grid-cols-3">
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
         <Link href={paths.returnsPolicy(locale)} className="card flex items-center gap-3 p-4 hover:border-brand-200"><RotateCcw className="size-5 text-brand-600" aria-hidden /><span className="font-semibold">{t('help.returnsPolicy')}</span></Link>
         <Link href={paths.deliveryInfo(locale)} className="card flex items-center gap-3 p-4 hover:border-brand-200"><Truck className="size-5 text-brand-600" aria-hidden /><span className="font-semibold">{t('help.deliveryInfo')}</span></Link>
         <Link href={paths.tickets(locale)} className="card flex items-center gap-3 p-4 hover:border-brand-200"><MessageCircle className="size-5 text-brand-600" aria-hidden /><span className="font-semibold">{t('help.myTickets')}</span></Link>
+        <Link href={paths.policies(locale)} className="card flex items-center gap-3 p-4 hover:border-brand-200" data-testid="help-policies"><FileText className="size-5 text-brand-600" aria-hidden /><span className="font-semibold">{t('footer.policies')}</span></Link>
       </div>
       <h2 className="section-title mb-4 mt-10">{t('help.faq')}</h2>
       <Faq items={faq} />

@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, BellOff, Home, Package, ShoppingBag, Store, Wallet } from 'lucide-react';
+import { Bell, BellOff, FileText, Home, Package, ShoppingBag, Store, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -67,6 +67,11 @@ function ding() {
 
 /** Seller Center frame: who you are as a seller decides what you see (join → application → your shop). */
 export function SellerShell({ children }: { children: ReactNode }) {
+  const { status } = useSession();
+  const t = useT();
+  const pathname = usePathname();
+  // "Sell on FastMoveX" is open to everyone: a signed-out visitor reads the pitch and the full seller policy first
+  if (status === 'guest' && pathname === paths.seller(t.locale)) return <div className="container-page py-6"><BecomeSeller guest /></div>;
   return <div className="container-page py-6"><RequireAuth><Gate>{children}</Gate></RequireAuth></div>;
 }
 
@@ -172,6 +177,11 @@ function Approved({ me, reloadMe, children }: { me: SellerMe; reloadMe: () => Pr
               </li>
             ))}
             <li className="shrink-0 lg:mt-3 lg:border-t lg:border-ink-100 lg:pt-3">
+              <Link href={paths.sellerPolicy(l)} target="_blank" className="flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium text-ink-600 hover:bg-ink-100 max-lg:border max-lg:border-ink-200 max-lg:bg-white" data-testid="seller-nav-policy">
+                <FileText className="size-4" aria-hidden />{t('seller.nav.policy')}
+              </Link>
+            </li>
+            <li className="shrink-0">
               <button type="button" onClick={toggleSound} aria-pressed={sound} className={`flex w-full items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium ${sound ? 'text-success-700' : 'text-ink-600'} hover:bg-ink-100 max-lg:border max-lg:border-ink-200 max-lg:bg-white`} data-testid="seller-sound">
                 {sound ? <Bell className="size-4" aria-hidden /> : <BellOff className="size-4" aria-hidden />}
                 {sound ? t('seller.home.soundOn') : t('seller.home.soundOff')}

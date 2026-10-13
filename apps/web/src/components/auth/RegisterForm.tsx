@@ -12,6 +12,7 @@ import { paths, safeNext } from '@/lib/urls';
 import { Spinner } from '../ui/Spinner';
 import { SocialButtons } from './SocialButtons';
 import { AuthCard, E164, EMAIL, Field, FormError, normalizePhone, PASSWORD_RULE, PasswordInput } from './fields';
+import { PolicyLinks } from '../content/PolicyLinks';
 
 export function RegisterForm({ nextParam }: { nextParam?: string }) {
   const t = useT();
@@ -85,7 +86,7 @@ export function RegisterForm({ nextParam }: { nextParam?: string }) {
         <button type="submit" disabled={busy} className="btn-primary btn-lg w-full" data-testid="register-submit">
           {busy && <Spinner />}{busy ? t('auth.creating') : t('auth.createAccount')}
         </button>
-        <p className="text-center text-xs text-ink-500">{t('auth.terms')}</p>
+        <p className="text-center text-xs text-ink-500">{t('auth.terms')} <PolicyLinks /></p>
       </form>
       <SocialButtons onDone={() => router.replace(next)} />
       <p className="mt-6 text-center text-sm text-ink-600">

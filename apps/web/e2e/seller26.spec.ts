@@ -58,10 +58,23 @@ test.describe('Seller Center (phase 26)', () => {
     await page.getByLabel('Business name (as on your CR)').fill('E2E Trading WLL');
     await page.getByLabel('Store name customers see').fill(`E2E Shop ${Date.now() % 100000}`);
     await page.getByLabel('Business phone').fill('+97455501234');
+    await expect(page.getByTestId('become-seller-submit')).toBeDisabled(); // the seller policy must be accepted first
+    await page.getByTestId('seller-agree').check();
     await page.getByTestId('become-seller-submit').click();
     await expect(page.getByTestId('seller-onboarding')).toBeVisible();
     await expect(page.getByTestId('seller-status')).toContainText('Finish the steps below');
     await expect(page.getByTestId('seller-submit')).toBeDisabled(); // CR, its document and the bank account are still missing
+  });
+
+  test('signed out, "Sell on FastMoveX" shows the pitch and the whole seller policy before sign-in', async ({ page }) => {
+    await page.goto('/en');
+    await page.getByTestId('footer-sell').click();
+    await expect(page.getByTestId('become-seller')).toBeVisible();
+    await expect(page.getByTestId('seller-policy-summary')).toContainText('Commission of 5–15%');
+    await page.getByTestId('seller-policy-full').locator('summary').click();
+    await expect(page.getByTestId('policy-payouts')).toContainText('within 14 days of delivery');
+    await expect(page.getByTestId('policy-data')).toContainText('Law (No. 13 of 2016)');
+    await expect(page.getByTestId('become-seller-signin')).toHaveAttribute('href', /\/en\/login\?next=%2Fen%2Fseller/);
   });
 
   test('a seller adds a product with a photo and sends it for review; price and stock are changed on the spot', async ({ page }) => {

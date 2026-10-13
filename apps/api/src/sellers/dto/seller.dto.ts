@@ -14,6 +14,7 @@ export class ApplySellerDto {
   @ApiProperty({ example: '+97455555555' }) @Transform(trim) @Matches(E164, { message: 'Phone must be like +97455555555' }) contactPhone: string;
   @ApiPropertyOptional({ description: 'Qatar Commercial Registration number' }) @IsOptional() @Transform(trim) @IsString() @Length(3, 40) commercialRegNo?: string;
   @ApiPropertyOptional() @IsOptional() @IsString() @MaxLength(2000) description?: string;
+  @ApiPropertyOptional({ description: 'Date (version) of the seller policy the applicant accepted', example: '2026-10-13' }) @IsOptional() @Matches(/^\d{4}-\d{2}-\d{2}$/) acceptedPolicy?: string;
 }
 
 export class UpdateSellerProfileDto {

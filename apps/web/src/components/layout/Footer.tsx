@@ -8,11 +8,9 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
   const l = t.locale;
   const year = new Date().getFullYear();
   const methods: PaymentMethod[] = market.paymentMethods;
-  const legal = market.legal ?? {};
   const footerPages = pages.filter((p) => p.showInFooter);
-  const legalSlugs = ['privacy', 'terms'];
+  const legalSlugs = ['privacy', 'terms']; // written in code (lib/policies), linked below
   const companyPages = footerPages.filter((p) => !legalSlugs.includes(p.slug));
-  const legalPages = footerPages.filter((p) => legalSlugs.includes(p.slug));
   return (
     <footer className="mt-16 border-t border-ink-100 bg-white pb-24 md:pb-0">
       <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
@@ -45,6 +43,7 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
             <li><Link href={paths.track(l)} className="hover:text-brand-600">{t('footer.track')}</Link></li>
             <li><Link href={paths.returnsPolicy(l)} className="hover:text-brand-600">{t('help.returnsPolicy')}</Link></li>
             <li><Link href={paths.deliveryInfo(l)} className="hover:text-brand-600">{t('help.deliveryInfo')}</Link></li>
+            <li><Link href={paths.policies(l)} className="hover:text-brand-600" data-testid="footer-policies">{t('footer.policies')}</Link></li>
           </ul>
         </div>
         <div>
@@ -65,10 +64,11 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
       <div className="border-t border-ink-100">
         <div className="container-page flex flex-col gap-2 py-5 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
           <p>{t('footer.rights', { year })}</p>
-          <ul className="flex gap-4">
-            {legalPages.map((p) => <li key={p.slug}><Link href={paths.page(l, p.slug)} className="hover:text-brand-600">{pick(l, p.title, p.titleAr)}</Link></li>)}
-            {!legalPages.some((p) => p.slug === 'terms') && typeof legal.termsUrl === 'string' && <li><a href={legal.termsUrl} className="hover:text-brand-600">{t('footer.terms')}</a></li>}
-            {!legalPages.some((p) => p.slug === 'privacy') && typeof legal.privacyUrl === 'string' && <li><a href={legal.privacyUrl} className="hover:text-brand-600">{t('footer.privacy')}</a></li>}
+          <ul className="flex flex-wrap gap-x-4 gap-y-2">
+            <li><Link href={paths.terms(l)} className="hover:text-brand-600">{t('footer.terms')}</Link></li>
+            <li><Link href={paths.privacy(l)} className="hover:text-brand-600">{t('footer.privacy')}</Link></li>
+            <li><Link href={paths.returnsPolicy(l)} className="hover:text-brand-600">{t('help.returnsPolicy')}</Link></li>
+            <li><Link href={paths.sellerPolicy(l)} className="hover:text-brand-600" data-testid="footer-seller-policy">{t('footer.sellerPolicy')}</Link></li>
           </ul>
         </div>
       </div>
