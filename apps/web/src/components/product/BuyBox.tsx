@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Truck } from 'lucide-react';
+import { BadgeCheck, Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Star, Store, Truck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
@@ -13,7 +13,7 @@ import { useCart } from '@/lib/state/cart';
 import { useSession } from '@/lib/state/session';
 import { useMoney, useShop } from '@/lib/state/shop';
 import { useToast } from '@/lib/state/toast';
-import { paths } from '@/lib/urls';
+import { paths, pick } from '@/lib/urls';
 import { Countdown } from '../ui/Countdown';
 import { Spinner } from '../ui/Spinner';
 import { Gallery, type GalleryImage } from './Gallery';
@@ -150,6 +150,28 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
         )}
 
         <ul className="mt-6 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white text-sm">
+          {/* Who sells it, Amazon-style: one line in the buy box (the shop's own products say so plainly). */}
+          <li className="flex items-start gap-3 p-3.5" data-testid="sold-by">
+            {product.store.isHouse ? (
+              <>
+                <BadgeCheck className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden />
+                <span className="text-ink-700">{t('product.soldByHouse', { name: pick(t.locale, product.store.name, product.store.nameAr) })}</span>
+              </>
+            ) : (
+              <>
+                <Store className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden />
+                <span className="text-ink-700">
+                  {t('product.soldByLine')}{' '}
+                  <Link href={paths.store(t.locale, product.store.slug)} className="font-semibold text-brand-700 hover:underline">{pick(t.locale, product.store.name, product.store.nameAr)}</Link>
+                  {product.store.ratingCount > 0 && (
+                    <span className="tabular ms-1.5 inline-flex items-center gap-0.5 text-xs text-ink-500">
+                      <Star className="size-3.5 fill-sand-500 text-sand-500" aria-hidden />{product.store.ratingAvg.toFixed(1)} ({product.store.ratingCount})
+                    </span>
+                  )}
+                </span>
+              </>
+            )}
+          </li>
           <li className="flex items-start gap-3 p-3.5"><Truck className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden /><span className="text-ink-700">{t('product.deliveryNote')}</span></li>
           <li className="flex items-start gap-3 p-3.5">
             <RotateCcw className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden />

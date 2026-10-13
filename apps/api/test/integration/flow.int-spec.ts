@@ -194,6 +194,7 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
     await api().post(`/api/v1/admin/products/${s.productId}/approve`).set(bearer(s.admin)).expect(200);
     const page = await api().get(`/api/v1/products/${s.productSlug}`).expect(200);
     expect(page.body.variants).toHaveLength(2);
+    expect(page.body.store.isHouse).toBe(false); // a marketplace seller: the shop names and links the store
     expect(page.body.variants.find((v: { priceMinor: string }) => v.priceMinor === '12000').discountPercent).toBe(20);
 
     const found = await api().get('/api/v1/search').query({ q: `flowtest mug ${run}` }).expect(200);

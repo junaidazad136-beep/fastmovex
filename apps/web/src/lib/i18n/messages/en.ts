@@ -153,6 +153,8 @@ const en = {
     notifyOn: 'You will be told when it is back',
     onlyLeft: { one: 'Only {count} left', other: 'Only {count} left' },
     soldBy: 'Sold by',
+    soldByHouse: 'Sold and delivered by {name}',
+    soldByLine: 'Sold by',
     visitStore: 'Visit store',
     verifiedSeller: 'Verified seller',
     description: 'Description',

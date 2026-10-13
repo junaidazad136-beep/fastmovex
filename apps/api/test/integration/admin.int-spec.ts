@@ -79,6 +79,7 @@ describe('Admin dashboard API — real database', () => {
   it('the published product is on the shop; cost price and staff-only data never are', async () => {
     const pub = await api().get(`/api/v1/products/${slug}`).expect(200);
     expect(pub.body.store.slug).toBe('fastmovex');
+    expect(pub.body.store.isHouse).toBe(true); // the shop says "Sold and delivered by FastMoveX"
     expect(pub.body.shortDescription).toBe('1.7 L');
     expect(JSON.stringify(pub.body)).not.toContain('costPriceMinor');
     const found = await api().get('/api/v1/admin/products').query({ q: `629${run}01` }).set(bearer(t.admin)).expect(200); // search by barcode

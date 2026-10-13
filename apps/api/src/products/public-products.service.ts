@@ -62,7 +62,7 @@ export class PublicProductsService {
         returnPolicyDays: true, warrantyMonths: true, ratingAvg: true, ratingCount: true, soldCount: true, minPriceMinor: true, countryCode: true,
         category: { select: { slug: true, name: true, nameAr: true, path: true } },
         brand: { select: { name: true, nameAr: true, slug: true } },
-        store: { select: { slug: true, name: true, nameAr: true, logoKey: true, ratingAvg: true, ratingCount: true, seller: { select: { returnWindowDays: true } } } },
+        store: { select: { slug: true, name: true, nameAr: true, logoKey: true, ratingAvg: true, ratingCount: true, seller: { select: { returnWindowDays: true, isHouse: true } } } },
         images: { select: { id: true, fileKey: true, kind: true, altText: true, variantId: true }, orderBy: { sortOrder: 'asc' } },
         variants: {
           where: { isActive: true },
@@ -87,7 +87,7 @@ export class PublicProductsService {
       breadcrumbs: slugs.map((s) => crumbs.find((c) => c.slug === s)).filter(Boolean),
       // 0 = not returnable; otherwise the product's own window or the seller's default (same rule as return requests)
       returnWindowDays: rest.returnPolicyDays ?? store.seller.returnWindowDays,
-      store: { slug: store.slug, name: store.name, nameAr: store.nameAr, ratingAvg: store.ratingAvg, ratingCount: store.ratingCount, logoUrl: this.storage.publicUrl(store.logoKey) },
+      store: { slug: store.slug, name: store.name, nameAr: store.nameAr, ratingAvg: store.ratingAvg, ratingCount: store.ratingCount, logoUrl: this.storage.publicUrl(store.logoKey), isHouse: store.seller.isHouse },
       images: images.map(({ fileKey, ...i }) => ({ ...i, url: this.storage.publicUrl(fileKey) })),
       variants: variants.map(({ inventory, campaignProducts, barcode, ...v }) => {
         const available = Math.max(0, (inventory?.onHand ?? 0) - (inventory?.reserved ?? 0));

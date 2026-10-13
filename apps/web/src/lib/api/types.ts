@@ -182,7 +182,8 @@ export interface ProductDetail {
   seoDescription?: string | null;
   category: { slug: string; name: string; nameAr: string };
   breadcrumbs: Crumb[];
-  store: StoreRef & { ratingAvg: number; ratingCount: number; logoUrl: string | null };
+  /** isHouse: FastMoveX's own store (sold and delivered by the shop itself). */
+  store: StoreRef & { ratingAvg: number; ratingCount: number; logoUrl: string | null; isHouse?: boolean };
   images: { id: string; kind: 'IMAGE' | 'VIDEO'; altText: string | null; variantId: string | null; url: string | null }[];
   variants: Variant[];
 }

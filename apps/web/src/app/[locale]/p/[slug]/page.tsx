@@ -134,7 +134,8 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
       <ProductBuy product={p} images={images} title={title} />
       <div className="mt-3 flex justify-end"><WhatsAppAsk text={t('whatsapp.aboutProduct', { product: title, url: `${env.siteUrl}${paths.product(locale, p.slug)}` })} label={t('whatsapp.askProduct')} /></div>
 
-      <div className="mt-12 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
+      {/* The seller card is for marketplace sellers on large screens; phones (and the shop's own products) show one line in the buy box. */}
+      <div className={`mt-12 grid gap-8 ${p.store.isHouse ? '' : 'lg:grid-cols-[minmax(0,1fr)_320px]'}`}>
         <div className="space-y-8">
           {description && (
             <section aria-labelledby="desc">
@@ -156,7 +157,7 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
             </section>
           )}
         </div>
-        <aside>
+        {!p.store.isHouse && <aside className="max-lg:hidden">
           <div className="card p-4">
             <p className="text-xs font-medium uppercase tracking-wide text-ink-400">{t('product.soldBy')}</p>
             <div className="mt-3 flex items-center gap-3">
@@ -174,7 +175,7 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
             </div>
             <Link href={paths.store(locale, p.store.slug)} className="btn-secondary mt-4 w-full">{t('product.visitStore')}</Link>
           </div>
-        </aside>
+        </aside>}
       </div>
 
       <Reviews initial={reviews} endpoint={`/products/${encodeURIComponent(slug)}/reviews`} title={t('product.reviews')} />

@@ -153,6 +153,8 @@ const ar: Localized<Messages> = {
     notifyOn: 'سنخبرك عند توفره',
     onlyLeft: { zero: 'نفدت الكمية', one: 'بقي واحد فقط', two: 'بقي اثنان فقط', few: 'بقي {count} فقط', many: 'بقي {count} فقط', other: 'بقي {count} فقط' },
     soldBy: 'يبيعه',
+    soldByHouse: 'يُباع ويُوصَّل من {name}',
+    soldByLine: 'يبيعه',
     visitStore: 'زيارة المتجر',
     verifiedSeller: 'بائع موثّق',
     description: 'الوصف',
