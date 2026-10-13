@@ -13,6 +13,8 @@ import { ApplySellerDto, UpdateBankDto, UpdateSellerProfileDto } from './dto/sel
 
 const LEGAL_FIELDS = ['businessName', 'legalName', 'commercialRegNo', 'taxNumber'] as const;
 const REQUIRED_DOCS: DocumentType[] = ['COMMERCIAL_REGISTRATION'];
+/** Default return window (and payout hold) for a new marketplace seller, in days. */
+export const MARKETPLACE_RETURN_DAYS = 7;
 const MAX_DOCUMENTS = 20;
 
 @Injectable()
@@ -44,6 +46,9 @@ export class SellerOnboardingService {
             contactEmail: dto.contactEmail,
             contactPhone: dto.contactPhone,
             countryCode: user.countryCode,
+            // FastMoveX policy: 7-day returns for marketplace sellers, so their money is released 7 days after delivery
+            // and reaches their bank in the next weekly payout (within 14 days). Staff can change it per seller.
+            returnWindowDays: MARKETPLACE_RETURN_DAYS,
             store: {
               create: {
                 slug: taken ? uniqueSlug(dto.storeName) : base,

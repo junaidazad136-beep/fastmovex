@@ -1,6 +1,7 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '../notifications/notification.events';
-import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
+import { Cron } from '@nestjs/schedule';
 import { ConfigService } from '@nestjs/config';
 import { PayoutStatus, Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
@@ -16,6 +17,7 @@ const s = (v: bigint) => v.toString();
 @Injectable()
 export class PayoutsService {
   private readonly minPayout: bigint;
+  private readonly logger = new Logger('Payouts');
 
   constructor(
     private readonly prisma: PrismaService,
@@ -69,7 +71,7 @@ export class PayoutsService {
     return { nextCursor: page.nextCursor, items: page.items.map((r) => ({ ...r, amountMinor: s(r.amountMinor) })) };
   }
 
-  async request(seller: SellerContext, amountMinor: bigint, actorId: string) {
+  async request(seller: SellerContext, amountMinor: bigint, actorId: string | null) {
     if (amountMinor < this.minPayout) throw new BadRequestException(`Minimum payout is ${this.minPayout} (minor units)`);
     const s0 = await this.prisma.seller.findUniqueOrThrow({ where: { id: seller.id }, select: { ibanLast4: true } });
     if (!s0.ibanLast4) throw new BadRequestException('Add your bank account (IBAN) before requesting a payout');
@@ -85,6 +87,37 @@ export class PayoutsService {
     });
     await this.audit.log({ actorId, action: 'payout.request', entityType: 'SellerPayout', entityId: payout.id, after: { amountMinor: s(amountMinor) } });
     return { ...payout, amountMinor: s(payout.amountMinor) };
+  }
+
+  /**
+   * Weekly payout run (Sunday 07:00 Qatar): every approved marketplace seller with a bank account gets a payout
+   * request for all the money that is ready (past the return window), so sellers are paid every week without asking.
+   * Finance still approves and marks each one paid (two people). Sellers with an open request are left alone.
+   */
+  @Cron('0 4 * * 0', { name: 'weekly-payouts' })
+  async weeklyRequests(): Promise<{ requested: number; skipped: number }> {
+    if (process.env.PAYOUT_AUTO_WEEKLY === 'off') return { requested: 0, skipped: 0 };
+    const sellers = await this.prisma.seller.findMany({
+      where: { status: 'APPROVED', isHouse: false, ibanLast4: { not: null }, payouts: { none: { status: { in: OPEN_PAYOUT } } } },
+      select: { id: true, status: true, countryCode: true },
+      take: 5000,
+    });
+    let requested = 0;
+    let skipped = 0;
+    for (const sel of sellers) {
+      try {
+        const b = await this.balance({ id: sel.id, status: sel.status, countryCode: sel.countryCode } as SellerContext);
+        const amount = BigInt(b.requestableMinor);
+        if (amount < this.minPayout) { skipped++; continue; }
+        await this.request({ id: sel.id, status: sel.status, countryCode: sel.countryCode } as SellerContext, amount, null);
+        requested++;
+      } catch (e) {
+        skipped++;
+        this.logger.warn(`weekly payout for seller ${sel.id} skipped: ${(e as Error).message}`);
+      }
+    }
+    if (requested) this.logger.log(`weekly payouts: ${requested} requested, ${skipped} skipped`);
+    return { requested, skipped };
   }
 
   async listForSeller(sellerId: string) {

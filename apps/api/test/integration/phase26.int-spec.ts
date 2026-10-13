@@ -9,6 +9,7 @@ import { randomBytes } from 'crypto';
 import request from 'supertest';
 import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
+import { PayoutsService } from '../../src/finance/payouts.service';
 import { NotificationsService } from '../../src/notifications/notifications.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { setCodRules } from './cod-helper';
@@ -104,5 +105,24 @@ describe('Phase 26 — Seller Center: labels and pick-up scan (real database)', 
     await api().post('/api/v1/courier/jobs/scan').set(bearer(t.courier)).send({ code: 'hello' }).expect(400);
     await api().post('/api/v1/courier/jobs/scan').set(bearer(t.courier)).send({ code: 'FMXS:00000000-0000-4000-8000-000000000000' }).expect(404);
     await api().post('/api/v1/courier/jobs/scan').set(bearer(t.gadgets)).send({ code: `FMXS:${t.so}` }).expect(403);
+  });
+
+  it('a new seller gets the 7-day return window; the weekly payout run asks once for every seller\'s ready money', async () => {
+    const fresh = await api().post('/api/v1/auth/register').send({ fullName: 'P26 Seller', email: `p26.seller.${run}@example.com`, password: 'P26-Pass-2026!', countryCode: 'QA', locale: 'en' }).expect(201);
+    await api().post('/api/v1/seller/apply').set(bearer(fresh.body.accessToken)).send({ businessName: `P26 Trading ${run}`, storeName: `P26 Shop ${run}`, contactEmail: `p26.seller.${run}@example.com`, contactPhone: '+97455526260' }).expect(201);
+    const seller = await prisma.seller.findFirstOrThrow({ where: { contactEmail: `p26.seller.${run}@example.com` }, select: { returnWindowDays: true } });
+    expect(seller.returnWindowDays).toBe(7);
+
+    const start = new Date();
+    const svc = app.get(PayoutsService);
+    try {
+      const first = await svc.weeklyRequests();
+      const made = await prisma.sellerPayout.count({ where: { requestedAt: { gte: start }, status: 'REQUESTED' } });
+      expect(made).toBe(first.requested);
+      const again = await svc.weeklyRequests();
+      expect(again.requested).toBe(0); // a seller with an open request is not asked twice
+    } finally {
+      await prisma.sellerPayout.deleteMany({ where: { requestedAt: { gte: start }, status: 'REQUESTED' } });
+    }
   });
 });
