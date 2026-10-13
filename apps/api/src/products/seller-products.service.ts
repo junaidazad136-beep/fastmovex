@@ -266,6 +266,19 @@ export class SellerProductsService {
     await this.audit.log({ actorId: actorId ?? null, action: 'product.image_remove', entityType: 'Product', entityId: img!.productId, before: { imageId, fileKey: img!.fileKey } });
   }
 
+  /** Link a photo to an option value (the colour it shows) or to none; the shop then shows it on that colour's card. */
+  async setImageVariant(seller: SellerContext, imageId: string, variantId: string | null, actorId?: string) {
+    const img = await this.prisma.productImage.findUnique({ where: { id: imageId }, select: { id: true, productId: true, product: { select: { store: { select: { sellerId: true } } } } } });
+    assertOwnedBy(img && { sellerId: img.product.store.sellerId }, seller.id, 'Image');
+    if (variantId) {
+      const v = await this.prisma.productVariant.findFirst({ where: { id: variantId, productId: img!.productId }, select: { id: true } });
+      if (!v) throw new BadRequestException('Variant does not belong to this product');
+    }
+    const updated = await this.prisma.productImage.update({ where: { id: imageId }, data: { variantId } });
+    await this.audit.log({ actorId: actorId ?? null, action: 'product.image_variant', entityType: 'Product', entityId: img!.productId, after: { imageId, variantId } });
+    return { ...updated, url: this.storage.publicUrl(updated.fileKey) };
+  }
+
   async reorderImages(seller: SellerContext, productId: string, dto: ReorderImagesDto, actorId?: string) {
     await this.owned(seller.id, productId);
     const imgs = await this.prisma.productImage.findMany({ where: { productId }, select: { id: true } });

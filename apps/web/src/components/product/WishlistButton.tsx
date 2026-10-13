@@ -10,7 +10,7 @@ import { useToast } from '@/lib/state/toast';
 import { useWishlist } from '@/lib/state/wishlist';
 import { paths } from '@/lib/urls';
 
-export function WishlistButton({ productId, compact = false }: { productId: string; compact?: boolean }) {
+export function WishlistButton({ productId, compact = false, className }: { productId: string; compact?: boolean; className?: string }) {
   const t = useT();
   const { status } = useSession();
   const wishlist = useWishlist();
@@ -46,11 +46,7 @@ export function WishlistButton({ productId, compact = false }: { productId: stri
       aria-pressed={saved}
       aria-label={label}
       title={label}
-      className={
-        compact
-          ? 'pcard-fav'
-          : 'btn-secondary size-12 shrink-0 p-0'
-      }
+      className={className ?? (compact ? 'pcard-fav' : 'btn-secondary size-12 shrink-0 p-0')}
     >
       <Heart className={`size-[18px] ${saved ? 'fill-brand-600 text-brand-600' : ''}`} aria-hidden />
     </button>

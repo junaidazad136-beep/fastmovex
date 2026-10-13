@@ -125,11 +125,12 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
   const specs = Object.entries(p.specs ?? {});
 
   return (
-    <div className="container-page py-6">
+    <div className="container-page pb-6 pt-3 md:pt-6">
       <JsonLd data={productJsonLd(p, locale, title, clip(description, 500), market.currency.minorUnits, market)} />
       <JsonLd data={{ '@context': 'https://schema.org', '@type': 'BreadcrumbList', itemListElement: crumbs.map((c, i) => ({ '@type': 'ListItem', position: i + 1, name: c.name, ...(c.href ? { item: `${env.siteUrl}${c.href}` } : {}) })) }} />
       <ViewTracker slug={slug} />
-      <Breadcrumbs items={crumbs} label={t('nav.breadcrumb')} />
+      {/* phones skip the path: the store and the title come first, like the big shopping apps */}
+      <div className="max-md:hidden"><Breadcrumbs items={crumbs} label={t('nav.breadcrumb')} /></div>
 
       <ProductBuy product={p} images={images} title={title} />
       <div className="mt-3 flex justify-end"><WhatsAppAsk text={t('whatsapp.aboutProduct', { product: title, url: `${env.siteUrl}${paths.product(locale, p.slug)}` })} label={t('whatsapp.askProduct')} /></div>

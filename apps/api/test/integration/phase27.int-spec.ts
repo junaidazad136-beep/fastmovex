@@ -63,3 +63,46 @@ describe('Phase 27 — category tile pictures (real database)', () => {
     await api().post(`/api/v1/admin/categories/${id}/image`).set(bearer(customer)).attach('file', png, 'x.png').expect(403);
   });
 });
+
+describe('Phase 27 — product page: colour photos and "bought in past month" (real database)', () => {
+  let app: INestApplication;
+  let prisma: PrismaService;
+  const api = () => request(app.getHttpServer());
+  const bearer = (t: string) => ({ Authorization: `Bearer ${t}` });
+  const login = async (identifier: string) => (await api().post('/api/v1/auth/login').send({ identifier, password: DEMO_PASSWORD }).expect(200)).body.accessToken as string;
+
+  beforeAll(async () => {
+    const mod = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    app = mod.createNestApplication({ rawBody: true });
+    configureApp(app);
+    await app.init();
+    prisma = app.get(PrismaService);
+  });
+  afterAll(async () => { await app.close(); });
+
+  it('staff and the seller link a photo to a colour (or clear it); other sellers cannot; the page reports bought-in-past-month', async () => {
+    const product = await prisma.product.findFirstOrThrow({
+      where: { status: 'ACTIVE', deletedAt: null, images: { some: {} }, variants: { some: {} }, store: { seller: { owner: { email: 'seller.gadgets@demo.jovia.test' } } } },
+      include: { images: { orderBy: { sortOrder: 'asc' } }, variants: true },
+    });
+    const img = product.images[0];
+    const v = product.variants[0];
+    const admin = await login('admin@demo.jovia.test');
+    const res = await api().patch(`/api/v1/admin/images/${img.id}`).set(bearer(admin)).send({ variantId: v.id }).expect(200);
+    expect(res.body.variantId).toBe(v.id);
+    // another product's variant is refused
+    const other = await prisma.productVariant.findFirstOrThrow({ where: { productId: { not: product.id } } });
+    await api().patch(`/api/v1/admin/images/${img.id}`).set(bearer(admin)).send({ variantId: other.id }).expect(400);
+    // the seller can clear it from Seller Center; another seller cannot touch it
+    const seller = await login('seller.gadgets@demo.jovia.test');
+    await api().patch(`/api/v1/seller/images/${img.id}`).set(bearer(seller)).send({ variantId: null }).expect(200);
+    const home = await login('seller.home@demo.jovia.test');
+    await api().patch(`/api/v1/seller/images/${img.id}`).set(bearer(home)).send({ variantId: v.id }).expect((r) => expect([403, 404]).toContain(r.status));
+    expect((await prisma.productImage.findUniqueOrThrow({ where: { id: img.id } })).variantId).toBeNull(); // cleared by the seller, not changed by the other one
+    await prisma.productImage.update({ where: { id: img.id }, data: { variantId: img.variantId } });
+
+    const page = await api().get(`/api/v1/products/${product.slug}`).expect(200);
+    expect(typeof page.body.boughtLastMonth).toBe('number');
+    expect([0, 10, 20, 50].includes(page.body.boughtLastMonth) || page.body.boughtLastMonth % 100 === 0).toBe(true);
+  });
+});

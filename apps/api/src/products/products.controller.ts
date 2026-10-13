@@ -14,7 +14,7 @@ import { AdminCatalogService } from './admin-catalog.service';
 import { CatalogCsvService } from './catalog-csv.service';
 import {
   AdjustStockDto, AdminBulkProductsDto, AdminCreateProductDto, AdminProductsQuery, AdminProductStatusDto, BulkVariantsDto, CreateProductDto,
-  InventoryQuery, ModerationDto, ReorderImagesDto, SellerProductsQuery, UpdateProductDto, UpdateVariantDto, VariantInputDto,
+  ImageVariantDto, InventoryQuery, ModerationDto, ReorderImagesDto, SellerProductsQuery, UpdateProductDto, UpdateVariantDto, VariantInputDto,
 } from './dto/product.dto';
 import { PublicProductsService } from './public-products.service';
 import { hasInternalKey } from '../common/utils/internal-key';
@@ -90,6 +90,11 @@ export class SellerProductsController {
   @Put('products/:id/images/order') @HttpCode(204)
   reorder(@CurrentSeller() s: SellerContext, @Param('id', ParseUUIDPipe) id: string, @Body() dto: ReorderImagesDto, @CurrentUser() u: AuthUser) {
     return this.products.reorderImages(s, id, dto, u.id);
+  }
+
+  @Patch('images/:imageId')
+  setImageVariant(@CurrentSeller() s: SellerContext, @Param('imageId', ParseUUIDPipe) imageId: string, @Body() dto: ImageVariantDto, @CurrentUser() u: AuthUser) {
+    return this.products.setImageVariant(s, imageId, dto.variantId ?? null, u.id);
   }
 
   @Delete('images/:imageId') @HttpCode(204)
@@ -169,6 +174,9 @@ export class AdminProductsController {
 
   @RequirePermissions('products.manage') @Put('products/:id/images/order') @HttpCode(204)
   reorder(@Param('id', ParseUUIDPipe) id: string, @Body() dto: ReorderImagesDto, @CurrentUser() u: AuthUser) { return this.catalog.reorderImages(id, dto.imageIds, u.id); }
+
+  @RequirePermissions('products.manage') @Patch('images/:imageId')
+  setImageVariant(@Param('imageId', ParseUUIDPipe) imageId: string, @Body() dto: ImageVariantDto, @CurrentUser() u: AuthUser) { return this.catalog.setImageVariant(imageId, dto.variantId ?? null, u.id); }
 
   @RequirePermissions('products.manage') @Delete('images/:imageId') @HttpCode(204)
   removeImage(@Param('imageId', ParseUUIDPipe) imageId: string, @CurrentUser() u: AuthUser) { return this.catalog.removeImage(imageId, u.id); }

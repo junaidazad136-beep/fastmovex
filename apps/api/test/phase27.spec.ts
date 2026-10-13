@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import sharp from 'sharp';
 import { CATEGORY_ART } from '../prisma/category-art';
 import { buildTree } from '../src/categories/categories.service';
+import { roundBought } from '../src/products/public-products.service';
 import { tilePicture } from '../src/storage/photo';
 
 describe('Phase 27 — category tile pictures', () => {
@@ -41,5 +42,12 @@ describe('Phase 27 — category tile pictures', () => {
 
   it('a file that is not a picture is refused', async () => {
     await expect(tilePicture(Buffer.from('not an image'))).rejects.toThrow('could not be read');
+  });
+});
+
+
+describe('Phase 27 — "bought in past month"', () => {
+  it.each([[0, 0], [9, 0], [10, 10], [19, 10], [37, 20], [64, 50], [99, 50], [100, 100], [340, 300], [999, 900], [2750, 2000]])('%i units → shows %i+', (n, shown) => {
+    expect(roundBought(n)).toBe(shown);
   });
 });

@@ -90,7 +90,7 @@ export interface SellerProductDetail {
   warrantyMonths: number | null;
   returnPolicyDays: number | null;
   moderationNote: string | null;
-  images: { id: string; url: string | null; sortOrder: number }[];
+  images: { id: string; url: string | null; sortOrder: number; variantId?: string | null }[];
   variants: {
     id: string; sku: string; barcode: string | null; priceMinor: string; compareAtMinor: string | null; isActive: boolean;
     optionValues: Record<string, string> | null; inventory: { onHand: number; reserved: number; lowStockThreshold: number } | null;

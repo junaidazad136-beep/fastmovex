@@ -177,6 +177,8 @@ export interface ProductDetail {
   ratingAvg: number;
   ratingCount: number;
   soldCount: number;
+  /** units bought in the last 30 days, rounded down (10, 20, 50, 100, 200 …); 0 = too few to show */
+  boughtLastMonth?: number;
   minPriceMinor: Minor;
   countryCode: string;
   brand: { name: string; nameAr?: string | null; slug: string } | null;

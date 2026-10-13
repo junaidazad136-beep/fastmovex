@@ -298,6 +298,12 @@ export class AdminCatalogService {
     return this.products.reorderImages(await this.sellerOfProduct(productId), productId, { imageIds }, actorId);
   }
 
+  async setImageVariant(imageId: string, variantId: string | null, actorId?: string) {
+    const img = await this.prisma.productImage.findUnique({ where: { id: imageId }, select: { product: { select: { store: { select: { seller: { select: { id: true, status: true, countryCode: true } } } } } } } });
+    if (!img) throw new NotFoundException('Image not found');
+    return this.products.setImageVariant(img.product.store.seller, imageId, variantId, actorId);
+  }
+
   async removeImage(imageId: string, actorId?: string) {
     const img = await this.prisma.productImage.findUnique({ where: { id: imageId }, select: { product: { select: { store: { select: { seller: { select: { id: true, status: true, countryCode: true } } } } } } } });
     if (!img) throw new NotFoundException('Image not found');

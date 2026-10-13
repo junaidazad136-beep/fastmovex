@@ -1,4 +1,5 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
+import { Prisma } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
 import { bestDeal, liveDealsSelect } from '../catalog/product-card.service';
 import { validGtin } from '../seo/seo-rules';
@@ -81,8 +82,10 @@ export class PublicProductsService {
     const crumbs = await this.prisma.category.findMany({ where: { slug: { in: slugs } }, select: { slug: true, name: true, nameAr: true } });
 
     const { store, images, variants, category, ...rest } = p;
+    const boughtLastMonth = await this.cache.wrap(`product:bought:${p.id}`, 900, () => this.boughtLastMonth(p.id));
     return {
       ...rest,
+      boughtLastMonth,
       category: { slug: category.slug, name: category.name, nameAr: category.nameAr },
       breadcrumbs: slugs.map((s) => crumbs.find((c) => c.slug === s)).filter(Boolean),
       // 0 = not returnable; otherwise the product's own window or the seller's default (same rule as return requests)
@@ -101,4 +104,30 @@ export class PublicProductsService {
       }),
     };
   }
+
+  /**
+   * "300+ bought in past month": units ordered in the last 30 days (paid or cash-on-delivery orders, minus refunds),
+   * rounded down to a round number so the exact sales stay private. Below 10 it is 0 and nothing is shown.
+   */
+  private async boughtLastMonth(productId: string): Promise<number> {
+    const [row] = await this.prisma.$queryRaw<{ n: number }[]>(Prisma.sql`
+      SELECT COALESCE(SUM(oi."quantity" - oi."refundedQty"), 0)::int AS n
+      FROM "OrderItem" oi
+      JOIN "ProductVariant" v ON v."id" = oi."variantId"
+      JOIN "Order" o ON o."id" = oi."orderId"
+      WHERE v."productId" = ${productId}::uuid
+        AND o."placedAt" > now() - interval '30 days'
+        AND oi."status" NOT IN ('PENDING', 'CANCELLED')`);
+    return roundBought(row?.n ?? 0);
+  }
+}
+
+/** 7 → 0, 12 → 10, 37 → 20, 64 → 50, 340 → 300, 2750 → 2000. Exported for tests. */
+export function roundBought(n: number): number {
+  if (n >= 1000) return Math.floor(n / 1000) * 1000;
+  if (n >= 100) return Math.floor(n / 100) * 100;
+  if (n >= 50) return 50;
+  if (n >= 20) return 20;
+  if (n >= 10) return 10;
+  return 0;
 }

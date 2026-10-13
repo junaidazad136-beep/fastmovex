@@ -181,6 +181,14 @@ export function EditProduct({ id }: { id: string }) {
       await load();
     } catch (err) { toast({ tone: 'error', message: errorMessage(err, t) }); } finally { setBusy(''); }
   }
+  /** which colour (first option value) a photo shows; the shop puts it on that colour's card */
+  async function linkPhoto(imageId: string, variantId: string | null, label: string) {
+    try {
+      await api(`/seller/images/${imageId}`, { method: 'PATCH', body: { variantId } });
+      toast({ tone: 'success', message: label });
+      await load();
+    } catch (err) { toast({ tone: 'error', message: errorMessage(err, t) }); }
+  }
   async function removePhoto(imageId: string) {
     try { await api(`/seller/images/${imageId}`, { method: 'DELETE' }); await load(); } catch (err) { toast({ tone: 'error', message: errorMessage(err, t) }); }
   }
@@ -188,6 +196,8 @@ export function EditProduct({ id }: { id: string }) {
   if (error) return <p className="card p-6 text-danger-600" role="alert">{error}</p>;
   if (!p || !f) return <div className="space-y-3"><div className="skeleton h-8 w-64" /><div className="skeleton h-40" /><div className="skeleton h-64" /></div>;
   const canSend = p.status === 'DRAFT' || p.status === 'REJECTED';
+  const optName = Object.keys(p.variants.find((v) => v.optionValues && Object.keys(v.optionValues).length)?.optionValues ?? {})[0];
+  const choices = optName ? [...new Map(p.variants.filter((v) => v.optionValues?.[optName]).map((v) => [v.optionValues![optName], v.id])).entries()] : [];
 
   return (
     <div className="mx-auto max-w-2xl space-y-4" data-testid="edit-product">
@@ -207,6 +217,18 @@ export function EditProduct({ id }: { id: string }) {
             <li key={img.id} className="relative aspect-square overflow-hidden rounded-xl bg-ink-50 ring-1 ring-ink-100">
               {img.url && <Image src={img.url} alt="" fill sizes="160px" className="object-cover" unoptimized />}
               <button type="button" onClick={() => void removePhoto(img.id)} className="absolute end-1 top-1 flex size-8 items-center justify-center rounded-full bg-white/90 text-danger-600 shadow" aria-label={t('seller.form.removePhoto')}><Trash2 className="size-4" aria-hidden /></button>
+              {choices.length > 1 && (
+                <select
+                  className="absolute inset-x-1 bottom-1 rounded-lg border border-ink-200 bg-white/95 px-1.5 py-1 text-xs"
+                  value={p.variants.find((v) => v.id === img.variantId)?.optionValues?.[optName!] ?? ''}
+                  onChange={(e) => { const c = choices.find(([value]) => value === e.target.value); void linkPhoto(img.id, c?.[1] ?? null, c ? t('seller.form.photoLinked', { value: c[0] }) : t('seller.form.photoAll')); }}
+                  aria-label={optName}
+                  data-testid="photo-option"
+                >
+                  <option value="">{t('seller.form.photoAll')}</option>
+                  {choices.map(([value]) => <option key={value} value={value}>{value}</option>)}
+                </select>
+              )}
             </li>
           ))}
           <li>

@@ -323,9 +323,9 @@ export function ProductEditor({ product, onReload }: { product: ProductDetail | 
           </Card>
 </fieldset>
 
-          <Card title="Photos" description="JPG, PNG or WebP up to 5 MB, max 10. The first photo is the main one; square photos look best.">
+          <Card title="Photos" description="JPG, PNG or WebP up to 5 MB, max 10. The first photo is the main one; square photos look best. With colours, set which colour each photo shows: the shop puts it on that colour’s card.">
             {product ? (
-              <ImagesManager productId={product.id} images={images} onChange={setImages} canEdit={canEdit} />
+              <ImagesManager productId={product.id} images={images} onChange={setImages} canEdit={canEdit} variants={product.variants} />
             ) : (
               <PendingImages files={pending} onChange={setPending} />
             )}

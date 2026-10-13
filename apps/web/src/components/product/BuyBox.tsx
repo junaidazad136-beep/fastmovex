@@ -1,6 +1,7 @@
 'use client';
 
 import { BadgeCheck, Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Star, Store, Truck } from 'lucide-react';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
@@ -15,6 +16,7 @@ import { useMoney, useShop } from '@/lib/state/shop';
 import { useToast } from '@/lib/state/toast';
 import { paths, pick } from '@/lib/urls';
 import { Countdown } from '../ui/Countdown';
+import { Stars } from '../ui/Stars';
 import { Spinner } from '../ui/Spinner';
 import { Gallery, type GalleryImage } from './Gallery';
 import { Price, effectivePrice } from './Price';
@@ -62,13 +64,55 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
     }
   }
 
+  const storeName = pick(t.locale, product.store.name, product.store.nameAr);
+  const bought = product.boughtLastMonth ?? 0;
+  /** the photo of each option value (a colour's own picture), when the seller added one */
+  const valueImage = (name: string, value: string) => {
+    const ids = new Set(product.variants.filter((v) => v.optionValues?.[name] === value).map((v) => v.id));
+    return images.find((im) => im.variantId && ids.has(im.variantId))?.url ?? null;
+  };
+
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:gap-12">
-      <Gallery images={images} activeVariantId={variant?.id} />
-      <div>
-        <h1 className="text-xl font-bold leading-snug tracking-tight text-ink-900 sm:text-2xl" data-testid="product-title">{title}</h1>
+    // Phones: who sells it + title first, then the photos, the options and the rest (Amazon's order). Larger screens:
+    // photos on the left, everything else on the right.
+    <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-12">
+      <div className="lg:col-start-2 lg:row-start-1" data-testid="product-head">
+        <div className="flex items-center gap-3">
+          <Link href={paths.store(t.locale, product.store.slug)} className="flex min-w-0 items-center gap-2.5" data-testid="product-store">
+            <span className="relative flex size-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white ring-1 ring-ink-100">
+              {product.store.logoUrl ? <Image src={product.store.logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" /> : <Store className="size-4 text-ink-400" aria-hidden />}
+            </span>
+            <span className="min-w-0 leading-tight">
+              <span className="flex items-center gap-1 text-sm font-semibold text-ink-900">
+                <span className="truncate">{storeName}</span>
+                {product.store.isHouse && <BadgeCheck className="size-4 shrink-0 text-brand-600" aria-label={t('product.officialStore')} />}
+              </span>
+              <span className="text-xs font-medium text-brand-700">{t('product.visitStore')}</span>
+            </span>
+          </Link>
+          {product.ratingCount > 0 && (
+            <a href="#reviews" className="ms-auto flex shrink-0 items-center gap-1 text-xs" aria-label={t('product.seeReviews', { count: product.ratingCount })} data-testid="product-rating">
+              <span className="tabular font-semibold text-ink-800">{product.ratingAvg.toFixed(1)}</span>
+              <Stars value={product.ratingAvg} label={t('product.ratingOutOf', { rating: product.ratingAvg })} />
+              <span className="tabular text-brand-700">({product.ratingCount.toLocaleString('en')})</span>
+            </a>
+          )}
+        </div>
+        <h1 className="mt-2.5 text-base font-medium leading-snug text-ink-900 sm:text-xl lg:text-2xl lg:font-bold lg:tracking-tight" data-testid="product-title">{title}</h1>
+        {bought > 0 && (
+          <p className="mt-1.5 text-[13px] font-semibold text-ink-800" data-testid="bought-last-month">
+            {t('product.boughtLastMonth', { n: bought >= 1000 ? `${bought / 1000}K` : String(bought) })}
+          </p>
+        )}
+      </div>
+
+      <div className="-mx-4 mt-3 sm:-mx-6 md:mx-0 lg:col-start-1 lg:row-span-2 lg:row-start-1 lg:mt-0">
+        <Gallery images={images} activeVariantId={variant?.id} productId={product.id} title={title} />
+      </div>
+
+      <div className="flex flex-col lg:col-start-2 lg:row-start-2">
         {variant && (
-          <div className="mt-4 rounded-2xl border border-ink-100 bg-white p-4">
+          <div className="mt-4 rounded-2xl border border-ink-100 bg-white p-4 max-lg:order-2">
             <Price input={variant} currency={variant.currencyCode} minorUnits={market.currency.minorUnits} locale={t.locale} size="lg" showPercent percentLabel={(n) => t('product.percentOff', { n })} />
             {price?.was && (
               <p className="mt-1 text-sm font-medium text-success-600">
@@ -88,31 +132,68 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
           </div>
         )}
 
-        {names.map((name) => (
-          <fieldset key={name} className="mt-5">
-            <legend className="mb-2 text-sm font-semibold text-ink-800">
-              {name}: <span className="font-normal text-ink-600">{selected[name]}</span>
-            </legend>
-            <div className="flex flex-wrap gap-2">
-              {optionValues(product.variants, name).map((value) => {
-                const active = selected[name] === value;
-                const available = isValueAvailable(product.variants, selected, name, value);
-                return (
-                  <button
-                    key={value}
-                    type="button"
-                    onClick={() => { setSelected(selectValue(product.variants, selected, name, value)); setQty(1); }}
-                    aria-pressed={active}
-                    className={`min-w-12 rounded-xl border px-3.5 py-2 text-sm transition ${active ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700 ring-1 ring-brand-600' : 'border-ink-200 bg-white text-ink-800 hover:border-ink-400'} ${available ? '' : 'text-ink-400 line-through decoration-ink-300'}`}
-                  >
-                    {value}
-                  </button>
-                );
-              })}
-            </div>
-          </fieldset>
-        ))}
+        <div className="max-lg:order-1">
+        {names.map((name) => {
+          const values = optionValues(product.variants, name);
+          const pictures = values.map((v) => valueImage(name, v));
+          // a picture card per value (Amazon's colour cards) when most values have their own photo; small buttons otherwise
+          const visual = pictures.filter(Boolean).length >= Math.max(2, Math.ceil(values.length / 2));
+          return (
+            <fieldset key={name} className="mt-4">
+              <legend className="mb-2 text-sm font-semibold text-ink-800">
+                {name}: <span className="font-normal text-ink-600">{selected[name]}</span>
+              </legend>
+              <div className={visual ? 'no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:px-0' : 'flex flex-wrap gap-2'} data-testid={visual ? 'option-cards' : undefined}>
+                {values.map((value, i) => {
+                  const active = selected[name] === value;
+                  const available = isValueAvailable(product.variants, selected, name, value);
+                  const choose = () => { setSelected(selectValue(product.variants, selected, name, value)); setQty(1); };
+                  if (!visual) {
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={choose}
+                        aria-pressed={active}
+                        className={`min-w-12 rounded-xl border px-3.5 py-2 text-sm transition ${active ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700 ring-1 ring-brand-600' : 'border-ink-200 bg-white text-ink-800 hover:border-ink-400'} ${available ? '' : 'text-ink-400 line-through decoration-ink-300'}`}
+                      >
+                        {value}
+                      </button>
+                    );
+                  }
+                  const v = findVariant(product.variants, selectValue(product.variants, selected, name, value));
+                  const vp = v ? effectivePrice(v) : null;
+                  return (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={choose}
+                      aria-pressed={active}
+                      className={`w-[104px] shrink-0 overflow-hidden rounded-xl border bg-white text-start transition ${active ? 'border-brand-600 ring-2 ring-brand-600' : 'border-ink-200 hover:border-ink-400'}`}
+                      data-testid="option-card"
+                    >
+                      <span className={`relative block aspect-square bg-ink-50 ${available ? '' : 'opacity-40'}`}>
+                        {pictures[i] && <Image src={pictures[i]!} alt="" fill sizes="104px" className="object-contain p-1.5" />}
+                      </span>
+                      <span className="block px-2 pb-2 pt-1.5 leading-tight">
+                        <span className="block truncate text-xs font-medium text-ink-800">{value}</span>
+                        {vp && available ? (
+                          <span className="tabular mt-0.5 block whitespace-nowrap text-xs font-bold text-ink-900">{money(vp.now)}</span>
+                        ) : (
+                          <span className="mt-0.5 block text-[11px] text-ink-400">{t('product.outOfStock')}</span>
+                        )}
+                        {vp?.was && available && <span className="tabular block whitespace-nowrap text-[11px] text-ink-400 line-through">{money(vp.was)}</span>}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </fieldset>
+          );
+        })}
+        </div>
 
+        <div className="order-3">
         <div className="mt-5">
           {variant?.inStock ? (
             <p className={`text-sm font-semibold ${variant.lowStockCount !== null ? 'text-warning-600' : 'text-success-600'}`} data-testid="stock-status">
@@ -141,7 +222,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
             {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : null}
             {busy ? t('product.adding') : justAdded ? t('product.added') : t('product.addToCart')}
           </button>
-          <WishlistButton productId={product.id} />
+          <span className="max-md:hidden"><WishlistButton productId={product.id} /></span>
         </div>
         {inCart > 0 && (
           <p className="mt-2 text-sm text-ink-500">
@@ -185,6 +266,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
           )}
         </ul>
         {variant && <p className="mt-3 text-xs text-ink-400">{t('product.sku')}: <span dir="ltr">{variant.sku}</span></p>}
+        </div>
       </div>
 
       {/* Phones: price + "Add to cart" always at the bottom of the screen (the tab bar steps aside on product pages). */}

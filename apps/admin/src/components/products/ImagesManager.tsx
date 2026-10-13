@@ -8,7 +8,22 @@ import { api } from '@/lib/api/client';
 import { errorMessage } from '@/lib/api/errors';
 import { useToast } from '@/lib/state/toast';
 
-export interface ProductImage { id: string; url: string; sortOrder: number; altText?: string | null }
+export interface ProductImage { id: string; url: string; sortOrder: number; altText?: string | null; variantId?: string | null }
+
+/**
+ * The choices for "which colour is this photo of": the values of the product's first option (usually Color), each
+ * linked through its first variant. Empty when the product has no options. Exported for tests.
+ */
+export function photoChoices(variants: { id: string; optionValues: Record<string, string> | null }[]): { name: string; choices: { value: string; variantId: string }[] } | null {
+  const name = Object.keys(variants.find((v) => v.optionValues && Object.keys(v.optionValues).length)?.optionValues ?? {})[0];
+  if (!name) return null;
+  const choices: { value: string; variantId: string }[] = [];
+  for (const v of variants) {
+    const value = v.optionValues?.[name];
+    if (value && !choices.some((c) => c.value === value)) choices.push({ value, variantId: v.id });
+  }
+  return choices.length > 1 ? { name, choices } : null;
+}
 
 export const MAX_IMAGES = 10;
 const TYPES = ['image/jpeg', 'image/png', 'image/webp'];
@@ -67,7 +82,9 @@ function DropZone({ onFiles, disabled, left }: { onFiles: (files: File[]) => voi
 }
 
 /** Photos of a saved product: upload (several at once), reorder (first one is the main photo), delete. */
-export function ImagesManager({ productId, images, onChange, canEdit }: { productId: string; images: ProductImage[]; onChange: (images: ProductImage[]) => void; canEdit: boolean }) {
+export function ImagesManager({ productId, images, onChange, canEdit, variants = [] }: { productId: string; images: ProductImage[]; onChange: (images: ProductImage[]) => void; canEdit: boolean; variants?: { id: string; optionValues: Record<string, string> | null }[] }) {
+  const options = photoChoices(variants);
+  const valueOf = (variantId: string | null | undefined) => (variantId && options ? variants.find((v) => v.id === variantId)?.optionValues?.[options.name] ?? '' : '');
   const toast = useToast();
   const [uploading, setUploading] = useState(0);
   const [busy, setBusy] = useState(false);
@@ -115,6 +132,21 @@ export function ImagesManager({ productId, images, onChange, canEdit }: { produc
     }
   }
 
+  /** "Photo of: Black" — the shop shows this photo on the Black card and when Black is picked. */
+  async function link(id: string, value: string) {
+    const variantId = options?.choices.find((c) => c.value === value)?.variantId ?? null;
+    setBusy(true);
+    try {
+      await api(`/admin/images/${id}`, { method: 'PATCH', body: { variantId } });
+      onChange(sorted.map((x) => (x.id === id ? { ...x, variantId } : x)));
+      toast.success(value ? `Photo linked to ${value}` : 'Photo shows for every option');
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setBusy(false);
+    }
+  }
+
   async function remove(id: string) {
     setBusy(true);
     try {
@@ -131,7 +163,8 @@ export function ImagesManager({ productId, images, onChange, canEdit }: { produc
   return (
     <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
       {sorted.map((im, i) => (
-        <figure key={im.id} className="group relative aspect-square overflow-hidden rounded-xl border border-ink-100 bg-ink-50">
+        <div key={im.id}>
+        <figure className="group relative aspect-square overflow-hidden rounded-xl border border-ink-100 bg-ink-50">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src={im.url} alt={`Photo ${i + 1}`} className="size-full object-cover" />
           {i === 0 ? <span className="absolute start-1.5 top-1.5 rounded-md bg-ink-900/80 px-1.5 py-0.5 text-[10px] font-semibold text-white">Main</span> : null}
@@ -151,6 +184,20 @@ export function ImagesManager({ productId, images, onChange, canEdit }: { produc
             </div>
           ) : null}
         </figure>
+        {options ? (
+          <select
+            className="mt-1.5 w-full rounded-lg border border-ink-200 bg-white px-2 py-1 text-xs text-ink-700"
+            value={valueOf(im.variantId)}
+            disabled={!canEdit || busy}
+            onChange={(e) => link(im.id, e.target.value)}
+            aria-label={`Photo ${i + 1} shows ${options.name}`}
+            data-testid="photo-option"
+          >
+            <option value="">{`Every ${options.name.toLowerCase()}`}</option>
+            {options.choices.map((c) => <option key={c.value} value={c.value}>{`${options.name}: ${c.value}`}</option>)}
+          </select>
+        ) : null}
+        </div>
       ))}
       {Array.from({ length: uploading }, (_, i) => (
         <div key={`u${i}`} className="flex aspect-square items-center justify-center rounded-xl border border-ink-100 bg-ink-50"><Spinner className="size-5 text-ink-400" /></div>

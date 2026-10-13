@@ -156,6 +156,11 @@ export class BulkVariantsDto {
   @ApiPropertyOptional({ description: 'onHand values are counts in this warehouse (default: totals, differences go to the default warehouse)' }) @IsOptional() @IsUUID() warehouseId?: string;
 }
 
+/** Which option value (a colour) a photo shows; null = the photo is for every option. */
+export class ImageVariantDto {
+  @ApiProperty({ nullable: true, description: 'A variant of the same product, or null' }) @IsOptional() @IsUUID() variantId: string | null;
+}
+
 export class ReorderImagesDto {
   @ApiProperty({ type: [String] }) @IsArray() @ArrayMaxSize(10) @IsUUID('all', { each: true }) imageIds: string[];
 }
