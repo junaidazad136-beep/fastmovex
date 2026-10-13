@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, Truck } from 'lucide-react';
+import { Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Truck } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
@@ -163,6 +163,35 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
         </ul>
         {variant && <p className="mt-3 text-xs text-ink-400">{t('product.sku')}: <span dir="ltr">{variant.sku}</span></p>}
       </div>
+
+      {/* Phones: price + "Add to cart" always at the bottom of the screen (the tab bar steps aside on product pages). */}
+      {variant && price && (
+        <div className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-100 bg-white/95 px-4 pt-2.5 pb-[calc(0.625rem+env(safe-area-inset-bottom))] shadow-[0_-4px_16px_rgb(0_0_0/0.06)] backdrop-blur md:hidden" data-testid="sticky-buy">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 shrink-0">
+              <p className="tabular text-lg font-extrabold leading-tight text-brand-700" data-testid="sticky-price">{money(price.now)}</p>
+              {price.was && price.percent > 0 && (
+                <p className="tabular flex items-center gap-1.5 text-xs leading-tight">
+                  <span className="text-ink-400 line-through">{money(price.was)}</span>
+                  <span className="rounded bg-brand-600 px-1 font-bold text-white">-{price.percent}%</span>
+                </p>
+              )}
+            </div>
+            <button
+              type="button"
+              onClick={add}
+              disabled={!ready || !variant.inStock || busy}
+              className="btn-primary h-12 min-w-0 flex-1 rounded-xl text-[15px] disabled:bg-ink-200 disabled:text-ink-500"
+              data-testid="sticky-add"
+            >
+              {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : variant.inStock ? <ShoppingCart className="size-5" aria-hidden /> : null}
+              <span className="truncate">
+                {!variant.inStock ? t('product.outOfStock') : busy ? t('product.adding') : justAdded ? t('product.added') : qty > 1 ? `${t('product.addToCart')} · ${qty}` : t('product.addToCart')}
+              </span>
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

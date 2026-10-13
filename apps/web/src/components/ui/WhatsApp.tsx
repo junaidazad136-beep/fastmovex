@@ -32,7 +32,7 @@ export function WhatsAppChat() {
       rel="noopener noreferrer"
       aria-label={t('whatsapp.chat')}
       title={t('whatsapp.chat')}
-      className="no-print fixed bottom-20 end-4 z-30 flex size-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[var(--shadow-pop)] transition hover:scale-105 lg:bottom-6 lg:end-6"
+      className="no-print fixed bottom-[calc(5.5rem+env(safe-area-inset-bottom))] end-4 z-30 flex size-12 items-center justify-center rounded-full bg-[#25D366] text-white shadow-[var(--shadow-pop)] transition hover:scale-105 lg:bottom-6 lg:end-6"
       data-testid="whatsapp-chat"
     >
       <WhatsAppIcon className="size-7" />
