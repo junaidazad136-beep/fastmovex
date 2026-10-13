@@ -41,7 +41,7 @@ export interface SeoText {
 export interface FaqEntry { q: string; qAr: string; a: string; aAr: string }
 export interface BrandDetail extends SeoText { slug: string; name: string; nameAr: string | null; logoUrl: string | null; productCount: number }
 
-export type PaymentMethod = 'CARD' | 'APPLE_PAY' | 'GOOGLE_PAY' | 'COD';
+export type PaymentMethod = 'CARD' | 'APPLE_PAY' | 'GOOGLE_PAY' | 'COD' | 'PAYLATER';
 export type AddressField = 'city' | 'zone' | 'street' | 'building' | 'unit' | 'line1' | 'postalCode';
 
 export interface StoreRef { slug: string; name: string; nameAr: string | null }
@@ -69,6 +69,9 @@ export interface ProductCard {
   /** Set when the card's "Add" can put the product straight in the cart (one option, in stock). */
   quickAddVariantId?: string | null;
 }
+
+/** A "Frequently bought together" item: the option the bundle adds and, for items with options, which one. */
+export type TogetherCard = ProductCard & { variantId: string; variantLabel: string | null };
 
 export interface CategoryNode {
   id: string;

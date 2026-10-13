@@ -16,6 +16,7 @@ import { classify, OrderTrafficDto, TrafficService } from '../analytics/traffic'
 import { WarehousesService } from '../warehouses/warehouses';
 import { CodGuardService } from '../cash/cod-rules';
 import { ATTRIBUTION_DAYS } from '../marketing/cart-reminders';
+import { PAYLATER_MAX_MINOR, PAYLATER_MIN_MINOR } from '../payments/providers/paylater.provider';
 import { PricedLine } from '../pricing/pricing.types';
 import { PrismaService } from '../prisma/prisma.service';
 import { buildOrderNumber } from './order-status';
@@ -54,7 +55,9 @@ export class CheckoutService {
     const address = await this.prisma.address.findFirst({ where: { id: dto.addressId, userId } });
     if (!address) throw new NotFoundException('Address not found');
     if (dto.whatsappOptIn) await this.optInWhatsApp(userId, address.phone);
-    return this.place({ userId, cart: { userId, country }, country, address, dto, idempotencyKey });
+    // "Buy now": that one item, in its own small cart (the customer's cart is left as it is); their coupon limits apply
+    const cart: CartContext = dto.buyNowToken ? { country, guestToken: dto.buyNowToken, couponFor: userId } : { userId, country };
+    return this.place({ userId, cart, country, address, dto, idempotencyKey });
   }
 
   /** Records WhatsApp consent. An account without a mobile number takes the delivery number, unless someone else has it. */
@@ -106,6 +109,9 @@ export class CheckoutService {
     if (!enabled.paymentMethods.includes(dto.paymentMethod)) throw new BadRequestException(`${dto.paymentMethod} is not available in ${country.code}`);
     if (!this.payments.isAvailable(dto.paymentMethod)) throw new BadRequestException(`${dto.paymentMethod} is not available right now. Please choose another payment method.`);
     this.payments.assertReturnUrl(dto.paymentMethod, dto.returnUrl);
+    if (dto.paymentMethod === 'PAYLATER' && (priced.totalMinor < PAYLATER_MIN_MINOR || priced.totalMinor > PAYLATER_MAX_MINOR)) {
+      throw new BadRequestException({ message: 'Pay in instalments is available for orders from QAR 300 to QAR 25,000.', reason: 'PAYLATER_AMOUNT' });
+    }
     if (dto.paymentMethod === 'COD' && this.cod) {
       // fake cash orders cost a driver trip and hold stock: blocked customers, order size, open orders, verified phone
       const who = await this.prisma.user.findUniqueOrThrow({ where: { id: userId }, select: { isGuest: true } });

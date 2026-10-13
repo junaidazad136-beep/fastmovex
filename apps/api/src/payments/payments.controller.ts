@@ -7,6 +7,7 @@ import { Public } from '../common/decorators/auth.decorators';
 import { PaymentsService } from './payments.service';
 import { CodProvider } from './providers/cod.provider';
 import { DibsyProvider } from './providers/dibsy.provider';
+import { PayLaterProvider } from './providers/paylater.provider';
 import { TestPaymentProvider } from './providers/test.provider';
 
 @ApiTags('Payments')
@@ -23,5 +24,5 @@ export class PaymentsController {
   }
 }
 
-@Module({ controllers: [PaymentsController], providers: [PaymentsService, CodProvider, TestPaymentProvider, DibsyProvider, UnpaidOrdersService], exports: [PaymentsService, UnpaidOrdersService] })
+@Module({ controllers: [PaymentsController], providers: [PaymentsService, CodProvider, TestPaymentProvider, DibsyProvider, PayLaterProvider, UnpaidOrdersService], exports: [PaymentsService, UnpaidOrdersService] })
 export class PaymentsModule {}

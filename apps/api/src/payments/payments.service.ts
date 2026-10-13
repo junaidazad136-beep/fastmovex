@@ -10,6 +10,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { PaymentIntentInput, PaymentProvider, WebhookEventData } from './payment-provider';
 import { CodProvider } from './providers/cod.provider';
 import { DibsyProvider } from './providers/dibsy.provider';
+import { PayLaterProvider } from './providers/paylater.provider';
 import { TestPaymentProvider } from './providers/test.provider';
 
 @Injectable()
@@ -27,11 +28,14 @@ export class PaymentsService {
     test: TestPaymentProvider,
     @Optional() dibsy?: DibsyProvider,
     @Optional() private readonly events?: EventEmitter2,
+    @Optional() paylater?: PayLaterProvider,
   ) {
     // The first provider that supports a method takes it. The sandbox never exists in production.
     const real = [dibsy].filter((p): p is DibsyProvider => !!p?.enabled);
     // With a real gateway configured the sandbox is not offered at all (no duplicate "Apple Pay" options that bypass it).
-    this.providers = process.env.NODE_ENV === 'production' || real.length ? [cod, ...real] : [cod, test];
+    // PayLater (instalments) is its own option and only appears with its credentials.
+    const instalments = paylater?.enabled ? [paylater] : [];
+    this.providers = process.env.NODE_ENV === 'production' || real.length ? [cod, ...real, ...instalments] : [cod, test, ...instalments];
     // Before an unpaid card order is expired, ask the gateway once more (a lost webhook must not cancel a paid order).
     this.unpaid.setReconciler?.((orderId) => this.reconcileOrder(orderId));
   }
@@ -43,7 +47,7 @@ export class PaymentsService {
   assertReturnUrl(method: PaymentMethod, url: string | undefined) {
     if (method === 'COD') return;
     if (!url) {
-      if (this.providerFor(method).code === 'dibsy') throw new BadRequestException('returnUrl is required for card payments');
+      if (['dibsy', 'paylater'].includes(this.providerFor(method).code)) throw new BadRequestException('returnUrl is required for this payment method');
       return;
     }
     let u: URL;

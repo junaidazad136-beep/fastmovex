@@ -106,6 +106,11 @@ Client ids are public (they are in the website's page); there is no client secre
 |---|---|---|---|---|
 | `DIBSY_SECRET_KEY` | *opt* | — | Dibsy secret API key (dashboard → Developers). Set = card payments go through Dibsy (the customer chooses card, Himyan, Apple Pay or Google Pay on Dibsy's page); the test sandbox is then switched off. Empty = no gateway: cash on delivery only in production, the test sandbox in development. | Live secret key from the secrets manager. Use the **test** key on staging. |
 | `DIBSY_API_URL` | *opt* | `https://api.dibsy.one/v2` | Dibsy API base. Only change it to use the local stand-in (`http://localhost:4010/v2`, see SETUP.md). | leave the default (must be https) |
+| `PAYLATER_CLIENT_ID` | *opt* | — | PayLater (Qatar "pay in 4") merchant client id, from PayLater's merchant portal. With the secret and outlet id set, the **PAYLATER** payment method becomes available; switch it on per market in Admin → Settings → Payment methods. Orders from QAR 300 to QAR 25,000 only. | From PayLater (live) — UAT credentials on staging. |
+| `PAYLATER_CLIENT_SECRET` | *opt* | — | PayLater client secret (OAuth2 client credentials). | Secrets manager. |
+| `PAYLATER_OUTLET_ID` | *opt* | — | PayLater outlet id (digits). | From PayLater. |
+| `PAYLATER_WEBHOOK_SECRET` | prod, if PayLater is on | — | Signs PayLater's payment notifications. Give PayLater the webhook address `{API_PUBLIC_URL}/api/v1/payments/webhook/paylater`. | Secrets manager. |
+| `PAYLATER_API_URL` | *opt* | `https://connect.paylaterapp.com` | PayLater API base. Use `https://connect.uat.paylaterapp.com` with UAT credentials on staging. | leave the default (must be https) |
 | `API_PUBLIC_URL` | with Dibsy | — | Public address of this API; Dibsy calls `<API_PUBLIC_URL>/api/v1/payments/webhook/dibsy` when a payment changes. | `https://api.fastmovex.qa` (required with Dibsy) |
 
 The return address after paying is the website's own `/{locale}/checkout/return`; the API only accepts return addresses on

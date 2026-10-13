@@ -1,6 +1,6 @@
 'use client';
 
-import { Banknote, CreditCard, Lock, MapPin, Plus, Smartphone } from 'lucide-react';
+import { Banknote, CalendarClock, CreditCard, Lock, MapPin, Plus, Smartphone } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -11,7 +11,7 @@ import { ApiError } from '@/lib/api/errors';
 import type { Address, CheckoutResult, PaymentMethod } from '@/lib/api/types';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
-import { useCart } from '@/lib/state/cart';
+import { initialMethod, paylaterFits, PAYLATER_MAX_MINOR, PAYLATER_MIN_MINOR, rememberMethod, useCheckoutCart } from '@/lib/state/checkout-cart';
 import { useMoney, useShop } from '@/lib/state/shop';
 import { paths, pick } from '@/lib/urls';
 import { AddressForm, formatAddress } from '../account/AddressForm';
@@ -28,7 +28,7 @@ import { PolicyLinks } from '../content/PolicyLinks';
 export const PENDING_ORDER_KEY = 'jovia_pending_order';
 /** Guest checkout: the order's access token, so the payment return page can open the order without an account. */
 export const PENDING_TOKEN_KEY = 'jovia_pending_order_token';
-const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote };
+const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote, PAYLATER: CalendarClock };
 
 function newKey() {
   return typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`;
@@ -39,10 +39,11 @@ export function Checkout() {
   const l = t.locale;
   const router = useRouter();
   const { market } = useShop();
-  const { cart, loading, refresh } = useCart();
+  const { cart, loading, refresh, buyToken } = useCheckoutCart();
   const [addresses, setAddresses] = useState<Address[] | null>(null);
   const [addressId, setAddressId] = useState<string>('');
-  const [method, setMethod] = useState<PaymentMethod | ''>(market.paymentMethods.includes('COD') ? 'COD' : market.paymentMethods[0] ?? '');
+  const [method, setMethod] = useState<PaymentMethod | ''>(() => (typeof window === 'undefined' ? '' : initialMethod(market)));
+  useEffect(() => { setMethod((m) => m || initialMethod(market)); }, [market]);
   const [note, setNote] = useState('');
   const slots = useDeliverySlots();
   const [slot, setSlot] = useState('');
@@ -83,10 +84,11 @@ export function Checkout() {
     }
     setBusy(true);
     setError('');
+    rememberMethod(method);
     try {
       const res = await api<CheckoutResult>('/checkout', {
         method: 'POST',
-        body: { addressId, paymentMethod: method, note: note.trim() || undefined, deliverySlot: slot || undefined, whatsappOptIn: whatsapp || undefined, returnUrl: `${window.location.origin}/${l}/checkout/return`, traffic: trafficForCheckout() },
+        body: { addressId, paymentMethod: method, ...(buyToken && { buyNowToken: buyToken }), note: note.trim() || undefined, deliverySlot: slot || undefined, whatsappOptIn: whatsapp || undefined, returnUrl: `${window.location.origin}/${l}/checkout/return`, traffic: trafficForCheckout() },
         headers: { 'idempotency-key': idemKey.current },
       });
       if (res.payment.status === 'FAILED') {
@@ -166,7 +168,8 @@ export function Checkout() {
             <ul className="space-y-2" role="radiogroup" aria-labelledby="co-pay">
               {market.paymentMethods.map((m) => {
                 const I = ICON[m];
-                const off = m === 'COD' && !cod.ok;
+                const tooSmallOrBig = m === 'PAYLATER' && !paylaterFits(cart?.totals.totalMinor);
+                const off = (m === 'COD' && !cod.ok) || tooSmallOrBig;
                 return (
                   <li key={m}>
                     <label className={`flex items-start gap-3 rounded-xl border p-3.5 transition ${off ? 'cursor-not-allowed border-ink-100 opacity-60' : 'cursor-pointer'} ${method === m ? 'border-brand-600 bg-brand-50/50 ring-1 ring-brand-600' : off ? '' : 'border-ink-200 hover:border-ink-300'}`}>
@@ -175,7 +178,9 @@ export function Checkout() {
                       <span className="text-sm">
                         <span className="block font-semibold text-ink-900">{m === 'CARD' && market.cardProvider === 'dibsy' ? t('checkout.hostedCard') : t(`checkout.method.${m}`)}</span>
                         <span className="block text-ink-500">
-                          {off && !cod.ok && cod.why === 'limit'
+                          {tooSmallOrBig
+                            ? t('checkout.paylaterRange', { min: money(PAYLATER_MIN_MINOR.toString()), max: money(PAYLATER_MAX_MINOR.toString()) })
+                            : off && !cod.ok && cod.why === 'limit'
                             ? t('cod.limit', { amount: money(cod.maxMinor!) })
                             : m === 'CARD' && market.cardProvider === 'dibsy' ? t('checkout.hostedCardHint') : t(`checkout.methodHint.${m}`)}
                         </span>

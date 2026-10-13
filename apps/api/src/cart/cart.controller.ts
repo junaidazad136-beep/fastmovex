@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, Headers, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
+import { BadRequestException, Body, Controller, Delete, Get, Headers, Param, ParseUUIDPipe, Patch, Post } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiTags } from '@nestjs/swagger';
 import { Throttle } from '@nestjs/throttler';
 import { AuthUser } from '../common/auth-user';
@@ -35,6 +35,19 @@ export class CartController {
   @Public() @Throttle({ default: { limit: 60, ttl: 60_000 } }) @Post('items')
   async add(@Body() dto: AddCartItemDto, @CurrentUser() u?: AuthUser, @Headers('x-cart-token') t?: string, @Headers('x-country') c?: string) {
     return this.cart.addItem(await this.ctx(u, t, c), dto.variantId, dto.quantity);
+  }
+
+  /** "Buy now": a separate one-item cart for an immediate checkout; the customer's own cart is not changed. */
+  @Public() @Throttle({ default: { limit: 30, ttl: 60_000 } }) @Post('buy-now')
+  async buyNow(@Body() dto: AddCartItemDto, @Headers('x-country') c?: string) {
+    return this.cart.buyNow(await this.countries.resolve(c), dto.variantId, dto.quantity);
+  }
+
+  /** The "buy now" cart (token in X-Buy-Now-Token), priced like the cart. */
+  @Public() @Get('buy-now')
+  async buyNowView(@Headers('x-buy-now-token') token?: string, @Headers('x-country') c?: string) {
+    if (!token || !/^[A-Za-z0-9_-]{20,64}$/.test(token)) throw new BadRequestException('Missing buy-now token');
+    return this.cart.view({ country: await this.countries.resolve(c), guestToken: token });
   }
 
   @Public() @Patch('items/:itemId')

@@ -25,6 +25,9 @@ export interface RefundInput {
   currencyCode: string;
   idempotencyKey: string;
   reason: string;
+  /** The whole payment and what was refunded before: lets a gateway tell a full refund from a partial one. */
+  paymentAmountMinor?: bigint;
+  alreadyRefundedMinor?: bigint;
 }
 
 export interface RefundResult {

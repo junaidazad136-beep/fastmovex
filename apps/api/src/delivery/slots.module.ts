@@ -27,7 +27,8 @@ export class DeliverySlotsService {
     const until = new Date(now.getTime() + (cfg.daysAhead + 1) * 86_400_000);
     const rows = await this.prisma.deliverySlotUsage.findMany({ where: { countryCode, slotStart: { gte: now, lt: until } }, select: { slotStart: true, booked: true } });
     const booked = new Map(rows.map((r) => [r.slotStart.toISOString(), r.booked]));
-    return { enabled: true, required: cfg.required, timezone: tz, days: buildSlotDays(cfg, offsetMin, now, booked) };
+    // leadMinutes: a window can be booked until this long before it starts ("order within 2 h" on the product page)
+    return { enabled: true, required: cfg.required, timezone: tz, leadMinutes: cfg.leadMinutes, days: buildSlotDays(cfg, offsetMin, now, booked) };
   }
 
   /**

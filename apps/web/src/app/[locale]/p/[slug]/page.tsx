@@ -107,10 +107,11 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
   if (!isLocale(locale)) notFound();
   const t = getT(locale);
   const [p, market] = await Promise.all([load(slug), serverApi.market()]);
-  const [reviews, questions, more] = await Promise.all([
+  const [reviews, questions, more, together] = await Promise.all([
     serverApi.productReviews(slug),
     serverApi.productQuestions(slug).catch(() => ({ total: 0, nextCursor: null, items: [] })),
     serverApi.search({ store: p.store.slug, sort: 'popular', limit: 13 }).catch(() => null),
+    serverApi.productRelated(slug).catch(() => ({ boughtTogether: [], alsoViewed: [] })),
   ]);
   const title = pick(locale, p.title, p.titleAr);
   const description = pick(locale, p.description ?? '', p.descriptionAr);
@@ -121,7 +122,10 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
     { name: title },
   ];
   const images = p.images.filter((i) => i.kind === 'IMAGE' && i.url).map((i) => ({ id: i.id, url: i.url!, alt: i.altText || title, variantId: i.variantId }));
-  const related = (more?.items ?? []).filter((x) => x.id !== p.id).slice(0, 12);
+  const alsoViewed = together.alsoViewed.filter((x) => x.id !== p.id).slice(0, 12);
+  const seen = new Set(alsoViewed.map((x) => x.id));
+  // "More from this store" without repeating what "Customers also viewed" just showed
+  const related = (more?.items ?? []).filter((x) => x.id !== p.id && !(seen.has(x.id) && alsoViewed.length >= 4)).slice(0, 12);
   const specs = Object.entries(p.specs ?? {});
 
   return (
@@ -132,7 +136,7 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
       {/* phones skip the path: the store and the title come first, like the big shopping apps */}
       <div className="max-md:hidden"><Breadcrumbs items={crumbs} label={t('nav.breadcrumb')} /></div>
 
-      <ProductBuy product={p} images={images} title={title} />
+      <ProductBuy product={p} images={images} title={title} together={together.boughtTogether} />
       <div className="mt-3 flex justify-end"><WhatsAppAsk text={t('whatsapp.aboutProduct', { product: title, url: `${env.siteUrl}${paths.product(locale, p.slug)}` })} label={t('whatsapp.askProduct')} /></div>
 
       {/* The seller card is for marketplace sellers on large screens; phones (and the shop's own products) show one line in the buy box. */}
@@ -179,6 +183,11 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
         </aside>}
       </div>
 
+      {alsoViewed.length > 0 && (
+        <div className="-mx-4 sm:-mx-6 lg:-mx-8" data-testid="also-viewed">
+          <ProductRail id="also-viewed" title={t('product.alsoViewed')} items={alsoViewed} t={t} minorUnits={market.currency.minorUnits} />
+        </div>
+      )}
       <Reviews initial={reviews} endpoint={`/products/${encodeURIComponent(slug)}/reviews`} title={t('product.reviews')} />
       <Questions slug={slug} initial={questions} />
 

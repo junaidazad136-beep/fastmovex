@@ -1,13 +1,13 @@
 'use client';
 
-import { BadgeCheck, Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Truck } from 'lucide-react';
+import { BadgeCheck, Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, Truck, Zap } from 'lucide-react';
 import Image from 'next/image';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
 import Link from 'next/link';
 import { useEffect, useMemo, useState } from 'react';
-import type { ProductDetail } from '@/lib/api/types';
+import type { ProductDetail, TogetherCard } from '@/lib/api/types';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
 import { useCart } from '@/lib/state/cart';
@@ -18,6 +18,8 @@ import { paths, pick } from '@/lib/urls';
 import { Countdown } from '../ui/Countdown';
 import { Stars } from '../ui/Stars';
 import { Spinner } from '../ui/Spinner';
+import { BoughtTogether } from './BoughtTogether';
+import { DeliveryLine, PayLaterLine } from './DeliveryLine';
 import { Gallery, type GalleryImage } from './Gallery';
 import { Price, effectivePrice } from './Price';
 import { defaultVariant, findVariant, isValueAvailable, optionNames, optionValues, selectValue } from './variants';
@@ -26,7 +28,7 @@ import { WishlistButton } from './WishlistButton';
 const MAX_QTY = 99;
 
 /** Gallery + options + add to cart. One client island, because the chosen variant drives the photo, price and stock. */
-export function ProductBuy({ product, images, title }: { product: ProductDetail; images: GalleryImage[]; title: string }) {
+export function ProductBuy({ product, images, title, together = [] }: { product: ProductDetail; images: GalleryImage[]; title: string; together?: TogetherCard[] }) {
   const t = useT();
   const { market } = useShop();
   const money = useMoney();
@@ -37,6 +39,8 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
   const [qty, setQty] = useState(1);
   const [busy, setBusy] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const [buying, setBuying] = useState(false);
+  const router = useRouter();
   // Server-rendered buttons only work once hydrated; keep them disabled until then so an early tap is never lost.
   // …and until we know whether the shopper is signed in, so the item lands in the right cart (account or guest).
   const [mounted, setMounted] = useState(false);
@@ -64,6 +68,21 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
     }
   }
 
+  /** "Buy Now": a one-item cart of its own, straight to checkout; the shopper's cart is left as it is. */
+  async function buyNow() {
+    if (!variant) return;
+    setBuying(true);
+    try {
+      const { cartToken } = await api<{ cartToken: string }>('/cart/buy-now', { method: 'POST', auth: 'none', body: { variantId: variant.id, quantity: qty } });
+      router.push(`${paths.checkout(t.locale)}?buy=${encodeURIComponent(cartToken)}`);
+    } catch (e) {
+      setBuying(false);
+      toast({ tone: 'error', message: errorMessage(e, t) });
+    }
+  }
+  const goods = price ? BigInt(price.now) * BigInt(qty) : 0n;
+  const canBuy = ready && !!variant?.inStock && !busy && !buying;
+
   const storeName = pick(t.locale, product.store.name, product.store.nameAr);
   const bought = product.boughtLastMonth ?? 0;
   const subtitle = pick(t.locale, product.shortDescription ?? '', product.shortDescriptionAr).trim();
@@ -76,6 +95,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
   return (
     // Phones: who sells it + title first, then the photos, the options and the rest (Amazon's order). Larger screens:
     // photos on the left, everything else on the right.
+    <>
     <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-12">
       <div className="lg:col-start-2 lg:row-start-1" data-testid="product-head">
         {/* The shop selling it, once, at the top (Amazon's "Visit the Store" line): its logo line when it has a logo,
@@ -131,6 +151,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
               </p>
             )}
             <p className="mt-1 text-xs text-ink-500">{market.pricesIncludeTax ? t('product.vatIncluded') : t('product.vatExcluded')}</p>
+            <PayLaterLine totalMinor={goods} />
             {variant.dealEndsAt && price?.onDeal && (
               <div className="mt-3 flex flex-wrap items-center gap-2 rounded-xl bg-deal-500/8 px-3 py-2 text-sm text-deal-600">
                 <span className="font-semibold">{t('product.dealEndsIn')}</span>
@@ -140,6 +161,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
                 )}
               </div>
             )}
+            {variant.inStock && <DeliveryLine goodsMinor={goods} />}
           </div>
         )}
 
@@ -235,6 +257,12 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
           </button>
           <span className="max-md:hidden"><WishlistButton productId={product.id} /></span>
         </div>
+        {variant?.inStock && (
+          <button type="button" onClick={buyNow} disabled={!canBuy} className="btn btn-lg mt-3 w-full bg-ink-900 text-white hover:bg-ink-800 active:bg-ink-700 max-md:hidden" data-testid="buy-now">
+            {buying ? <Spinner /> : <Zap className="size-5" aria-hidden />}
+            {buying ? t('product.buyingNow') : t('product.buyNow')}
+          </button>
+        )}
         {inCart > 0 && (
           <p className="mt-2 text-sm text-ink-500">
             <Link href={paths.cart(t.locale)} className="link">{t('product.viewCart')}</Link> · {t.plural('common.items', inCart)}
@@ -272,22 +300,45 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
                 </p>
               )}
             </div>
-            <button
-              type="button"
-              onClick={add}
-              disabled={!ready || !variant.inStock || busy}
-              className="btn-primary h-12 min-w-0 flex-1 rounded-xl text-[15px] disabled:bg-ink-200 disabled:text-ink-500"
-              data-testid="sticky-add"
-            >
-              {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : variant.inStock ? <ShoppingCart className="size-5" aria-hidden /> : null}
-              <span className="truncate">
-                {!variant.inStock ? t('product.outOfStock') : busy ? t('product.adding') : justAdded ? t('product.added') : qty > 1 ? `${t('product.addToCart')} · ${qty}` : t('product.addToCart')}
-              </span>
-            </button>
+            {variant.inStock ? (
+              <>
+                <button
+                  type="button"
+                  onClick={add}
+                  disabled={!ready || busy || buying}
+                  className="btn-primary h-12 min-w-0 flex-1 rounded-xl px-2 text-[15px]"
+                  data-testid="sticky-add"
+                >
+                  {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : null}
+                  <span className="truncate">{busy ? t('product.adding') : justAdded ? t('product.added') : t('product.addToCart')}</span>
+                </button>
+                <button
+                  type="button"
+                  onClick={buyNow}
+                  disabled={!canBuy}
+                  className="btn h-12 min-w-0 flex-1 rounded-xl bg-ink-900 px-2 text-[15px] text-white active:bg-ink-700"
+                  data-testid="sticky-buy-now"
+                >
+                  {buying && <Spinner />}
+                  <span className="truncate">{buying ? t('product.buyingNow') : t('product.buyNow')}</span>
+                </button>
+              </>
+            ) : (
+              <button type="button" disabled className="btn h-12 min-w-0 flex-1 rounded-xl bg-ink-200 text-[15px] text-ink-500" data-testid="sticky-add">
+                {t('product.outOfStock')}
+              </button>
+            )}
           </div>
         </div>
       )}
     </div>
+    {variant && (
+      <BoughtTogether
+        main={variant.inStock && price ? { variantId: variant.id, title, imageUrl: images.find((im) => im.variantId === variant.id)?.url ?? images[0]?.url ?? null, priceMinor: price.now } : null}
+        items={together}
+      />
+    )}
+    </>
   );
 }
 

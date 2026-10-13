@@ -25,6 +25,12 @@ import { SellerProductsService } from './seller-products.service';
 export class PublicProductsController {
   constructor(private readonly products: PublicProductsService) {}
 
+  /** "Frequently bought together" (from orders) and "Customers also viewed" (from shoppers' views), as product cards. */
+  @Public() @Get(':slug/related')
+  related(@Param('slug') slug: string) {
+    return this.products.related(slug);
+  }
+
   @Public() @Get(':slug')
   async bySlug(@Param('slug') slug: string, @Req() req: Request, @CurrentUser() user?: AuthUser) {
     const product = await this.products.bySlug(slug);

@@ -1,6 +1,6 @@
 'use client';
 
-import { Banknote, CreditCard, LocateFixed, Lock, MapPin, Smartphone, UserRound } from 'lucide-react';
+import { Banknote, CalendarClock, CreditCard, LocateFixed, Lock, MapPin, Smartphone, UserRound } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -12,7 +12,7 @@ import type { AddressField, CheckoutResult, PaymentMethod } from '@/lib/api/type
 import { errorMessage } from '@/lib/errors';
 import { rememberGuestOrder } from '@/lib/guest-orders';
 import { useT } from '@/lib/i18n/client';
-import { useCart } from '@/lib/state/cart';
+import { initialMethod, paylaterFits, PAYLATER_MAX_MINOR, PAYLATER_MIN_MINOR, rememberMethod, useCheckoutCart } from '@/lib/state/checkout-cart';
 import { useShop } from '@/lib/state/shop';
 import { paths, pick } from '@/lib/urls';
 import { E164, EMAIL, Field, FormError, normalizePhone } from '../auth/fields';
@@ -25,7 +25,7 @@ import { COD_REASONS, codAvailability, codErrorMessage, GuestPhoneCheck } from '
 import { useMoney } from '@/lib/state/shop';
 import { PolicyLinks } from '../content/PolicyLinks';
 
-const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote };
+const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote, PAYLATER: CalendarClock };
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
 
 type Form = Record<AddressField | 'fullName' | 'email' | 'phone', string> & { marketing: boolean; whatsapp: boolean; lat: number | null; lng: number | null };
@@ -39,14 +39,15 @@ export function GuestCheckout() {
   const l = t.locale;
   const router = useRouter();
   const { market } = useShop();
-  const { cart, loading, refresh } = useCart();
+  const { cart, loading, refresh, buyToken } = useCheckoutCart();
   const fields = market.addressFormat.fields;
   const required = new Set<string>(['fullName', 'email', 'phone', 'city', ...market.addressFormat.required]);
   const [f, setF] = useState<Form>({
     fullName: '', email: '', phone: '', city: market.code === 'QA' ? 'Doha' : '', zone: '', street: '', building: '', unit: '', line1: '', postalCode: '',
     marketing: false, whatsapp: false, lat: null, lng: null,
   });
-  const [method, setMethod] = useState<PaymentMethod | ''>(market.paymentMethods.includes('COD') ? 'COD' : market.paymentMethods[0] ?? '');
+  const [method, setMethod] = useState<PaymentMethod | ''>(() => (typeof window === 'undefined' ? '' : initialMethod(market)));
+  useEffect(() => { setMethod((m) => m || initialMethod(market)); }, [market]);
   const [note, setNote] = useState('');
   const slots = useDeliverySlots();
   const [slot, setSlot] = useState('');
@@ -129,11 +130,13 @@ export function GuestCheckout() {
     };
     for (const k of fields) if (f[k].trim()) address[k] = f[k].trim();
     try {
+      rememberMethod(method as PaymentMethod);
       const res = await api<CheckoutResult>('/checkout/guest', {
         method: 'POST',
         auth: 'none',
-        cart: true,
-        headers: { 'idempotency-key': idemKey.current },
+        // "Buy now": that one-item cart instead of the guest's cart
+        cart: !buyToken,
+        headers: { 'idempotency-key': idemKey.current, ...(buyToken && { 'x-cart-token': buyToken }) },
         body: {
           contact: {
             fullName: f.fullName.trim(), email: f.email.trim().toLowerCase(), phone, marketingOptIn: f.marketing || undefined, whatsappOptIn: f.whatsapp || undefined, locale: l,
@@ -281,7 +284,8 @@ export function GuestCheckout() {
             <ul className="space-y-2" role="radiogroup" aria-labelledby="gc-pay">
               {market.paymentMethods.map((m) => {
                 const I = ICON[m];
-                const off = m === 'COD' && !cod.ok;
+                const tooSmallOrBig = m === 'PAYLATER' && !paylaterFits(cart?.totals.totalMinor);
+                const off = (m === 'COD' && !cod.ok) || tooSmallOrBig;
                 return (
                   <li key={m}>
                     <label className={`flex items-start gap-3 rounded-xl border p-3.5 transition ${off ? 'cursor-not-allowed border-ink-100 opacity-60' : 'cursor-pointer'} ${method === m ? 'border-brand-600 bg-brand-50/50 ring-1 ring-brand-600' : off ? '' : 'border-ink-200 hover:border-ink-300'}`}>

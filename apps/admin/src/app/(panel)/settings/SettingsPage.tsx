@@ -29,7 +29,7 @@ interface Country {
   seoSettings?: unknown;
 }
 
-const METHODS = ['CARD', 'APPLE_PAY', 'GOOGLE_PAY', 'COD'];
+const METHODS = ['CARD', 'APPLE_PAY', 'GOOGLE_PAY', 'COD', 'PAYLATER'];
 const LEGAL: { key: string; label: string; hint?: string; type?: string }[] = [
   { key: 'companyName', label: 'Company legal name', hint: 'Printed on invoices, e.g. FastMoveX Trading W.L.L.' },
   { key: 'commercialRegNo', label: 'Commercial registration (CR) no.' },

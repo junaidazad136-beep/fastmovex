@@ -30,6 +30,7 @@ all — carts take `variantId` + `quantity`, and every total is computed by the 
 |---|---|
 | `X-Country` | Market (`QA` default). Only active countries are accepted. Drives currency, VAT, delivery and catalogue. |
 | `X-Cart-Token` | Guest cart. Returned as `cartToken` by the first `POST /cart/items`; after login call `POST /cart/merge`. |
+| `X-Buy-Now-Token` | `GET /cart/buy-now`: the one-item cart made by `POST /cart/buy-now { variantId, quantity }` ("Buy Now"). Checkout takes it as `buyNowToken` (signed in) or `X-Cart-Token` (guest); the customer's own cart is untouched. |
 | `Idempotency-Key` | `POST /checkout` and `POST /checkout/guest` — retrying with the same key returns the same order (`"reused": true`), never a second one. A key already used by someone else is refused (`409`). |
 | `X-Order-Token` | Guest order pages: the `orderAccessToken` from guest checkout or `POST /orders/guest/lookup`. |
 | `X-Client-Type: mobile` | Refresh token in the body instead of a cookie. |
@@ -123,6 +124,10 @@ refuses it (`400`/`403`):
   payment id (`{ "id": "…" }` or `id=…`). The API never trusts it — it fetches that payment from Dibsy with the secret
   key and uses Dibsy's answer, which must match the order (our order id in `metadata`, amount and currency) before
   anything is confirmed. A forged call can at most make the API look a payment up.
+- **PayLater** (`/payments/webhook/paylater`, give this address to PayLater): JSON with `merchantId`, `orderId` (our
+  order number), `status`, `timestamp`, `comments`, `txHash`, `signature`. `txHash` must be MD5 of the upper-cased
+  concatenation and `signature` HMAC-SHA256 of `txHash` with `PAYLATER_WEBHOOK_SECRET`; anything else is refused. The
+  customer's return page also asks PayLater's status endpoint, so a lost webhook never leaves a paid order unpaid.
 - **Test gateway** (development only): `X-Test-Signature` = HMAC-SHA256 of the raw body with `JWT_ACCESS_SECRET`.
 
 Replayed events return `{ "duplicate": true }`. If a webhook never arrives, the API asks the gateway when the customer
@@ -259,6 +264,7 @@ lastActiveAt, twoStep, current }`; `DELETE` ends one. `GET /auth/login-history` 
 | Method | Path | Auth |
 |---|---|---|
 | GET | `/products/{slug}` | public |
+| GET | `/products/{slug}/related` | public — `{ boughtTogether (≤2), alsoViewed (≤12) }`, from real orders and views, cached 30 min |
 
 ### Seller / Products
 

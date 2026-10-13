@@ -269,6 +269,16 @@ export class CartService {
 
   // --------------------------------------------------------------- writing
 
+  /**
+   * "Buy now": a small cart of its own holding just this item, so checkout can buy it without touching the customer's
+   * cart. Returns its token (the website keeps it only for this checkout).
+   */
+  async buyNow(country: CountryInfo, variantId: string, quantity: number): Promise<{ cartToken: string }> {
+    const view = await this.addItem({ country }, variantId, quantity);
+    if (!view.cartToken) throw new BadRequestException('Could not start the checkout');
+    return { cartToken: view.cartToken };
+  }
+
   async addItem(ctx: CartContext, variantId: string, quantity: number) {
     const now = new Date();
     const v = await this.prisma.productVariant.findUnique({

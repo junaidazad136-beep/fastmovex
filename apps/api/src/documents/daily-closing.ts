@@ -18,7 +18,7 @@ export interface DailyClosingInput {
   netMinor: string;
 }
 
-const METHOD: Record<string, string> = { CARD: 'Card', APPLE_PAY: 'Apple Pay', GOOGLE_PAY: 'Google Pay', COD: 'Cash on delivery', NONE: 'No payment' };
+const METHOD: Record<string, string> = { CARD: 'Card', APPLE_PAY: 'Apple Pay', GOOGLE_PAY: 'Google Pay', COD: 'Cash on delivery', PAYLATER: 'PayLater', NONE: 'No payment' };
 
 /** End-of-day report for finance: what was sold, what money came in and went out, and where the cash is. */
 export async function renderDailyClosing(r: DailyClosingInput): Promise<Buffer> {

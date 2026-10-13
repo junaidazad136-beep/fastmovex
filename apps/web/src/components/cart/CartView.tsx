@@ -1,11 +1,11 @@
 'use client';
 
-import { AlertTriangle, Minus, Plus, ShoppingBag, Tag, Trash2, X } from 'lucide-react';
+import { AlertTriangle, CircleCheck, Minus, Plus, ShoppingBag, Tag, Trash2, X } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useState } from 'react';
 import { ApiError } from '@/lib/api/errors';
-import type { Cart, CartItem, CouponReason } from '@/lib/api/types';
+import type { Cart, CartGroup, CartItem, CouponReason } from '@/lib/api/types';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
 import { useCart } from '@/lib/state/cart';
@@ -224,6 +224,7 @@ export function CartView() {
                   {t('cart.delivery')}: <span className="tabular font-semibold text-ink-700">{g.deliveryWaived ? t('cart.deliveryWaived') : g.deliveryFeeMinor === '0' ? t('cart.deliveryFree') : money(g.deliveryFeeMinor)}</span>
                 </p>
               </header>
+              <FreeDeliveryBar group={g} />
               <ul className="divide-y divide-ink-100">
                 {g.items.map((item) => (
                   <Line
@@ -261,6 +262,34 @@ export function CartView() {
             <Link href={paths.login(l, paths.checkout(l))} className="btn-primary btn-lg w-full" data-testid="go-checkout">{t('cart.signInToCheckout')}</Link>
           )}
         </aside>
+      </div>
+    </div>
+  );
+}
+
+/**
+ * "Add QAR 23.00 more from Store for FREE delivery" with a bar that fills up — delivery is free per store above the
+ * market's threshold. Hidden when delivery costs nothing anyway or a coupon already waived it.
+ */
+function FreeDeliveryBar({ group }: { group: CartGroup }) {
+  const t = useT();
+  const money = useMoney();
+  const { market } = useShop();
+  const flat = BigInt(market.delivery.flatFeeMinor ?? '0');
+  const freeOver = market.delivery.freeOverMinor ? BigInt(market.delivery.freeOverMinor) : null;
+  if (!freeOver || flat === 0n || group.deliveryWaived) return null;
+  const goods = BigInt(group.subtotalMinor) - BigInt(group.discountMinor);
+  const store = pick(t.locale, group.store.name, group.store.nameAr);
+  const done = goods >= freeOver;
+  const pct = done ? 100 : Math.max(4, Math.min(100, Number((goods * 100n) / freeOver)));
+  return (
+    <div className="border-b border-ink-100 py-3" data-testid="free-delivery-bar">
+      <p className={`flex items-start gap-1.5 text-sm leading-5 ${done ? 'font-medium text-success-600' : 'text-ink-800'}`}>
+        {done && <CircleCheck className="mt-0.5 size-4 shrink-0" aria-hidden />}
+        <span>{done ? t('cart.freeDone', { store }) : t('cart.freeLeft', { amount: money(freeOver - goods), store })}</span>
+      </p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-ink-100" role="progressbar" aria-valuemin={0} aria-valuemax={100} aria-valuenow={pct} aria-label={t('cart.delivery')}>
+        <div className={`h-full rounded-full transition-[width] duration-500 ${done ? 'bg-success-600' : 'bg-brand-600'}`} style={{ width: `${pct}%` }} />
       </div>
     </div>
   );

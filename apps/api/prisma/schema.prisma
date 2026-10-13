@@ -118,6 +118,8 @@ enum PaymentMethod {
   APPLE_PAY
   GOOGLE_PAY
   COD
+  /// PayLater (Qatar, QCB-licensed): the customer splits the total into interest-free instalments on PayLater's page
+  PAYLATER
 }
 
 enum PaymentStatus {

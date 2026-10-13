@@ -77,6 +77,13 @@ export const envSchema = z.object({
   // Payments — Dibsy (Qatar): cards, Apple Pay, Google Pay, Himyan/NAPS on Dibsy's hosted page
   DIBSY_SECRET_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(16, 'DIBSY_SECRET_KEY looks too short').optional()),
   DIBSY_API_URL: z.string().url().default('https://api.dibsy.one/v2'),
+  /** PayLater (Qatar buy-now-pay-later): merchant credentials, outlet and webhook secret from the PayLater account manager */
+  PAYLATER_CLIENT_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(3).optional()),
+  PAYLATER_CLIENT_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(8, 'PAYLATER_CLIENT_SECRET looks too short').optional()),
+  PAYLATER_OUTLET_ID: z.preprocess((v) => (v === '' ? undefined : v), z.string().regex(/^\d{1,19}$/, 'PAYLATER_OUTLET_ID must be a number').optional()),
+  PAYLATER_WEBHOOK_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(8).optional()),
+  /** https://connect.paylaterapp.com (live) or https://connect.uat.paylaterapp.com (sandbox) */
+  PAYLATER_API_URL: z.string().url().default('https://connect.paylaterapp.com'),
   /** Public https address of this API, so gateways can call the webhook (e.g. https://api.fastmovex.qa). */
   API_PUBLIC_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
 });
@@ -103,6 +110,7 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     if (env.CORS_ORIGINS.includes('localhost')) problems.push('CORS_ORIGINS must not contain localhost in production');
     if (env.DIBSY_SECRET_KEY && !env.API_PUBLIC_URL) problems.push('API_PUBLIC_URL is required with DIBSY_SECRET_KEY (Dibsy must reach the payment webhook)');
     if (env.DIBSY_SECRET_KEY && !env.DIBSY_API_URL.startsWith('https://')) problems.push('DIBSY_API_URL must be https in production');
+    if (env.PAYLATER_CLIENT_ID && !env.PAYLATER_WEBHOOK_SECRET) problems.push('PAYLATER_WEBHOOK_SECRET is required with PAYLATER_CLIENT_ID (PayLater webhooks are signed)');
     // sign-in keys must come from Google / Apple themselves (a test key server is for local tests only)
     if (env.GOOGLE_JWKS_URL !== 'https://www.googleapis.com/oauth2/v3/certs') problems.push('GOOGLE_JWKS_URL must not be changed in production');
     if (env.APPLE_JWKS_URL !== 'https://appleid.apple.com/auth/keys') problems.push('APPLE_JWKS_URL must not be changed in production');

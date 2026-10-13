@@ -33,7 +33,7 @@ export interface ReturnReceiptInput {
   refund: { status: string; amountMinor: bigint; currencyCode: string; creditNoteNo: string | null } | null;
 }
 
-const METHOD: Record<string, string> = { CARD: 'Back to the card used', APPLE_PAY: 'Back to Apple Pay', GOOGLE_PAY: 'Back to Google Pay', COD: 'Bank transfer (paid in cash)' };
+const METHOD: Record<string, string> = { CARD: 'Back to the card used', APPLE_PAY: 'Back to Apple Pay', GOOGLE_PAY: 'Back to Google Pay', COD: 'Bank transfer (paid in cash)', PAYLATER: 'Back to your PayLater plan' };
 const bi = (en: string, ar: string) => `${en} · ${ar}`;
 
 function header(doc: PDFKit.PDFDocument, seller: InvoiceSeller, title: string, titleAr: string, number: string, at: Date, tz: string) {

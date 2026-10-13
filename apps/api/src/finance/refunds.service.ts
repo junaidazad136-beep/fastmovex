@@ -134,6 +134,7 @@ export class RefundsService {
       result = await this.payments.byCode(refund.payment.provider).refund({
         paymentProviderRef: refund.payment.providerRef, amountMinor: refund.amountMinor, currencyCode: refund.payment.currencyCode,
         idempotencyKey: refund.idempotencyKey, reason: refund.reason,
+        paymentAmountMinor: refund.payment.amountMinor, alreadyRefundedMinor: refund.payment.refundedMinor,
       });
     } catch (e) {
       this.logger.error(`refund ${refundId} provider error: ${(e as Error).message}`);

@@ -1,7 +1,8 @@
 import { Injectable, Logger, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
-import { bestDeal, liveDealsSelect } from '../catalog/product-card.service';
+import { bestDeal, liveDealsSelect, ProductCardService } from '../catalog/product-card.service';
+import { RelatedProducts } from './related-products';
 import { validGtin } from '../seo/seo-rules';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -21,7 +22,15 @@ export class PublicProductsService {
     private readonly prisma: PrismaService,
     private readonly storage: StorageService,
     private readonly cache: CacheService,
+    private readonly cards: ProductCardService,
   ) {}
+
+  /** "Frequently bought together" and "Customers also viewed" for the product page. */
+  async related(slug: string) {
+    const p = await this.prisma.product.findFirst({ where: { slug, ...VISIBLE_PRODUCT }, select: { id: true, countryCode: true, category: { select: { path: true } } } });
+    if (!p) throw new NotFoundException('Product not found');
+    return new RelatedProducts(this.prisma, this.cards, this.cache).forProduct({ id: p.id, countryCode: p.countryCode, categoryPath: p.category.path });
+  }
 
   /**
    * Counts a view at most once per visitor per 30 min (stops refresh-spam inflating "trending"),

@@ -2,7 +2,7 @@ import 'server-only';
 import { env } from '../env';
 import { ApiError } from './errors';
 import type {
-  BrandDetail, CategoryDetail, CategoryNode, ContentPage, Faq, HomeFeed, Market, Offers, PageSummary, ProductDetail, QuestionPage, ReviewPage, SearchResult, StoreDetail,
+  BrandDetail, CategoryDetail, CategoryNode, ContentPage, Faq, HomeFeed, Market, Offers, PageSummary, ProductCard, ProductDetail, QuestionPage, TogetherCard, ReviewPage, SearchResult, StoreDetail,
 } from './types';
 
 /**
@@ -57,6 +57,9 @@ export const serverApi = {
   product: (slug: string) => read<ProductDetail>(`/products/${encodeURIComponent(slug)}`, { revalidate: 60, tags: [`product:${slug}`] }),
   productReviews: (slug: string, rating?: number) =>
     read<ReviewPage>(`/products/${encodeURIComponent(slug)}/reviews${q({ rating })}`, { revalidate: 120, tags: [`product:${slug}`] }),
+  /** "Frequently bought together" (up to 2) and "Customers also viewed" (up to 12); refreshed every 30 minutes. */
+  productRelated: (slug: string) =>
+    read<{ boughtTogether: TogetherCard[]; alsoViewed: ProductCard[] }>(`/products/${encodeURIComponent(slug)}/related`, { revalidate: 1800, tags: [`product:${slug}`] }),
   productQuestions: (slug: string) => read<QuestionPage>(`/products/${encodeURIComponent(slug)}/questions`, { revalidate: 120, tags: [`product:${slug}`] }),
   store: (slug: string) => read<StoreDetail>(`/stores/${encodeURIComponent(slug)}`, { revalidate: 120, tags: [`store:${slug}`] }),
   storeReviews: (slug: string) => read<ReviewPage>(`/stores/${encodeURIComponent(slug)}/reviews`, { revalidate: 120, tags: [`store:${slug}`] }),

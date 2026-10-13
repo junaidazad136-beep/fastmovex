@@ -31,7 +31,7 @@ export interface InvoiceInput {
   creditNotes: { number: string; amountMinor: bigint; at: Date }[];
 }
 
-const METHOD: Record<string, string> = { CARD: 'Card', APPLE_PAY: 'Apple Pay', GOOGLE_PAY: 'Google Pay', COD: 'Cash on delivery' };
+const METHOD: Record<string, string> = { CARD: 'Card', APPLE_PAY: 'Apple Pay', GOOGLE_PAY: 'Google Pay', COD: 'Cash on delivery', PAYLATER: 'PayLater (instalments)' };
 const PAID: Record<string, string> = { CAPTURED: 'Paid', PARTIALLY_REFUNDED: 'Paid (part refunded)', REFUNDED: 'Refunded', PENDING: 'To pay', AUTHORIZED: 'Authorised' };
 
 /** Total the customer pays for one seller's part (VAT on top only where prices exclude it). Exported for tests. */

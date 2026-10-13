@@ -16,6 +16,8 @@ export class CheckoutDto {
   @IsOptional() @IsBoolean() whatsappOptIn?: boolean;
   @ApiPropertyOptional({ type: OrderTrafficDto, description: 'Where the visit came from (website analytics), so sales can be reported by source' })
   @IsOptional() @ValidateNested() @Type(() => OrderTrafficDto) traffic?: OrderTrafficDto;
+  @ApiPropertyOptional({ description: '"Buy now": the token from POST /cart/buy-now — the order is made from that one item, the cart is left as it is' })
+  @IsOptional() @Matches(/^[A-Za-z0-9_-]{20,64}$/) buyNowToken?: string;
 }
 
 export class CancelDto {

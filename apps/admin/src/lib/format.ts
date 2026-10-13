@@ -116,7 +116,7 @@ export function initials(name: string | null | undefined): string {
   return name.split(/\s+/).filter(Boolean).slice(0, 2).map((p) => p[0]!.toUpperCase()).join('');
 }
 
-const PAYMENT_METHODS: Record<string, string> = { CARD: 'Card', APPLE_PAY: 'Apple Pay', GOOGLE_PAY: 'Google Pay', COD: 'Cash on delivery' };
+const PAYMENT_METHODS: Record<string, string> = { CARD: 'Card', APPLE_PAY: 'Apple Pay', GOOGLE_PAY: 'Google Pay', COD: 'Cash on delivery', PAYLATER: 'PayLater (instalments)' };
 export function paymentMethodLabel(m: string | null | undefined): string {
   return m ? PAYMENT_METHODS[m] ?? humanize(m) : '—';
 }

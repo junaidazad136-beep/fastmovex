@@ -217,7 +217,7 @@ describe('Home feed', () => {
 describe('View tracking', () => {
   it('counts one view per visitor per 30 min, records recently viewed', async () => {
     const prisma = { product: { update: jest.fn() }, recentlyViewed: { upsert: jest.fn() } };
-    const svc = new PublicProductsService(prisma as never, storage as never, new MemoryCacheService());
+    const svc = new PublicProductsService(prisma as never, storage as never, new MemoryCacheService(), {} as never);
     await svc.recordView('p1', 'u1', 'u1');
     await svc.recordView('p1', 'u1', 'u1');
     expect(prisma.product.update).toHaveBeenCalledTimes(1);
@@ -225,6 +225,6 @@ describe('View tracking', () => {
   });
   it('never throws even if DB fails', async () => {
     const prisma = { product: { update: jest.fn().mockRejectedValue(new Error('db down')) }, recentlyViewed: { upsert: jest.fn() } };
-    await expect(new PublicProductsService(prisma as never, storage as never, new MemoryCacheService()).recordView('p', 'v')).resolves.toBeUndefined();
+    await expect(new PublicProductsService(prisma as never, storage as never, new MemoryCacheService(), {} as never).recordView('p', 'v')).resolves.toBeUndefined();
   });
 });

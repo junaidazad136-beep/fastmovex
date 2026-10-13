@@ -244,7 +244,7 @@ function AllPayments() {
         </select>
         <select className="input w-auto" value={f.method} onChange={(e) => setF({ ...f, method: e.target.value })} aria-label="Method">
           <option value="">Any method</option>
-          {['CARD', 'APPLE_PAY', 'GOOGLE_PAY', 'COD'].map((m) => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
+          {['CARD', 'APPLE_PAY', 'GOOGLE_PAY', 'COD', 'PAYLATER'].map((m) => <option key={m} value={m}>{paymentMethodLabel(m)}</option>)}
         </select>
       </div>
       {list.error && !list.items ? <ErrorState error={list.error} onRetry={list.reload} /> : null}
