@@ -5,13 +5,13 @@ const PRODUCT = '/en/p/nova-x12-wireless-earbuds';
 test.describe('Product page, phone order (phase 27)', () => {
   test.use({ viewport: { width: 390, height: 844 }, hasTouch: true, isMobile: true });
 
-  test('the brand and the title come first, then the photos; the shop once under Sold by; no path on phones', async ({ page }) => {
+  test('the shop and the title come first, then the photos; the shop is named once; no path on phones', async ({ page }) => {
     await page.goto(PRODUCT);
     const head = page.getByTestId('product-head');
-    // the top line is the brand; the shop is named once, under "Sold by"
-    await expect(head.getByTestId('product-brand-line')).toHaveAttribute('href', /\/en\/brand\/nova/);
-    await expect(head.getByTestId('product-store')).toHaveCount(0);
-    await expect(page.getByTestId('sold-by')).toContainText('Doha Gadgets Hub');
+    // the shop is named once, at the top (no "Sold by" line further down)
+    await expect(head.getByTestId('product-store')).toHaveAttribute('href', /\/en\/store\/doha-gadgets-hub/);
+    await expect(head.getByTestId('product-store')).toContainText('Doha Gadgets Hub');
+    await expect(page.getByTestId('sold-by')).toHaveCount(0);
     await expect(head.getByTestId('product-title')).toBeVisible();
     const headBox = (await head.boundingBox())!;
     const galleryBox = (await page.getByTestId('gallery-track').boundingBox())!;

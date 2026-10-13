@@ -1,6 +1,6 @@
 'use client';
 
-import { BadgeCheck, Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Star, Store, Truck } from 'lucide-react';
+import { BadgeCheck, Bell, Check, Minus, Plus, ShieldCheck, RotateCcw, ShoppingCart, Truck } from 'lucide-react';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { api } from '@/lib/api/client';
@@ -64,6 +64,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
     }
   }
 
+  const storeName = pick(t.locale, product.store.name, product.store.nameAr);
   const bought = product.boughtLastMonth ?? 0;
   const subtitle = pick(t.locale, product.shortDescription ?? '', product.shortDescriptionAr).trim();
   /** the photo of each option value (a colour's own picture), when the seller added one */
@@ -77,34 +78,36 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
     // photos on the left, everything else on the right.
     <div className="grid lg:grid-cols-[minmax(0,1.1fr)_minmax(0,1fr)] lg:grid-rows-[auto_1fr] lg:gap-x-12">
       <div className="lg:col-start-2 lg:row-start-1" data-testid="product-head">
-        {/* Amazon: the top line is the BRAND (with its logo when it has one); the shop selling it is shown once, under
-            "Sold by" further down. No brand: only the rating. */}
-        {(product.brand || product.ratingCount > 0) && (
-          <div className="flex min-h-5 items-center gap-3">
-            {product.brand && (product.brand.logoUrl ? (
-              <Link href={paths.brand(t.locale, product.brand.slug)} className="flex min-w-0 items-center gap-2.5" data-testid="product-brand-line">
-                <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-ink-100">
-                  <Image src={product.brand.logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" />
+        {/* The shop selling it, once, at the top (Amazon's "Visit the Store" line): its logo line when it has a logo,
+            otherwise one plain line. The rating sits on the right. The brand is in the specifications. */}
+        <div className="flex min-h-5 items-center gap-3">
+          {product.store.logoUrl ? (
+            <Link href={paths.store(t.locale, product.store.slug)} className="flex min-w-0 items-center gap-2.5" data-testid="product-store">
+              <span className="relative size-9 shrink-0 overflow-hidden rounded-full bg-white ring-1 ring-ink-100">
+                <Image src={product.store.logoUrl} alt="" fill sizes="36px" className="object-contain p-0.5" />
+              </span>
+              <span className="min-w-0 leading-tight">
+                <span className="flex items-center gap-1 text-[15px] font-semibold text-ink-900">
+                  <span className="truncate">{storeName}</span>
+                  {product.store.isHouse && <BadgeCheck className="size-4 shrink-0 text-brand-600" aria-label={t('product.officialStore')} />}
                 </span>
-                <span className="min-w-0 leading-tight">
-                  <span className="block truncate text-[15px] font-semibold text-ink-900">{pick(t.locale, product.brand.name, product.brand.nameAr)}</span>
-                  <span className="text-[13px] text-brand-700">{t('product.visitTheStore')}</span>
-                </span>
-              </Link>
-            ) : (
-              <Link href={paths.brand(t.locale, product.brand.slug)} className="min-w-0 truncate text-sm text-brand-700 hover:underline" data-testid="product-brand-line">
-                {t('product.brandLine', { name: pick(t.locale, product.brand.name, product.brand.nameAr) })}
-              </Link>
-            ))}
-            {product.ratingCount > 0 && (
-              <a href="#reviews" className="ms-auto flex shrink-0 items-center gap-1 text-[13px]" aria-label={t('product.seeReviews', { count: product.ratingCount })} data-testid="product-rating">
-                <span className="tabular text-ink-800">{product.ratingAvg.toFixed(1)}</span>
-                <Stars value={product.ratingAvg} label={t('product.ratingOutOf', { rating: product.ratingAvg })} />
-                <span className="tabular text-brand-700">({product.ratingCount.toLocaleString('en')})</span>
-              </a>
-            )}
-          </div>
-        )}
+                <span className="text-[13px] text-brand-700">{t('product.visitTheStore')}</span>
+              </span>
+            </Link>
+          ) : (
+            <Link href={paths.store(t.locale, product.store.slug)} className="flex min-w-0 items-center gap-1 text-sm text-brand-700 hover:underline" data-testid="product-store">
+              <span className="truncate">{t('product.visitStoreNamed', { name: storeName })}</span>
+              {product.store.isHouse && <BadgeCheck className="size-4 shrink-0 text-brand-600" aria-label={t('product.officialStore')} />}
+            </Link>
+          )}
+          {product.ratingCount > 0 && (
+            <a href="#reviews" className="ms-auto flex shrink-0 items-center gap-1 text-[13px]" aria-label={t('product.seeReviews', { count: product.ratingCount })} data-testid="product-rating">
+              <span className="tabular text-ink-800">{product.ratingAvg.toFixed(1)}</span>
+              <Stars value={product.ratingAvg} label={t('product.ratingOutOf', { rating: product.ratingAvg })} />
+              <span className="tabular text-brand-700">({product.ratingCount.toLocaleString('en')})</span>
+            </a>
+          )}
+        </div>
         <h1 className={`mt-1 text-sm leading-[19px] lg:mt-2 lg:text-2xl lg:font-bold lg:leading-snug lg:tracking-tight lg:text-ink-900 ${subtitle ? 'text-ink-900' : 'text-ink-700'}`} data-testid="product-title">{title}</h1>
         {subtitle && <p className="text-sm leading-[19px] text-ink-500 lg:mt-1 lg:text-base" data-testid="product-subtitle">{subtitle}</p>}
         {bought > 0 && (
@@ -239,28 +242,7 @@ export function ProductBuy({ product, images, title }: { product: ProductDetail;
         )}
 
         <ul className="mt-6 divide-y divide-ink-100 rounded-2xl border border-ink-100 bg-white text-sm">
-          {/* Who sells it, Amazon-style: one line in the buy box (the shop's own products say so plainly). */}
-          <li className="flex items-start gap-3 p-3.5" data-testid="sold-by">
-            {product.store.isHouse ? (
-              <>
-                <BadgeCheck className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden />
-                <span className="text-ink-700">{t('product.soldByHouse', { name: pick(t.locale, product.store.name, product.store.nameAr) })}</span>
-              </>
-            ) : (
-              <>
-                <Store className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden />
-                <span className="text-ink-700">
-                  {t('product.soldByLine')}{' '}
-                  <Link href={paths.store(t.locale, product.store.slug)} className="font-semibold text-brand-700 hover:underline">{pick(t.locale, product.store.name, product.store.nameAr)}</Link>
-                  {product.store.ratingCount > 0 && (
-                    <span className="tabular ms-1.5 inline-flex items-center gap-0.5 text-xs text-ink-500">
-                      <Star className="size-3.5 fill-sand-500 text-sand-500" aria-hidden />{product.store.ratingAvg.toFixed(1)} ({product.store.ratingCount})
-                    </span>
-                  )}
-                </span>
-              </>
-            )}
-          </li>
+          {/* who sells it is the top line of the page (Amazon's "Visit the Store"), so it is not repeated here */}
           <li className="flex items-start gap-3 p-3.5"><Truck className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden /><span className="text-ink-700">{t('product.deliveryNote')}</span></li>
           <li className="flex items-start gap-3 p-3.5">
             <RotateCcw className="mt-0.5 size-5 shrink-0 text-brand-600" aria-hidden />
