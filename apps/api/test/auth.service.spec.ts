@@ -31,7 +31,7 @@ function setup(overrides: { user?: unknown; createError?: Error } = {}) {
     consume: jest.fn(),
     revokeFamily: jest.fn(),
     revokeAllForUser: jest.fn(),
-    revokeByRaw: jest.fn(),
+    revokeLoginByRaw: jest.fn(),
   };
   const pw = new PasswordService();
   const burn = jest.spyOn(pw, 'burnTime');

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { apiCall, apiToken, freshCustomer, signIn } from './helpers';
 
 /** Phase 22 on the website: before packing the customer moves the order to another saved address; staff changes show as order updates. */

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 /** The FastMoveX app-style home: header, chips, slider, cards with "Add", barcode search, five tabs on phones. */
 test.describe('Storefront look (FastMoveX)', () => {

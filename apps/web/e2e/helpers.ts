@@ -154,3 +154,11 @@ export function totp(secretBase32: string, at = Date.now()): string {
   const bin = ((mac[o] & 0x7f) << 24) | (mac[o + 1] << 16) | (mac[o + 2] << 8) | mac[o + 3];
   return String(bin % 1_000_000).padStart(6, '0');
 }
+
+/**
+ * Waits until a page that streams in behind its loading skeleton has been put in place. While it streams, React keeps
+ * the incoming part in a hidden container for a moment, so a test could briefly see two copies of an element.
+ */
+export async function settle(page: Page) {
+  await expect(page.locator('body > div[hidden][id^="S:"]')).toHaveCount(0, { timeout: 15_000 });
+}

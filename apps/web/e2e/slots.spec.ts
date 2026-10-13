@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, freshCustomer, signIn, confirmGuestPhone, freshMobile } from './helpers';
 
 /** Delivery time slots at checkout. Turns slots on for these tests only (and off again afterwards). */

@@ -94,11 +94,13 @@ export class TokenService {
     return live > 0;
   }
 
-  async revokeByRaw(raw: string): Promise<void> {
-    await this.prisma.refreshToken.updateMany({
-      where: { tokenHash: TokenService.hash(raw), revokedAt: null },
-      data: { revokedAt: new Date() },
-    });
+  /**
+   * Logout: ends the whole login the token belongs to, not just this one token. A refresh that raced the logout may
+   * already have rotated it into a newer token (and set that cookie); that one dies too.
+   */
+  async revokeLoginByRaw(raw: string): Promise<void> {
+    const row = await this.prisma.refreshToken.findUnique({ where: { tokenHash: TokenService.hash(raw) }, select: { familyId: true } });
+    if (row) await this.revokeFamily(row.familyId);
   }
 
   async revokeFamily(familyId: string): Promise<void> {

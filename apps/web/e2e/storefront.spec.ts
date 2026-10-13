@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('Storefront (guest)', () => {
   test('home: hero, categories, deals with a live countdown, SEO basics', async ({ page }) => {

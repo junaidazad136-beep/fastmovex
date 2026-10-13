@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import crypto from 'node:crypto';
 import http from 'node:http';
 import { apiCall, apiToken, freshCustomer, signIn } from './helpers';

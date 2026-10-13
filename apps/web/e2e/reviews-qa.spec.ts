@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, freshCustomer, signIn } from './helpers';
 
 const PRODUCT = 'premium-khalas-dates-1kg';
@@ -53,7 +53,8 @@ test('a buyer adds photos to a review; once published they lead the reviews and 
   await call(c.admin, 'POST', `/admin/reviews/${review.id}/moderate`, { status: 'APPROVED' });
 
   await page.goto(`/en/p/${PRODUCT}`);
-  const photos = page.getByTestId('review-photos');
+  // the visible reviews section (while the page streams in, React may briefly hold a hidden copy of the block)
+  const photos = page.getByRole('region', { name: 'Reviews' }).getByTestId('review-photos');
   await expect(photos).toBeVisible();
   await photos.getByRole('button').first().click();
   await expect(page.getByTestId('photo-viewer')).toBeVisible();
@@ -85,7 +86,7 @@ test('a customer asks about a product; the answer shows on the product page and 
   await call(a, 'POST', `/admin/questions/${q.id}/answer`, { answer: 'Yes — packed in September from this year’s harvest.' });
 
   await page.goto(`/en/p/${PRODUCT}`);
-  const shown = page.getByTestId('question').filter({ hasText: question });
+  const shown = page.getByRole('region', { name: 'Questions & answers' }).getByTestId('question').filter({ hasText: question });
   await expect(shown).toContainText('Yes — packed in September');
   await expect(shown).toContainText('Answer from');
 

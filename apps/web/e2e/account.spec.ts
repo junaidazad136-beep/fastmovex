@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { apiLogSize, codeFromApiLog, signIn, freshCustomer } from './helpers';
 
 test.describe('Account', () => {

@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, freshCustomer, signIn } from './helpers';
 
 /** Phase 18: the customer's delivery code and the driver on the map; cash-on-delivery limits at checkout. */

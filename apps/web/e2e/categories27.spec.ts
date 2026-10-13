@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 test.describe('All categories page (phase 27)', () => {
   test('each category is a picture tile that opens the category', async ({ page }) => {

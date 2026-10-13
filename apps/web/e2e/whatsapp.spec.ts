@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, confirmGuestPhone, freshMobile } from './helpers';
 
 async function admin() {
@@ -26,7 +26,8 @@ test.describe.serial('WhatsApp', () => {
     await expect(chat).toHaveAttribute('href', /^https:\/\/wa\.me\/97444001234\?text=/);
     await page.goto('/en/p/premium-khalas-dates-1kg');
     await expect(page.getByTestId('whatsapp-chat')).toHaveCount(0); // nothing floats over the price on product pages
-    await expect(page.getByTestId('whatsapp-ask')).toHaveAttribute('href', /wa\.me\/97444001234\?text=.*premium-khalas-dates-1kg/);
+    // by role: only what is shown (the page streams in behind its loading skeleton, briefly with a hidden copy)
+    await expect(page.getByRole('link', { name: 'Ask about this on WhatsApp' })).toHaveAttribute('href', /wa\.me\/97444001234\?text=.*premium-khalas-dates-1kg/);
     const axe = await new AxeBuilder({ page }).withTags(['wcag2a', 'wcag2aa']).analyze();
     expect(axe.violations.filter((v) => v.impact === 'serious' || v.impact === 'critical').map((v) => v.id)).toEqual([]);
   });

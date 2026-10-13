@@ -106,3 +106,32 @@ describe('Phase 27 — product page: colour photos and "bought in past month" (r
     expect([0, 10, 20, 50].includes(page.body.boughtLastMonth) || page.body.boughtLastMonth % 100 === 0).toBe(true);
   });
 });
+
+describe('Phase 27 — sign out ends the whole login (real database)', () => {
+  let app: INestApplication;
+  const api = () => request(app.getHttpServer());
+  const web = { 'x-requested-with': 'jovia-web', 'content-type': 'application/json' };
+  const cookieOf = (res: request.Response) => ((res.headers['set-cookie'] as unknown as string[] | undefined) ?? []).map((c) => c.split(';')[0]).find((c) => c.startsWith('jovia_rt=') && c.length > 'jovia_rt='.length);
+
+  beforeAll(async () => {
+    const mod = await Test.createTestingModule({ imports: [AppModule] }).compile();
+    app = mod.createNestApplication({ rawBody: true });
+    configureApp(app);
+    await app.init();
+  });
+  afterAll(async () => { await app.close(); });
+
+  it('a refresh that raced the sign-out cannot keep the person signed in', async () => {
+    const login = await api().post('/api/v1/auth/login').set(web).send({ identifier: 'customer@demo.jovia.test', password: DEMO_PASSWORD }).expect(200);
+    const first = cookieOf(login)!;
+    expect(first).toBeTruthy();
+    // the page opens and refreshes: first → second (the browser may not have stored "second" yet)
+    const refreshed = await api().post('/api/v1/auth/refresh').set(web).set('Cookie', first).send({}).expect(200);
+    const second = cookieOf(refreshed)!;
+    expect(second).not.toBe(first);
+    // sign-out goes out with the older cookie…
+    await api().post('/api/v1/auth/logout').set(web).set('Cookie', first).send({}).expect(204);
+    // …and the newer one, set by the raced refresh, no longer signs anybody in
+    await api().post('/api/v1/auth/refresh').set(web).set('Cookie', second).send({}).expect(401);
+  });
+});

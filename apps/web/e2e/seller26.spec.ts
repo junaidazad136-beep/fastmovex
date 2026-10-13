@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, freshCustomer, signIn } from './helpers';
 
 const SELLER = 'seller.gadgets@demo.jovia.test';

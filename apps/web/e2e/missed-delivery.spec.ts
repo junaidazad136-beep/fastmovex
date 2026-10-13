@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { apiCall, freshCustomer, missedDeliveryOrder, setDeliverySlots, signIn } from './helpers';
 
 /** The driver could not deliver: the order page explains why and lets the customer choose what happens next. */

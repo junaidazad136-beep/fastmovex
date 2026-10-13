@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { apiCall, apiToken, freshCustomer, signIn } from './helpers';
 
 /** Phase 20 on the website: invoice and credit note downloads on the order page; download my data; delete my account (and keep it). */

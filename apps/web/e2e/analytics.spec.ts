@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, DEMO_PASSWORD, confirmGuestPhone, freshMobile } from './helpers';
 
 // a normal phone browser: the API does not count headless/bot user agents

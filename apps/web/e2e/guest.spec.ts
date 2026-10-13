@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 import { API, apiLogSize, codeFromApiLog } from './helpers';
 
 /** Phase 14: guest checkout, order tracking, contact form, content pages and offers. */

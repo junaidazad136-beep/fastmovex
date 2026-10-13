@@ -213,7 +213,7 @@ export class AuthService {
   }
 
   async logout(rawToken: string | undefined): Promise<void> {
-    if (rawToken) await this.tokens.revokeByRaw(rawToken);
+    if (rawToken) await this.tokens.revokeLoginByRaw(rawToken);
   }
 
   async logoutAll(userId: string, meta: RequestMeta): Promise<void> {

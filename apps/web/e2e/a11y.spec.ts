@@ -1,5 +1,5 @@
 import AxeBuilder from '@axe-core/playwright';
-import { expect, test } from '@playwright/test';
+import { expect, test } from './fixtures';
 
 const PAGES = ['/en', '/ar', '/en/search?q=phone', '/en/c/electronics', '/en/p/nova-powercore-20000-power-bank', '/ar/p/nova-powercore-20000-power-bank', '/en/cart', '/en/login', '/ar/register', '/en/help', '/en/checkout', '/en/track', '/en/contact', '/en/offers', '/ar/about'];
 

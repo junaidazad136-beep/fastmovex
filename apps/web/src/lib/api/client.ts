@@ -322,7 +322,10 @@ export async function authRequest(path: '/auth/login' | '/auth/register' | '/aut
 }
 
 export async function logoutRequest(everywhere = false): Promise<void> {
-  try {
+  // A refresh still on its way (the page has just opened) would hand back a new login cookie after this logout and sign
+  // the person straight back in. So: let it finish, and log out under the same lock refreshes use (other tabs too).
+  if (refreshInFlight) await refreshInFlight.catch(() => false);
+  const run = async () => {
     if (everywhere) await api('/auth/logout-all', { method: 'POST' });
     else {
       await fetch(`${config.apiUrl}/auth/logout`, {
@@ -332,6 +335,12 @@ export async function logoutRequest(everywhere = false): Promise<void> {
         body: '{}',
       });
     }
+  };
+  const locks = typeof navigator !== 'undefined' ? (navigator as Navigator & { locks?: LockManager }).locks : undefined;
+  try {
+    // logout-all needs a fresh access token, which may itself refresh: never hold the lock around that one
+    if (locks && !everywhere) await locks.request(REFRESH_LOCK, run);
+    else await run();
   } finally {
     clearLocalSession();
   }

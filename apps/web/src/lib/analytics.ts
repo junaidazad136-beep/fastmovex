@@ -83,7 +83,10 @@ export function track(type: EventType, path?: string) {
   if (typeof window === 'undefined') return;
   currentTouch(); // read the landing address now, before the visitor moves on (it is remembered for the visit)
   queue.push({ type, ...(path && { path }) });
-  if (queue.length >= 10) send();
+  // funnel steps go out at once, with everything queued before them, as a request that survives leaving the page:
+  // shoppers often tap "Add to cart" and move on straight away, and a batched event would be lost with the page
+  if (type === 'add_to_cart' || type === 'checkout_start') send(true);
+  else if (queue.length >= 10) send();
   else timer ??= window.setTimeout(() => send(), type === 'page_view' ? 2_000 : 500);
 }
 
