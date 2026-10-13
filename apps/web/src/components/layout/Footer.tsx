@@ -58,6 +58,7 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
           <ul className="mt-3 space-y-2 text-sm text-ink-600">
             <li><Link href={paths.account(l)} className="hover:text-brand-600">{t('nav.myAccount')}</Link></li>
             <li><Link href={paths.wishlist(l)} className="hover:text-brand-600">{t('nav.wishlist')}</Link></li>
+            <li><Link href={paths.seller(l)} className="font-semibold text-brand-700 hover:text-brand-600" data-testid="footer-sell">{t('seller.sellWithUs')}</Link></li>
           </ul>
         </div>
       </div>

@@ -107,12 +107,16 @@ export function isSignedIn(): boolean {
   return accessToken !== null;
 }
 
-/** Exchanges the refresh cookie for a new access token. Resolves false when there is no valid session. */
-export function refreshSession(): Promise<boolean> {
-  if (refreshInFlight) return refreshInFlight;
+/**
+ * Exchanges the refresh cookie for a new access token. Resolves false when there is no valid session.
+ * `force`: even when the current token is still fresh — after the account gained a role (e.g. opening a seller account)
+ * the new token carries it.
+ */
+export function refreshSession(force = false): Promise<boolean> {
+  if (refreshInFlight && !force) return refreshInFlight;
   const run = async (): Promise<boolean> => {
     // Another tab may have refreshed while this one waited for the lock.
-    if (accessToken && expiresAt - Date.now() > EARLY_REFRESH_MS) return true;
+    if (!force && accessToken && expiresAt - Date.now() > EARLY_REFRESH_MS) return true;
     let res: Response;
     try {
       res = await fetch(`${config.apiUrl}/auth/refresh`, {
@@ -209,6 +213,59 @@ export async function api<T>(path: string, opts: RequestOptions = {}): Promise<T
  * A file the API makes (invoice, credit note, my-data export): fetched with the same sign-in (or the guest order
  * token in `opts.headers`), then saved by the browser. A tab cannot send the Authorization header, hence the blob.
  */
+/**
+ * Opens a PDF the API makes (shipping label, packing list) in a new tab, ready to print. Call it straight from the
+ * click: the tab is opened before the download so pop-up blockers allow it. If the tab is blocked anyway, the file
+ * is saved instead; resolves to false in that case.
+ */
+export async function openPdf(path: string, fallbackName: string, opts: RequestOptions = {}): Promise<boolean> {
+  const tab = typeof window !== 'undefined' ? window.open('', '_blank') : null;
+  try {
+    const { blob, name } = await fetchFile(path, fallbackName, opts);
+    const url = URL.createObjectURL(new Blob([blob], { type: 'application/pdf' }));
+    window.setTimeout(() => URL.revokeObjectURL(url), 120_000);
+    if (tab && !tab.closed) {
+      tab.location.href = url;
+      return true;
+    }
+    saveBlob(url, name);
+    return false;
+  } catch (e) {
+    tab?.close();
+    throw e;
+  }
+}
+
+function saveBlob(url: string, name: string) {
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = name;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
+async function fetchFile(path: string, fallbackName: string, opts: RequestOptions = {}): Promise<{ blob: Blob; name: string }> {
+  const mode = opts.auth ?? 'required';
+  let token = mode === 'none' ? null : await validToken();
+  if (mode === 'required' && !token) throw new ApiError(401, { message: 'Please sign in', statusCode: 401 });
+  let res = await send(path, { ...opts, headers: { ...opts.headers } }, token);
+  if (res.status === 401 && token) {
+    const ok = await refreshSession();
+    token = ok ? accessToken : null;
+    res = await send(path, opts, token);
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    let data: unknown = null;
+    try { data = text ? JSON.parse(text) : null; } catch { data = { message: text }; }
+    throw new ApiError(res.status, data as ApiError['body']);
+  }
+  const cd = res.headers.get('content-disposition') ?? '';
+  const name = /filename\*?=(?:UTF-8'')?"?([^";]+)"?/i.exec(cd)?.[1] ?? fallbackName;
+  return { blob: await res.blob(), name: decodeURIComponent(name) };
+}
+
 export async function downloadFile(path: string, fallbackName: string, opts: RequestOptions = {}): Promise<void> {
   const mode = opts.auth ?? 'required';
   let token = mode === 'none' ? null : await validToken();

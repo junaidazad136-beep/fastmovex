@@ -144,7 +144,9 @@ export function Overview() {
           {user.phone && <div><dt className="text-ink-500">{t('account.phone')}</dt><dd className="font-medium" dir="ltr">{user.phone}</dd><dd><Verified at={user.phoneVerifiedAt} channel="phone" /></dd></div>}
         </dl>
         <p className="mt-3 text-xs text-ink-400">{t('account.memberSince', { date: formatDate(user.createdAt, l, { month: 'long', year: 'numeric' }) })}</p>
-        {user.seller && <p className="mt-3 rounded-xl bg-sand-50 px-3 py-2 text-xs text-sand-700">{t('account.sellerLink')}</p>}
+        <Link href={paths.seller(l)} className="mt-3 flex items-center justify-between gap-3 rounded-xl bg-brand-50 px-3 py-2.5 text-sm font-semibold text-brand-700 hover:bg-brand-100" data-testid="seller-center-link">
+          <span>{user.seller ? t('seller.title') : t('seller.sellWithUs')}</span><span aria-hidden className="rtl:rotate-180">→</span>
+        </Link>
       </section>
 
       <section className="card p-5" aria-labelledby="acc-orders">

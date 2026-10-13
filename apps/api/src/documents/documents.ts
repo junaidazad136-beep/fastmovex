@@ -1,22 +1,24 @@
 import {
-  BadRequestException, ConflictException, Controller, Get, Headers, Injectable, Module, NotFoundException, Param, ParseUUIDPipe, Query, Res,
+  BadRequestException, ConflictException, Controller, Get, Headers, Injectable, Module, NotFoundException, Param, ParseUUIDPipe, Query, Res, UseGuards,
 } from '@nestjs/common';
 import { ApiBearerAuth, ApiHeader, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
 import { OrderStatus, Prisma } from '@prisma/client';
 import { Transform } from 'class-transformer';
-import { IsIn, IsOptional, IsUUID, Matches } from 'class-validator';
+import { ArrayMaxSize, ArrayMinSize, IsArray, IsIn, IsOptional, IsUUID, Matches } from 'class-validator';
 import type { Response } from 'express';
 import { tzFor } from '../analytics/range';
 import { AuditService } from '../audit/audit.service';
 import { sendPdf } from '../cash/cash';
-import { AuthUser } from '../common/auth-user';
-import { CurrentUser, Public, RequirePermissions } from '../common/decorators/auth.decorators';
+import { AuthUser, SellerContext } from '../common/auth-user';
+import { CurrentSeller, CurrentUser, Public, RequirePermissions } from '../common/decorators/auth.decorators';
+import { SellerGuard } from '../common/guards/seller.guard';
 import { OrderAccessService } from '../common/order-access.service';
 import { shipmentPaidTotal } from '../finance/finance-math';
 import { PrismaService } from '../prisma/prisma.service';
 import { WarehousesService } from '../warehouses/warehouses';
 import { renderCreditNote, renderReturnReceipt } from './credit-note';
 import { InvoiceSeller, renderInvoice } from './invoice';
+import { renderShippingLabels, ShippingLabel } from './label';
 import { PackingSlip, PickLine, renderPackingSlips, renderPickList } from './packing';
 import { addressText } from './run-sheet';
 
@@ -132,15 +134,17 @@ export class DocumentsService {
 
   // ------------------------------------------------------------------ packing slips and picking list
 
-  private async shipmentsFor(q: BatchQuery) {
-    const sellerId = await this.warehouses.house();
+  /** Shipments to print. Staff: FastMoveX's own (by ids or filters). A marketplace seller passes `scopeSellerId`: only theirs, by ids. */
+  private async shipmentsFor(q: BatchQuery, scopeSellerId?: string, staffAnySeller = false) {
+    const sellerId = scopeSellerId ?? await this.warehouses.house();
+    if (scopeSellerId && !q.ids?.length) throw new BadRequestException('Choose the orders to print');
     const { offsetMin } = tzFor(process.env.DEFAULT_COUNTRY ?? 'QA');
     if (!q.ids?.length && !q.warehouseId && !q.date && !q.slotStart) {
       // default: everything waiting to be packed in the default warehouse
       q.warehouseId = (await this.prisma.warehouse.findFirst({ where: { sellerId, isDefault: true }, select: { id: true } }))?.id;
     }
     const where: Prisma.SellerOrderWhereInput = q.ids?.length
-      ? { id: { in: q.ids }, sellerId }
+      ? { id: { in: q.ids }, ...(!staffAnySeller && { sellerId }) } // staff may print a label for any shipment they hand to a driver
       : {
           sellerId, status: { in: TO_PACK },
           ...(q.warehouseId && { warehouseId: q.warehouseId }),
@@ -151,6 +155,7 @@ export class DocumentsService {
       orderBy: [{ order: { deliverySlotStart: { sort: 'asc', nulls: 'last' } } }, { createdAt: 'asc' }],
       include: {
         warehouse: { select: { id: true, name: true } },
+        seller: { select: { contactPhone: true, store: { select: { name: true } } } },
         order: {
           select: {
             id: true, orderNumber: true, placedAt: true, shippingAddress: true, customerNote: true, deliverySlotStart: true, deliverySlotEnd: true, currencyCode: true,
@@ -197,6 +202,36 @@ export class DocumentsService {
     await this.audit.log({ actorId: actor.id, action: 'documents.packing_slips', entityType: 'SellerOrder', entityId: rows.length === 1 ? rows[0].id : 'batch', after: { count: rows.length } });
     const pdf = await renderPackingSlips(slips, tzFor(process.env.DEFAULT_COUNTRY ?? 'QA').tz);
     return { pdf, name: rows.length === 1 ? `packing-slip-${slips[0].shipmentNo}.pdf` : `packing-slips-${rows.length}.pdf` };
+  }
+
+  /**
+   * Shipping labels (10 × 15 cm) with the packing list behind each: what a seller prints for a parcel in one click.
+   * Staff print any shipment by id (or FastMoveX's own by filters); a marketplace seller (`scopeSellerId`) only theirs.
+   * Cancelled shipments are refused.
+   */
+  async labels(q: BatchQuery, actor: AuthUser, scopeSellerId?: string) {
+    const rows = await this.shipmentsFor(q, scopeSellerId, !scopeSellerId && !!q.ids?.length);
+    if (!rows.length) throw new BadRequestException('No shipments to print');
+    const labels: ShippingLabel[] = rows.map((so) => {
+      const a = so.order.shippingAddress as ShipAddress | null;
+      const idx = so.order.sellerOrders.findIndex((x) => x.id === so.id);
+      const cod = so.order.payments[0]?.method === 'COD';
+      return {
+        shipmentId: so.id, orderNumber: so.order.orderNumber, shipmentNo: shipmentNo(so.order.orderNumber, idx, so.order.sellerOrders.length), placedAt: so.order.placedAt,
+        slot: so.order.deliverySlotStart ? { start: so.order.deliverySlotStart, end: so.order.deliverySlotEnd } : null,
+        deliveryMethod: so.deliveryMethod,
+        from: { store: so.seller.store?.name ?? 'FastMoveX', phone: so.seller.contactPhone ?? null },
+        customer: { name: a?.recipientName ?? 'Customer', phone: a?.phone ?? null, address: addressLines(a) },
+        note: so.order.customerNote,
+        cash: cod ? { amountMinor: shipmentPaidTotal(so, so.order.country.pricesIncludeTax), currencyCode: so.order.currencyCode } : null,
+        items: so.items.filter((i) => i.status !== 'CANCELLED').map((i) => ({
+          title: i.productTitle, sku: i.sku, options: optionsText(i.variant.optionValues), quantity: i.quantity - i.refundedQty,
+        })).filter((i) => i.quantity > 0),
+      };
+    });
+    await this.audit.log({ actorId: actor.id, action: 'documents.labels', entityType: 'SellerOrder', entityId: rows.length === 1 ? rows[0].id : 'batch', after: { count: rows.length, seller: scopeSellerId ?? 'house' } });
+    const pdf = await renderShippingLabels(labels, tzFor(process.env.DEFAULT_COUNTRY ?? 'QA').tz);
+    return { pdf, name: rows.length === 1 ? `label-${labels[0].shipmentNo}.pdf` : `labels-${rows.length}.pdf` };
   }
 
   /** What to take off the shelves for these shipments, grouped by product in walking order (JSON for the screen). */
@@ -372,6 +407,16 @@ export class AdminDocumentsController {
     const r = await this.docs.packingSlips({ ids: [id] }, u);
     sendPdf(res, r.pdf, r.name);
   }
+  @RequirePermissions('orders.read') @Get('orders/shipments/:id/label.pdf')
+  async label(@Param('id', ParseUUIDPipe) id: string, @CurrentUser() u: AuthUser, @Res() res: Response) {
+    const r = await this.docs.labels({ ids: [id] }, u);
+    sendPdf(res, r.pdf, r.name);
+  }
+  @RequirePermissions('orders.read') @Get('fulfilment/labels.pdf')
+  async labelsPdf(@Query() q: BatchQuery, @CurrentUser() u: AuthUser, @Res() res: Response) {
+    const r = await this.docs.labels(q, u);
+    sendPdf(res, r.pdf, r.name);
+  }
   @RequirePermissions('orders.read') @Get('fulfilment/packing-slips.pdf')
   async packingSlips(@Query() q: BatchQuery, @CurrentUser() u: AuthUser, @Res() res: Response) {
     const r = await this.docs.packingSlips(q, u);
@@ -395,5 +440,30 @@ export class AdminDocumentsController {
   }
 }
 
-@Module({ controllers: [CustomerDocumentsController, GuestDocumentsController, AdminDocumentsController], providers: [DocumentsService], exports: [DocumentsService] })
+class SellerLabelsQuery {
+  @ApiPropertyOptional({ description: 'Comma-separated shipment (seller order) ids' })
+  @Transform(({ value }) => (typeof value === 'string' ? value.split(',').map((x: string) => x.trim()).filter(Boolean) : value)) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(50) @IsUUID('4', { each: true }) ids!: string[];
+}
+
+/** A marketplace seller prints the label + packing list for their own shipments (never another seller's). */
+@ApiTags('Seller / Orders') @ApiBearerAuth()
+@UseGuards(SellerGuard)
+@Controller({ path: 'seller', version: '1' })
+export class SellerDocumentsController {
+  constructor(private readonly docs: DocumentsService) {}
+
+  @Get('orders/:id/label.pdf')
+  async label(@CurrentSeller() s: SellerContext, @Param('id', ParseUUIDPipe) id: string, @CurrentUser() u: AuthUser, @Res() res: Response) {
+    const r = await this.docs.labels({ ids: [id] }, u, s.id);
+    sendPdf(res, r.pdf, r.name);
+  }
+
+  @Get('labels.pdf')
+  async labels(@CurrentSeller() s: SellerContext, @Query() q: SellerLabelsQuery, @CurrentUser() u: AuthUser, @Res() res: Response) {
+    const r = await this.docs.labels({ ids: q.ids }, u, s.id);
+    sendPdf(res, r.pdf, r.name);
+  }
+}
+
+@Module({ controllers: [CustomerDocumentsController, GuestDocumentsController, AdminDocumentsController, SellerDocumentsController], providers: [DocumentsService], exports: [DocumentsService] })
 export class DocumentsModule {}

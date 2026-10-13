@@ -64,6 +64,8 @@ export class SellerOrdersController {
   constructor(private readonly orders: OrdersService) {}
 
   @Get() list(@CurrentSeller() s: SellerContext, @Query() q: OrdersQuery) { return this.orders.listForSeller(s.id, q); }
+  /** Seller Center home: orders by stage, newest new order, products by status (before :id so "summary" is not an id). */
+  @Get('summary') summary(@CurrentSeller() s: SellerContext) { return this.orders.sellerSummary(s.id); }
   @Get(':id') detail(@CurrentSeller() s: SellerContext, @Param('id', ParseUUIDPipe) id: string) { return this.orders.detailForSeller(s.id, id); }
 
   @HttpCode(200) @Post(':id/status')

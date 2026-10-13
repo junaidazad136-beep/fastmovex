@@ -211,13 +211,44 @@ export class OrdersService {
     };
   }
 
+  /**
+   * Seller Center home: orders by stage (new → packing → ready → on the way), the newest one (for the "new order"
+   * sound), products by status and how many are running low. Counts only; one round trip.
+   */
+  async sellerSummary(sellerId: string) {
+    const [byStatus, newest, products, low] = await Promise.all([
+      this.prisma.sellerOrder.groupBy({ by: ['status'], where: { sellerId }, _count: { _all: true } }),
+      this.prisma.sellerOrder.findFirst({ where: { sellerId, status: 'CONFIRMED' }, orderBy: { createdAt: 'desc' }, select: { id: true, createdAt: true } }),
+      this.prisma.product.groupBy({ by: ['status'], where: { store: { sellerId }, deletedAt: null }, _count: { _all: true } }),
+      this.prisma.$queryRaw<{ n: bigint }[]>`
+        SELECT COUNT(DISTINCT p.id)::bigint AS n
+        FROM "Product" p JOIN "Store" s ON s.id = p."storeId" JOIN "ProductVariant" v ON v."productId" = p.id AND v."isActive"
+        JOIN "Inventory" i ON i."variantId" = v.id
+        WHERE s."sellerId" = ${sellerId}::uuid AND p."deletedAt" IS NULL AND p.status = 'ACTIVE' AND i."onHand" - i.reserved <= i."lowStockThreshold"`,
+    ]);
+    const o = (st: OrderStatus[]) => byStatus.filter((r) => st.includes(r.status)).reduce((n, r) => n + r._count._all, 0);
+    const p = (st: string) => products.find((r) => r.status === st)?._count._all ?? 0;
+    return {
+      orders: { new: o(['CONFIRMED']), packing: o(['PREPARING']), ready: o(['READY_FOR_PICKUP']), onTheWay: o(['SHIPPED', 'OUT_FOR_DELIVERY']), delivered: o(['DELIVERED']), cancelled: o(['CANCELLED']) },
+      newestNew: newest ? { id: newest.id, at: newest.createdAt } : null,
+      products: { live: p('ACTIVE'), inReview: p('PENDING_REVIEW'), draft: p('DRAFT'), rejected: p('REJECTED'), lowStock: Number(low[0]?.n ?? 0) },
+    };
+  }
+
   async detailForSeller(sellerId: string, sellerOrderId: string) {
     const so = await this.prisma.sellerOrder.findFirst({
       where: { id: sellerOrderId, sellerId }, // scoped: a seller can never open another seller's shipment
       include: {
         items: true,
         delivery: true,
-        order: { select: { orderNumber: true, currencyCode: true, placedAt: true, customerNote: true, shippingAddress: true, user: { select: { fullName: true } } } },
+        order: {
+          select: {
+            orderNumber: true, currencyCode: true, placedAt: true, customerNote: true, shippingAddress: true, deliverySlotStart: true, deliverySlotEnd: true,
+            user: { select: { fullName: true } }, country: { select: { pricesIncludeTax: true } },
+            payments: { take: 1, orderBy: { createdAt: 'asc' }, select: { method: true } },
+            _count: { select: { sellerOrders: true } },
+          },
+        },
         history: { orderBy: { createdAt: 'asc' }, select: { fromStatus: true, toStatus: true, note: true, createdAt: true } },
       },
     });
@@ -225,7 +256,12 @@ export class OrdersService {
     const addr = so.order.shippingAddress as Record<string, unknown>;
     return {
       ...this.money(so),
-      order: { orderNumber: so.order.orderNumber, currencyCode: so.order.currencyCode, placedAt: so.order.placedAt, customerNote: so.order.customerNote },
+      order: {
+        orderNumber: so.order.orderNumber, currencyCode: so.order.currencyCode, placedAt: so.order.placedAt, customerNote: so.order.customerNote,
+        deliverySlotStart: so.order.deliverySlotStart, deliverySlotEnd: so.order.deliverySlotEnd, shipments: so.order._count.sellerOrders,
+      },
+      // What the driver collects at the door for this parcel (cash on delivery), or null when it was paid online
+      cashToCollectMinor: so.order.payments[0]?.method === 'COD' ? shipmentPaidTotal(so, so.order.country.pricesIncludeTax).toString() : null,
       customer: { name: so.order.user.fullName },
       // Sellers see what they need to deliver, not the customer's account details
       shippingAddress: { recipientName: addr.recipientName, phone: addr.phone, city: addr.city, zone: addr.zone, street: addr.street, building: addr.building, unit: addr.unit, line1: addr.line1, lat: addr.lat, lng: addr.lng },

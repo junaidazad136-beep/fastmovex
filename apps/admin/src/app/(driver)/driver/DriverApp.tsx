@@ -1,7 +1,7 @@
 'use client';
 
 import clsx from 'clsx';
-import { Banknote, Camera, CheckCircle2, FileText, LocateFixed, LogOut, MapPin, MessageCircle, Navigation, Package, Phone, Printer, RefreshCw, RotateCcw, Truck, WifiOff, XCircle } from 'lucide-react';
+import { Banknote, Camera, CheckCircle2, QrCode, FileText, LocateFixed, LogOut, MapPin, MessageCircle, Navigation, Package, Phone, Printer, RefreshCw, RotateCcw, Truck, WifiOff, XCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useRef, useState } from 'react';
@@ -15,6 +15,7 @@ import { useSession } from '@/lib/state/session';
 import { useToast } from '@/lib/state/toast';
 import { cachedRun, enqueue, flush, isOffline, outbox, type OutboxEntry, type OutboxKind, saveProfile, saveRun, statusAfter } from '@/lib/driver-offline';
 import { PickupCards, RefuseItemsDialog, type PickupJob } from './DriverExtras';
+import { ScanParcel } from './ScanParcel';
 
 type Queue = (job: Job, kind: OutboxKind, payload?: Record<string, string>) => void;
 
@@ -136,6 +137,7 @@ export function DriverApp() {
   const [cash, setCash] = useState<MyCash | null>(null);
   const [refuse, setRefuse] = useState<Job | null>(null);
   const [pickups, setPickups] = useState<PickupJob[]>([]);
+  const [scanning, setScanning] = useState(false);
   // offline: when the shown run was saved, and how many steps wait to be sent
   const [offlineSince, setOfflineSince] = useState<string | null>(null);
   const [pending, setPending] = useState(0);
@@ -262,6 +264,12 @@ export function DriverApp() {
             {pending && !offlineSince ? <button type="button" className="btn-secondary btn-sm" onClick={() => void load()}>Send now</button> : null}
           </div>
         ) : null}
+        {run?.jobs.some((j) => j.status === 'ASSIGNED') ? (
+          <button type="button" onClick={() => setScanning(true)} className="flex w-full items-center justify-center gap-2 rounded-xl bg-ink-900 px-4 py-3.5 text-base font-semibold text-white" data-testid="driver-scan">
+            <QrCode className="size-5" aria-hidden />Scan parcels at pick-up
+          </button>
+        ) : null}
+        <ScanParcel open={scanning} onClose={() => setScanning(false)} onPicked={() => void load()} />
         {onTheWay ? (
           <button type="button" onClick={() => setSharing(!sharing)} aria-pressed={sharing}
             className={clsx('flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-start text-sm', sharing ? 'border-success-600 bg-success-50 text-success-700' : 'border-ink-200 bg-white text-ink-700')}>

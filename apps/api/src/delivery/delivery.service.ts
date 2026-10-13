@@ -1,3 +1,4 @@
+import { parseLabelQr } from '../documents/label';
 import { BadRequestException, ForbiddenException, Injectable, Logger, NotFoundException, Optional } from '@nestjs/common';
 import { EventEmitter2, OnEvent } from '@nestjs/event-emitter';
 import { DeliveryStatus, Prisma } from '@prisma/client';
@@ -265,6 +266,25 @@ export class DeliveryService {
       if (d) await this.cash.assertCanPickUp(courierId, d.sellerOrder.order.countryCode);
     }
     return this.step(id, courierId, 'PICKED_UP', { pickedUpAt: new Date() }, 'Picked up from seller');
+  }
+
+  /**
+   * The driver scans a parcel's label at the seller: if it is one of their assigned jobs it is picked up in one step;
+   * a parcel already picked up just says so; anything else is not theirs to take.
+   */
+  async scanPickup(courierId: string, code: string) {
+    const sellerOrderId = parseLabelQr(code);
+    if (!sellerOrderId) throw new BadRequestException('This is not a FastMoveX label. Scan the QR on the parcel.');
+    const d = await this.prisma.deliveryOrder.findFirst({
+      where: { sellerOrderId, courierUserId: courierId, status: { notIn: ['CANCELLED', 'RETURNED'] } },
+      orderBy: { createdAt: 'desc' },
+      select: { id: true, status: true, sellerOrder: { select: { order: { select: { orderNumber: true } } } } },
+    });
+    if (!d) throw new NotFoundException('This parcel is not on your list. Ask operations to assign it to you.');
+    const orderNumber = d.sellerOrder.order.orderNumber;
+    if (d.status !== 'ASSIGNED') return { id: d.id, orderNumber, status: d.status, pickedUp: false };
+    await this.pickup(d.id, courierId);
+    return { id: d.id, orderNumber, status: 'PICKED_UP' as const, pickedUp: true };
   }
 
   outForDelivery(id: string, courierId: string) {

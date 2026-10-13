@@ -1,6 +1,6 @@
 'use client';
 
-import { Ban, FileText, PackageCheck, Printer, Receipt, Truck } from 'lucide-react';
+import { Ban, FileText, PackageCheck, Printer, Receipt, Tag, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import { summaryStale } from '@/components/layout/Shell';
@@ -241,6 +241,12 @@ export function OrderDetail({ orderNumber }: { orderNumber: string }) {
                       <button type="button" className="btn-ghost btn-sm" disabled={docs.busy === `slip-${s.id}`} data-testid="packing-slip"
                         onClick={() => docs.run(`slip-${s.id}`, () => openPdf(`/admin/orders/shipments/${s.id}/packing-slip.pdf`, `packing-slip-${o.orderNumber}.pdf`))}>
                         <PackageCheck className="size-4" aria-hidden /> Packing slip
+                      </button>
+                    ) : null}
+                    {s.status !== 'CANCELLED' ? (
+                      <button type="button" className="btn-ghost btn-sm" disabled={docs.busy === `label-${s.id}`} data-testid="shipping-label"
+                        onClick={() => docs.run(`label-${s.id}`, () => openPdf(`/admin/orders/shipments/${s.id}/label.pdf`, `label-${o.orderNumber}.pdf`))}>
+                        <Tag className="size-4" aria-hidden /> Label 10×15
                       </button>
                     ) : null}
                     {can('refunds.create') && ['DELIVERED', 'SHIPPED', 'OUT_FOR_DELIVERY', 'RETURNED', 'RETURN_REQUESTED'].includes(s.status) ? (

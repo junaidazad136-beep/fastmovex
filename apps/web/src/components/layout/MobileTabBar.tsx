@@ -22,8 +22,8 @@ export function MobileTabBar() {
     { href: paths.wishlist(l), label: t('nav.wishlist'), Icon: Heart, active: pathname.startsWith(paths.wishlist(l)) },
     { href: status === 'user' ? paths.account(l) : paths.login(l), label: t('nav.account'), Icon: User, active: (pathname.startsWith(`/${l}/account`) && !pathname.startsWith(paths.wishlist(l))) || pathname.startsWith(`/${l}/login`) },
   ];
-  // Checkout has its own pay button; product pages show a price + "Add to cart" bar in this place.
-  if (pathname.startsWith(`/${l}/checkout`) || pathname.startsWith(`/${l}/p/`)) return null;
+  // Checkout has its own pay button; product pages show a price + "Add to cart" bar in this place; Seller Center has its own menu.
+  if (pathname.startsWith(`/${l}/checkout`) || pathname.startsWith(`/${l}/p/`) || pathname.startsWith(`/${l}/seller`)) return null;
   return (
     <nav aria-label={t('nav.menu')} className="fixed inset-x-0 bottom-0 z-40 border-t border-ink-100 bg-white/95 pb-[env(safe-area-inset-bottom)] backdrop-blur md:hidden">
       <ul className="grid grid-cols-5">

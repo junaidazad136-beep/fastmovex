@@ -35,9 +35,10 @@ const nextConfig: NextConfig = {
           ...(isProd ? [{ key: 'Strict-Transport-Security', value: 'max-age=31536000; includeSubDomains' }] : []),
         ],
       },
-      // geolocation for our own origin only: the driver page shares the driver's position, and drivers reach it by an
-      // in-app navigation from /login (the policy of the first page loaded applies to the whole visit)
-      { source: '/:path*', headers: [{ key: 'Permissions-Policy', value: 'camera=(), microphone=(), geolocation=(self), payment=()' }] },
+      // geolocation and camera for our own origin only: the driver page shares the driver's position and scans parcel
+      // labels, and drivers reach it by an in-app navigation from /login (the policy of the first page loaded applies to
+      // the whole visit)
+      { source: '/:path*', headers: [{ key: 'Permissions-Policy', value: 'camera=(self), microphone=(), geolocation=(self), payment=()' }] },
     ];
   },
 };

@@ -68,6 +68,10 @@ export class GuestRescheduleController {
   }
 }
 
+class ScanDto {
+  @ApiProperty({ example: 'FMXS:3f0c…', description: 'What the camera read from the label QR' }) @IsString() @MaxLength(300) code!: string;
+}
+
 /** Courier app. Only users with the DELIVERY_AGENT role, and only their own jobs. */
 @ApiTags('Courier') @ApiBearerAuth() @Roles('DELIVERY_AGENT')
 @Controller({ path: 'courier/jobs', version: '1' })
@@ -77,6 +81,9 @@ export class CourierController {
   @Get() jobs(@CurrentUser() u: AuthUser) { return this.delivery.courierJobs(u.id); }
   /** Today's run for the driver page: open jobs in driving order plus today's finished ones, with a summary. */
   @Get('run') run(@CurrentUser() u: AuthUser) { return this.delivery.courierRun(u.id); }
+  /** Scan the QR on a parcel's label at pick-up: picks up that job if it is yours. */
+  @Throttle({ default: { limit: 60, ttl: 60_000 } })
+  @HttpCode(200) @Post('scan') scan(@CurrentUser() u: AuthUser, @Body() d: ScanDto) { return this.delivery.scanPickup(u.id, d.code); }
   @HttpCode(200) @Post(':id/pickup') pickup(@CurrentUser() u: AuthUser, @Param('id', ParseUUIDPipe) id: string) { return this.delivery.pickup(id, u.id); }
   @HttpCode(200) @Post(':id/out-for-delivery') out(@CurrentUser() u: AuthUser, @Param('id', ParseUUIDPipe) id: string) { return this.delivery.outForDelivery(id, u.id); }
   @Throttle({ default: { limit: 120, ttl: 60_000 } })
