@@ -9,36 +9,27 @@ export function LogoMark({ className = 'size-9' }: { className?: string }) {
 }
 
 /**
- * The line under the logo ("SHOP SMART · LIVE BETTER"), drawn in the logo's own width so it always sits centred under
- * the letters and scales with the logo — the same layout as the social covers. English is spaced out to fill the
- * width; Arabic keeps its natural spacing (spreading it would break the joined letters).
+ * The line under the logo ("SHOP SMART · LIVE BETTER"), sized from the logo's own width (container units) so it always
+ * sits centred under the letters and scales with the logo — the same layout as the social covers. Plain text (not SVG
+ * text): Safari draws SVG text stretched with textLength on top of itself. Arabic keeps its natural letter spacing
+ * (spreading it would break the joined letters).
  */
 function Tagline({ text, tone }: { text: string; tone: 'light' | 'dark' }) {
   const arabic = /[\u0600-\u06FF]/.test(text);
   const [a, b] = text.split('·').map((x) => x.trim());
-  const fill = tone === 'dark' ? 'rgba(255,255,255,.85)' : '#2c2824';
-  const dot = <tspan fill="#9b2ff8" dx={arabic ? 0 : 6}>{' • '}</tspan>;
+  const color = tone === 'dark' ? 'text-white/85' : 'text-ink-800';
+  const dot = <span className="mx-[0.8em] inline-block size-[0.45em] shrink-0 rounded-full bg-gradient-to-br from-[#C13CFE] to-[#6711FA]" aria-hidden />;
+  const word = (w: string) => (arabic ? <span>{w}</span> : <span className="me-[-0.3em] tracking-[0.3em]">{w.toUpperCase()}</span>);
   return (
-    <>
-      <svg viewBox="0 0 1065 78" className="mt-[3px] block h-auto w-full overflow-visible" aria-hidden focusable="false">
-        {arabic ? (
-          <text x="532.5" y="62" textAnchor="middle" direction="rtl" fontSize="74" fontWeight="600" fill={fill} style={{ fontFamily: 'var(--font-arabic)' }}>
-            {b !== undefined ? <>{a}{dot}{b}</> : text}
-          </text>
-        ) : (
-          <text x="532.5" y="58" textAnchor="middle" textLength="940" lengthAdjust="spacing" fontSize="52" fontWeight="700" fill={fill}>
-            {b !== undefined ? <>{a.toUpperCase()}{dot}{b.toUpperCase()}</> : text.toUpperCase()}
-          </text>
-        )}
-      </svg>
-      <span className="sr-only">{text}</span>
-    </>
+    <span className={`mt-[3px] flex items-center justify-center whitespace-nowrap font-bold leading-none ${color} ${arabic ? 'text-[9px] font-semibold supports-[container-type:inline-size]:text-[6.8cqw]' : 'text-[6px] supports-[container-type:inline-size]:text-[4.4cqw]'}`}>
+      {b !== undefined ? <>{word(a)}{dot}{word(b)}</> : word(text)}
+    </span>
   );
 }
 
 export function Logo({ label, tone = 'light', tagline, className = '' }: { label: string; tone?: 'light' | 'dark'; tagline?: string; className?: string }) {
   return (
-    <span className={`inline-flex w-[132px] flex-col sm:w-[140px] ${className}`}>
+    <span className={`inline-flex w-[132px] flex-col [container-type:inline-size] sm:w-[140px] ${className}`}>
       <Image
         src={tone === 'dark' ? '/brand/fastmovex-logo-dark.svg' : '/brand/fastmovex-logo-light.svg'}
         alt={label}
