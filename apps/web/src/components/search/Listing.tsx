@@ -34,8 +34,8 @@ export function Listing({
   ];
 
   return (
-    <div className="flex gap-8">
-      <Filters query={query} facets={result.facets} basePath={basePath} fixed={fixed} total={result.total} categoryBase={categoryBase} />
+    <div className="lg:flex lg:gap-8">
+      <Filters variant="sidebar" query={query} facets={result.facets} basePath={basePath} fixed={fixed} total={result.total} categoryBase={categoryBase} />
       <div className="min-w-0 flex-1">
         {heading}
         {result.spelling && query.q && (
@@ -46,9 +46,11 @@ export function Listing({
             correctedHref={url(basePath, { ...query, q: result.spelling.corrected, exact: undefined, page: 1 }, fixed)}
           />
         )}
-        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-          <p className="text-sm text-ink-500" data-testid="result-count">{t.plural('search.count', result.total)}</p>
-          <SortSelect query={query} basePath={basePath} fixed={fixed} />
+        {/* Phones: [Filters] [Sort] side by side, count below. Large screens: count … sort (filters are in the sidebar). */}
+        <div className="mb-4 flex flex-wrap items-center gap-2 lg:flex-nowrap lg:gap-3">
+          <Filters variant="button" className="min-w-0 flex-1" query={query} facets={result.facets} basePath={basePath} fixed={fixed} total={result.total} categoryBase={categoryBase} />
+          <SortSelect query={query} basePath={basePath} fixed={fixed} className="min-w-0 flex-1 lg:order-last lg:flex-none" />
+          <p className="w-full text-sm text-ink-500 lg:w-auto lg:flex-1" data-testid="result-count">{t.plural('search.count', result.total)}</p>
         </div>
         {chips.length > 0 && (
           <ul className="mb-4 flex flex-wrap items-center gap-2" aria-label={t('search.activeFilters')}>

@@ -149,22 +149,35 @@ function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }
   );
 }
 
-export function Filters(props: Props & { total: number }) {
+/**
+ * Filters, two ways: a sidebar on large screens (`variant="sidebar"`) and, on phones and tablets, a full-width button in
+ * the results toolbar that opens the same panel in a sheet (`variant="button"`) — so the products keep the whole width.
+ */
+export function Filters({ variant, className = '', ...props }: Props & { total: number; variant: 'sidebar' | 'button'; className?: string }) {
   const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
   const navigate = (url: string) => { setOpen(false); start(() => router.push(url, { scroll: false })); };
   const activeCount = props.query.brands.length + (props.query.min || props.query.max ? 1 : 0) + (props.query.rating ? 1 : 0) + (props.query.inStock ? 1 : 0);
-  return (
-    <>
-      <aside className={`hidden w-60 shrink-0 lg:block ${pending ? 'opacity-60' : ''}`} aria-label={t('search.filters')}>
+  if (variant === 'sidebar') {
+    return (
+      <aside className={`hidden w-60 shrink-0 lg:block ${pending ? 'opacity-60' : ''} ${className}`} aria-label={t('search.filters')}>
         <Panel {...props} onNavigate={navigate} />
       </aside>
-      <button type="button" onClick={() => setOpen(true)} className="btn-secondary lg:hidden" data-testid="open-filters">
+    );
+  }
+  return (
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        className={`inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-3 text-sm font-semibold text-ink-900 hover:bg-ink-50 lg:hidden ${pending ? 'opacity-60' : ''} ${className}`}
+        data-testid="open-filters"
+      >
         <SlidersHorizontal className="size-4" aria-hidden />
         {t('search.filters')}
-        {activeCount > 0 && <span className="rounded-full bg-brand-600 px-1.5 text-xs text-white">{activeCount}</span>}
+        {activeCount > 0 && <span className="tabular min-w-5 rounded-full bg-brand-600 px-1.5 text-xs leading-5 text-white">{activeCount}</span>}
       </button>
       <Dialog open={open} onClose={() => setOpen(false)} title={t('search.filters')} closeLabel={t('common.close')}>
         {open && <Panel {...props} onNavigate={navigate} />}
