@@ -171,6 +171,9 @@ export interface ProductDetail {
   description: string | null;
   descriptionAr: string | null;
   specs: Record<string, string> | null;
+  /** one line under the title (grey), written by the seller */
+  shortDescription?: string | null;
+  shortDescriptionAr?: string | null;
   returnPolicyDays: number | null;
   returnWindowDays: number;
   warrantyMonths: number | null;
