@@ -319,6 +319,26 @@ lastActiveAt, twoStep, current }`; `DELETE` ends one. `GET /auth/login-history` 
 | POST | `/admin/brands` | 🔒 |
 | PATCH | `/admin/brands/{id}` | 🔒 |
 
+### Size guides
+
+`GET /products/{slug}` returns `sizeChart` (or `null`): the product's own guide, otherwise the nearest category's default
+when the product has a size option ("Size", "Shoe size", "المقاس"…). A guide is `{ id, name, nameAr, kind, columns:
+[{ label, labelAr, unit: "cm" | "in" | null }], rows: string[][], note, noteAr }`; `kind` (CLOTHING, LENGTH, SHOES, KIDS,
+GENERAL) picks the "how to measure" tips. Products and categories take `sizeChartId` (null = none / category default).
+FastMoveX's guides (no store) can be category defaults; a store's own guides only its own products.
+
+| Method | Path | Auth |
+|---|---|---|
+| GET | `/admin/size-charts` | 🔒 products.read |
+| GET | `/admin/size-charts/{id}` | 🔒 products.read |
+| POST | `/admin/size-charts` | 🔒 products.manage |
+| PATCH | `/admin/size-charts/{id}` | 🔒 products.manage |
+| DELETE | `/admin/size-charts/{id}` | 🔒 products.manage |
+| GET | `/seller/size-charts` | 🔒 seller — FastMoveX's (`own: false`) and the store's own |
+| POST | `/seller/size-charts` | 🔒 seller |
+| PATCH | `/seller/size-charts/{id}` | 🔒 seller (own guides only) |
+| DELETE | `/seller/size-charts/{id}` | 🔒 seller (own guides only) |
+
 ### Search
 
 | Method | Path | Auth |

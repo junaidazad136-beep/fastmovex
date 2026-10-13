@@ -27,7 +27,9 @@ test('staff set delivery times in Settings; the shop offers them and Orders show
   expect(last.slots.map((s) => s.from)).toEqual(['09:00', '13:00']);
   expect(last.slots[0].left).toBe(5);
 
-  // an impossible window is refused with a clear message
+  // an impossible window is refused with a clear message (after the saved settings have been read back into the form)
+  await page.waitForLoadState('networkidle');
+  await expect(card.getByLabel('Window 2 to')).toHaveValue('17:00');
   await card.getByLabel('Window 2 to').fill('10:00');
   await card.getByRole('button', { name: 'Save delivery times' }).click();
   await expect(page.getByText(/must end after it starts/).first()).toBeVisible();

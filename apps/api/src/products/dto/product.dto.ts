@@ -42,6 +42,8 @@ class ProductFieldsDto {
   @ApiPropertyOptional({ example: { Display: '6.1"', Chip: 'A17 Pro' } }) @IsOptional() @IsObject() specs?: Record<string, string>;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(90) returnPolicyDays?: number;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(120) warrantyMonths?: number;
+  @ApiPropertyOptional({ nullable: true, description: "Size guide shown next to the size option (FastMoveX's or your store's); null = the category's default" })
+  @IsOptional() @IsUUID() sizeChartId?: string | null;
   @ApiPropertyOptional({ description: 'Food, cosmetics, medicine: keep stock in dated lots, sell earliest-expiry first, write off expired' }) @IsOptional() @IsBoolean() tracksExpiry?: boolean;
   @ApiPropertyOptional({ example: ['gift', 'eid'], description: 'Up to 20 keywords, stored lowercase' })
   @IsOptional() @Transform(normalizeTags) @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) @Length(1, 40, { each: true }) tags?: string[];

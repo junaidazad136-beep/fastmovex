@@ -16,6 +16,7 @@ export class CreateCategoryDto extends IntersectionType(SeoFieldsDto, FaqFieldDt
   @ApiPropertyOptional() @IsOptional() @IsUUID() parentId?: string;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(10_000) sortOrder?: number;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
+  @ApiPropertyOptional({ nullable: true, description: 'Default size guide (FastMoveX charts only)' }) @IsOptional() @IsUUID() sizeChartId?: string | null;
 }
 
 export class UpdateCategoryDto extends IntersectionType(SeoFieldsDto, FaqFieldDto) {
@@ -26,6 +27,8 @@ export class UpdateCategoryDto extends IntersectionType(SeoFieldsDto, FaqFieldDt
   @IsOptional() @IsUUID() parentId?: string | null;
   @ApiPropertyOptional() @IsOptional() @IsInt() @Min(0) @Max(10_000) sortOrder?: number;
   @ApiPropertyOptional() @IsOptional() @IsBoolean() isActive?: boolean;
+  @ApiPropertyOptional({ nullable: true, description: 'Default size guide for products here (and in subcategories) that come in sizes; null = none' })
+  @IsOptional() @IsUUID() sizeChartId?: string | null;
 }
 
 export class ReorderItemDto {

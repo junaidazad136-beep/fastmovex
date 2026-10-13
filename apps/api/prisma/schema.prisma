@@ -570,6 +570,7 @@ model Store {
   updatedAt     DateTime @updatedAt
 
   products Product[]
+  sizeCharts SizeChart[]
 
   @@index([isFeatured, isActive])
 }
@@ -599,6 +600,9 @@ model Category {
   seoDescriptionAr String?
   /// [{ q, qAr, a, aAr }] — shown on the page and as FAQ structured data
   faq              Json       @default("[]")
+  /// default size guide for products in this category (and its subcategories) that have a size option
+  sizeChartId String?    @db.Uuid
+  sizeChart   SizeChart? @relation(fields: [sizeChartId], references: [id], onDelete: SetNull)
   createdAt DateTime   @default(now())
   updatedAt DateTime   @updatedAt
 
@@ -624,6 +628,29 @@ model Brand {
   seoDescription   String?
   seoDescriptionAr String?
   products Product[]
+}
+
+/// A size guide ("Size chart" link next to the size option on the product page). FastMoveX's own charts have no
+/// store and can be any category's default; a store's own charts can be used on that store's products only.
+/// columns: [{ label, labelAr, unit: "cm" | "in" | null }] — cm/in columns can be switched on the page;
+/// rows: one string per column ("97–102"). kind picks the "how to measure" tips: CLOTHING, LENGTH (thobes, abayas), SHOES, KIDS, GENERAL.
+model SizeChart {
+  id         String     @id @default(uuid()) @db.Uuid
+  storeId    String?    @db.Uuid
+  store      Store?     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  name       String
+  nameAr     String
+  kind       String     @default("CLOTHING")
+  columns    Json
+  rows       Json
+  note       String?
+  noteAr     String?
+  createdAt  DateTime   @default(now())
+  updatedAt  DateTime   @updatedAt
+  products   Product[]
+  categories Category[]
+
+  @@index([storeId])
 }
 
 model Product {
@@ -653,6 +680,9 @@ model Product {
   moderationNote   String? // admin reason when REJECTED
   returnPolicyDays Int?
   warrantyMonths   Int?
+  /// own size guide; empty = the category's default (shown only when the product has a size option)
+  sizeChartId      String?       @db.Uuid
+  sizeChart        SizeChart?    @relation(fields: [sizeChartId], references: [id], onDelete: SetNull)
   // Denormalized for fast listing (updated by background jobs)
   minPriceMinor    BigInt        @default(0)
   ratingAvg        Float         @default(0)

@@ -248,7 +248,7 @@ export class AdminCatalogService {
           slug: uniqueSlug(`${src.title} copy`), title: `${src.title} (copy)`, titleAr: src.titleAr,
           shortDescription: src.shortDescription, shortDescriptionAr: src.shortDescriptionAr, description: src.description, descriptionAr: src.descriptionAr,
           specs: src.specs as Prisma.InputJsonValue, tags: src.tags, seoTitle: src.seoTitle, seoDescription: src.seoDescription,
-          returnPolicyDays: src.returnPolicyDays, warrantyMonths: src.warrantyMonths, status: 'DRAFT', minPriceMinor: src.minPriceMinor,
+          returnPolicyDays: src.returnPolicyDays, warrantyMonths: src.warrantyMonths, sizeChartId: src.sizeChartId, status: 'DRAFT', minPriceMinor: src.minPriceMinor,
         },
         select: { id: true },
       });

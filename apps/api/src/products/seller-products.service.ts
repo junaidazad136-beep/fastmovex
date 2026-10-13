@@ -10,6 +10,7 @@ import { toMinor } from '../common/utils/money';
 import { assertOwnedBy } from '../common/utils/ownership';
 import { afterCursor, decodeCursor, toPage } from '../common/utils/pagination';
 import { uniqueSlug } from '../common/utils/slug';
+import { SizeChartsService } from '../size-charts/size-charts.service';
 import { PrismaService } from '../prisma/prisma.service';
 import { WarehousesService } from '../warehouses/warehouses';
 import { validateUpload } from '../storage/file-validation';
@@ -32,6 +33,7 @@ export class SellerProductsService {
     private readonly storage: StorageService,
     @Optional() private readonly events?: EventEmitter2,
     @Optional() private readonly warehouses?: WarehousesService,
+    @Optional() private readonly sizeCharts?: SizeChartsService,
   ) {}
 
   // ----------------------------------------------------------------- products
@@ -40,6 +42,7 @@ export class SellerProductsService {
     const store = await this.prisma.store.findUniqueOrThrow({ where: { sellerId: seller.id }, select: { id: true } });
     await this.assertCategory(dto.categoryId);
     if (dto.brandId) await this.assertBrand(dto.brandId);
+    if (dto.sizeChartId) await this.sizeCharts?.assertUsable(dto.sizeChartId, store.id);
     const currencyCode = await this.currencyFor(seller.countryCode);
 
     assertUniqueSkus(dto.variants.map((v) => v.sku));
@@ -66,6 +69,7 @@ export class SellerProductsService {
           seoDescription: dto.seoDescription,
           returnPolicyDays: dto.returnPolicyDays,
           warrantyMonths: dto.warrantyMonths,
+          sizeChartId: dto.sizeChartId ?? null,
           tracksExpiry: dto.tracksExpiry ?? false,
           status: 'DRAFT', // images are uploaded after create, then seller submits via PATCH { submitForReview: true }
           minPriceMinor: variants.reduce((m, v) => (v.priceMinor < m ? v.priceMinor : m), variants[0].priceMinor),
@@ -129,6 +133,7 @@ export class SellerProductsService {
     const status = nextStatusAfterSellerEdit(p.status, dto.submitForReview);
     if (dto.categoryId) await this.assertCategory(dto.categoryId);
     if (dto.brandId) await this.assertBrand(dto.brandId);
+    if (dto.sizeChartId) await this.sizeCharts?.assertUsable(dto.sizeChartId, p.storeId);
     if (status === 'PENDING_REVIEW' && p.status !== 'PENDING_REVIEW') await this.assertReadyForReview(id);
 
     await this.prisma.product.update({
@@ -140,6 +145,7 @@ export class SellerProductsService {
         categoryId: dto.categoryId, brandId: dto.brandId,
         specs: dto.specs === undefined ? undefined : assertSpecs(dto.specs),
         returnPolicyDays: dto.returnPolicyDays, warrantyMonths: dto.warrantyMonths, tracksExpiry: dto.tracksExpiry,
+        sizeChartId: dto.sizeChartId,
         status: status as Prisma.ProductUpdateInput['status'],
         moderationNote: status === 'PENDING_REVIEW' ? null : undefined,
       },
@@ -295,7 +301,7 @@ export class SellerProductsService {
   private async owned(sellerId: string, id: string) {
     const p = await this.prisma.product.findFirst({
       where: { id, deletedAt: null, store: { sellerId } },
-      select: { id: true, status: true, countryCode: true },
+      select: { id: true, status: true, countryCode: true, storeId: true },
     });
     if (!p) throw new NotFoundException('Product not found');
     return p;

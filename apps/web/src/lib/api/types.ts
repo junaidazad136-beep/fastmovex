@@ -196,6 +196,20 @@ export interface ProductDetail {
   store: StoreRef & { ratingAvg: number; ratingCount: number; logoUrl: string | null; isHouse?: boolean };
   images: { id: string; kind: 'IMAGE' | 'VIDEO'; altText: string | null; variantId: string | null; url: string | null }[];
   variants: Variant[];
+  /** size guide: the product's own, or its category's default when it comes in sizes */
+  sizeChart?: SizeChart | null;
+}
+
+export type SizeUnit = 'cm' | 'in' | null;
+export interface SizeChart {
+  id: string;
+  name: string;
+  nameAr: string;
+  kind: 'CLOTHING' | 'LENGTH' | 'SHOES' | 'KIDS' | 'GENERAL';
+  columns: { label: string; labelAr: string | null; unit: SizeUnit }[];
+  rows: string[][];
+  note: string | null;
+  noteAr: string | null;
 }
 
 export interface Review {

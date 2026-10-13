@@ -131,7 +131,10 @@ describe('Phase 21 — insights, notes and staff alerts (real database)', () => 
     const c = await customer('Latifa Live');
     const o = await order(c, p.variant);
     for (const status of ['PREPARING', 'READY_FOR_PICKUP']) await api().post(`/api/v1/admin/orders/shipments/${o.so}/status`).set(bearer(s.admin)).send({ status }).expect(200);
-    const job = await prisma.deliveryOrder.findUniqueOrThrow({ where: { sellerOrderId: o.so } });
+    // the delivery job is created right after "ready for pickup", by an event handler: wait for it
+    let found = null;
+    for (let i = 0; i < 50 && !found; i++) { found = await prisma.deliveryOrder.findUnique({ where: { sellerOrderId: o.so } }); if (!found) await new Promise((r) => setTimeout(r, 100)); }
+    const job = found!;
     await api().post(`/api/v1/admin/deliveries/${job.id}/assign`).set(bearer(s.admin)).send({ courierUserId: s.courierId }).expect(200);
     await api().post(`/api/v1/courier/jobs/${job.id}/pickup`).set(bearer(s.courier)).expect(200);
     await api().post(`/api/v1/courier/jobs/${job.id}/location`).set(bearer(s.courier)).send({ lat: 25.29, lng: 51.53 }).expect(200);

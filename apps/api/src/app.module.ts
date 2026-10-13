@@ -57,6 +57,7 @@ import { HealthController } from './health/health.controller';
 import { PrismaModule } from './prisma/prisma.module';
 import { PricingModule } from './pricing/pricing.module';
 import { ProductsModule } from './products/products.module';
+import { SizeChartsModule } from './size-charts/size-charts.module';
 import { SellersModule } from './sellers/sellers.module';
 import { StorageModule } from './storage/storage.service';
 
@@ -83,6 +84,7 @@ import { SeoModule } from './seo/seo';
     CategoriesModule,
     SellersModule,
     ProductsModule,
+    SizeChartsModule,
     BrandsModule,
     SearchModule,
     HomeModule,

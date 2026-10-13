@@ -21,6 +21,8 @@ import { Spinner } from '../ui/Spinner';
 import { BoughtTogether } from './BoughtTogether';
 import { DeliveryLine, PayLaterLine } from './DeliveryLine';
 import { Gallery, type GalleryImage } from './Gallery';
+import { SizeGuideLink } from './SizeGuide';
+import { SIZE_OPTION } from '@/lib/size-chart';
 import { Price, effectivePrice } from './Price';
 import { defaultVariant, findVariant, isValueAvailable, optionNames, optionValues, selectValue } from './variants';
 import { WishlistButton } from './WishlistButton';
@@ -84,6 +86,8 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
   const canBuy = ready && !!variant?.inStock && !busy && !buying;
 
   const storeName = pick(t.locale, product.store.name, product.store.nameAr);
+  const chart = product.sizeChart ?? null;
+  const sizeOption = names.find((n) => SIZE_OPTION.test(n)) ?? null;
   const bought = product.boughtLastMonth ?? 0;
   const subtitle = pick(t.locale, product.shortDescription ?? '', product.shortDescriptionAr).trim();
   /** the photo of each option value (a colour's own picture), when the seller added one */
@@ -173,8 +177,9 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
           const visual = pictures.filter(Boolean).length >= Math.max(2, Math.ceil(values.length / 2));
           return (
             <fieldset key={name} className="mt-4">
-              <legend className="mb-2 text-sm font-semibold text-ink-800">
-                {name}: <span className="font-normal text-ink-600">{selected[name]}</span>
+              <legend className="mb-2 flex w-full items-center justify-between gap-3 text-sm font-semibold text-ink-800">
+                <span>{name}: <span className="font-normal text-ink-600">{selected[name]}</span></span>
+                {chart && name === sizeOption && <SizeGuideLink chart={chart} selected={selected[name]} />}
               </legend>
               <div className={visual ? 'no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:px-0' : 'flex flex-wrap gap-2'} data-testid={visual ? 'option-cards' : undefined}>
                 {values.map((value, i) => {
@@ -224,6 +229,8 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
             </fieldset>
           );
         })}
+        {/* a guide the seller attached to a product without a "Size" option (one size, or sizes in the title) */}
+        {chart && !sizeOption && <div className="mt-3"><SizeGuideLink chart={chart} /></div>}
         </div>
 
         <div className="order-3">

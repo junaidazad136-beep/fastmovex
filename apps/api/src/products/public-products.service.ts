@@ -3,6 +3,7 @@ import { Prisma } from '@prisma/client';
 import { CacheService } from '../cache/cache.service';
 import { bestDeal, liveDealsSelect, ProductCardService } from '../catalog/product-card.service';
 import { RelatedProducts } from './related-products';
+import { pickSizeChart, toSizeChart } from '../size-charts/size-chart';
 import { validGtin } from '../seo/seo-rules';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
@@ -13,6 +14,8 @@ export const VISIBLE_PRODUCT = {
   deletedAt: null,
   store: { isActive: true, seller: { status: 'APPROVED' } },
 } as const;
+
+const SIZE_CHART_SELECT = { id: true, name: true, nameAr: true, kind: true, columns: true, rows: true, note: true, noteAr: true } as const;
 
 @Injectable()
 export class PublicProductsService {
@@ -69,6 +72,7 @@ export class PublicProductsService {
       select: {
         id: true, slug: true, title: true, titleAr: true, description: true, descriptionAr: true, specs: true,
         shortDescription: true, shortDescriptionAr: true, seoTitle: true, seoDescription: true, tags: true,
+        sizeChart: { select: SIZE_CHART_SELECT },
         returnPolicyDays: true, warrantyMonths: true, ratingAvg: true, ratingCount: true, soldCount: true, minPriceMinor: true, countryCode: true,
         category: { select: { slug: true, name: true, nameAr: true, path: true } },
         brand: { select: { name: true, nameAr: true, slug: true, logoKey: true } },
@@ -88,16 +92,20 @@ export class PublicProductsService {
     if (!p) throw new NotFoundException('Product not found');
 
     const slugs = p.category.path.split('/');
-    const crumbs = await this.prisma.category.findMany({ where: { slug: { in: slugs } }, select: { slug: true, name: true, nameAr: true } });
+    const crumbs = await this.prisma.category.findMany({ where: { slug: { in: slugs } }, select: { slug: true, name: true, nameAr: true, sizeChart: { select: SIZE_CHART_SELECT } } });
 
-    const { store, images, variants, category, brand, ...rest } = p;
+    const { store, images, variants, category, brand, sizeChart: ownChart, ...rest } = p;
+    // the product's own size guide, or the nearest category's default when the product comes in sizes
+    const optionNames = [...new Set(variants.flatMap((v) => Object.keys((v.optionValues ?? {}) as Record<string, unknown>)))];
+    const chartRow = pickSizeChart(ownChart, [...slugs].reverse().map((s) => crumbs.find((c) => c.slug === s)?.sizeChart ?? null), optionNames);
     const boughtLastMonth = await this.cache.wrap(`product:bought:${p.id}`, 900, () => this.boughtLastMonth(p.id));
     return {
       ...rest,
       boughtLastMonth,
       brand: brand ? { name: brand.name, nameAr: brand.nameAr, slug: brand.slug, logoUrl: this.storage.publicUrl(brand.logoKey) } : null,
       category: { slug: category.slug, name: category.name, nameAr: category.nameAr },
-      breadcrumbs: slugs.map((s) => crumbs.find((c) => c.slug === s)).filter(Boolean),
+      breadcrumbs: slugs.map((s) => crumbs.find((c) => c.slug === s)).filter((c) => !!c).map(({ sizeChart: _c, ...c }) => c),
+      sizeChart: chartRow ? toSizeChart(chartRow) : null,
       // 0 = not returnable; otherwise the product's own window or the seller's default (same rule as return requests)
       returnWindowDays: rest.returnPolicyDays ?? store.seller.returnWindowDays,
       store: { slug: store.slug, name: store.name, nameAr: store.nameAr, ratingAvg: store.ratingAvg, ratingCount: store.ratingCount, logoUrl: this.storage.publicUrl(store.logoKey), isHouse: store.seller.isHouse },

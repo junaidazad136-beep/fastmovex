@@ -5,6 +5,7 @@ import { Prisma } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { slugify } from '../common/utils/slug';
 import { PrismaService } from '../prisma/prisma.service';
+import { SizeChartsService } from '../size-charts/size-charts.service';
 import { randomUUID } from 'node:crypto';
 import { validateUpload } from '../storage/file-validation';
 import { tilePicture } from '../storage/photo';
@@ -74,6 +75,7 @@ export class CategoriesService {
     private readonly audit: AuditService,
     private readonly storage: StorageService,
     @Optional() private readonly storefront?: StorefrontService,
+    @Optional() private readonly sizeCharts?: SizeChartsService,
   ) {}
 
   async publicTree(): Promise<CategoryNode[]> {
@@ -124,6 +126,7 @@ export class CategoriesService {
     const parent = dto.parentId ? await this.mustGet(dto.parentId) : null;
     const depth = parent ? parent.depth + 1 : 0;
     if (depth >= MAX_CATEGORY_DEPTH) throw new BadRequestException(`Categories can be at most ${MAX_CATEGORY_DEPTH} levels deep`);
+    if (dto.sizeChartId) await this.sizeCharts?.assertUsable(dto.sizeChartId, null);
 
     const created = await this.uniqueGuard(() =>
       this.prisma.category.create({
@@ -131,6 +134,7 @@ export class CategoriesService {
           name: dto.name, nameAr: dto.nameAr, slug, parentId: parent?.id ?? null,
           path: parent ? `${parent.path}/${slug}` : slug, depth,
           sortOrder: dto.sortOrder ?? 0, isActive: dto.isActive ?? true,
+          sizeChartId: dto.sizeChartId ?? null,
           ...seoData(dto),
         },
       }),
@@ -142,6 +146,7 @@ export class CategoriesService {
 
   async update(id: string, dto: UpdateCategoryDto, actorId: string) {
     const current = await this.mustGet(id);
+    if (dto.sizeChartId) await this.sizeCharts?.assertUsable(dto.sizeChartId, null);
     const slug = dto.slug ?? current.slug;
     const movingParent = dto.parentId !== undefined && dto.parentId !== current.parentId;
     let parent: { id: string; path: string; depth: number } | null = null;
@@ -170,6 +175,7 @@ export class CategoriesService {
           where: { id },
           data: {
             name: dto.name, nameAr: dto.nameAr, slug, sortOrder: dto.sortOrder, isActive: dto.isActive,
+            sizeChartId: dto.sizeChartId,
             parentId: movingParent ? dto.parentId ?? null : undefined,
             ...seoData(dto),
             path: newPath, depth: newDepth,

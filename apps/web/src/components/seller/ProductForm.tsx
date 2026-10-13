@@ -15,6 +15,7 @@ import { useToast } from '@/lib/state/toast';
 import { paths, pick } from '@/lib/urls';
 import { Spinner } from '../ui/Spinner';
 import { Field } from './BecomeSeller';
+import { SizeChartPicker } from './SizeChartPicker';
 import { PRODUCT_TONE } from './Products';
 import type { SellerProductDetail } from './types';
 
@@ -43,7 +44,7 @@ function useCategories() {
   return list;
 }
 
-interface Basics { title: string; titleAr: string; shortDescription: string; shortDescriptionAr: string; brandId: string; categoryId: string; description: string; descriptionAr: string; warrantyMonths: string; returnPolicyDays: string }
+interface Basics { title: string; titleAr: string; shortDescription: string; shortDescriptionAr: string; brandId: string; categoryId: string; description: string; descriptionAr: string; warrantyMonths: string; returnPolicyDays: string; sizeChartId: string }
 
 /** Brands a seller can pick (FastMoveX adds new ones on request). */
 function useBrands() {
@@ -87,6 +88,7 @@ function BasicsFields({ f, setF }: { f: Basics; setF: (f: Basics) => void }) {
         <Field id="pf-warranty" label={t('seller.form.warranty')}><input id="pf-warranty" className="input" inputMode="numeric" value={f.warrantyMonths} onChange={set('warrantyMonths')} /></Field>
         <Field id="pf-return" label={t('seller.form.returnDays')}><input id="pf-return" className="input" inputMode="numeric" value={f.returnPolicyDays} onChange={set('returnPolicyDays')} /></Field>
       </div>
+      <SizeChartPicker value={f.sizeChartId} onChange={(sizeChartId) => setF({ ...f, sizeChartId })} />
     </div>
   );
 }
@@ -96,6 +98,7 @@ const basicsBody = (f: Basics) => ({
   ...(f.titleAr.trim() && { titleAr: f.titleAr.trim() }),
   shortDescription: f.shortDescription.trim(), shortDescriptionAr: f.shortDescriptionAr.trim(),
   brandId: f.brandId || null,
+  sizeChartId: f.sizeChartId || null,
   description: f.description, descriptionAr: f.descriptionAr,
   ...(intOrUndefined(f.warrantyMonths) !== undefined && { warrantyMonths: Math.min(120, intOrUndefined(f.warrantyMonths)!) }),
   ...(intOrUndefined(f.returnPolicyDays) !== undefined && { returnPolicyDays: Math.min(90, intOrUndefined(f.returnPolicyDays)!) }),
@@ -108,7 +111,7 @@ export function NewProductForm() {
   const toast = useToast();
   const { market } = useShop();
   const mu = market.currency.minorUnits;
-  const [f, setF] = useState<Basics>({ title: '', titleAr: '', shortDescription: '', shortDescriptionAr: '', brandId: '', categoryId: '', description: '', descriptionAr: '', warrantyMonths: '', returnPolicyDays: '' });
+  const [f, setF] = useState<Basics>({ title: '', titleAr: '', shortDescription: '', shortDescriptionAr: '', brandId: '', categoryId: '', description: '', descriptionAr: '', warrantyMonths: '', returnPolicyDays: '', sizeChartId: '' });
   const [v, setV] = useState({ price: '', oldPrice: '', stock: '1', sku: '', barcode: '' });
   const [skuTouched, setSkuTouched] = useState(false);
   const [busy, setBusy] = useState(false);
@@ -175,7 +178,7 @@ export function EditProduct({ id }: { id: string }) {
       setP(d);
       setF((x) => x ?? {
         title: d.title, titleAr: d.titleAr ?? '', shortDescription: d.shortDescription ?? '', shortDescriptionAr: d.shortDescriptionAr ?? '', brandId: d.brandId ?? '', categoryId: d.categoryId, description: d.description ?? '', descriptionAr: d.descriptionAr ?? '',
-        warrantyMonths: d.warrantyMonths?.toString() ?? '', returnPolicyDays: d.returnPolicyDays?.toString() ?? '',
+        warrantyMonths: d.warrantyMonths?.toString() ?? '', returnPolicyDays: d.returnPolicyDays?.toString() ?? '', sizeChartId: d.sizeChartId ?? '',
       });
     } catch (e) { setError(errorMessage(e, t)); }
   }, [id, t]);

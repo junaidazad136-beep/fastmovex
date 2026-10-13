@@ -19,6 +19,7 @@ import { categoryOptionLabel, useBrands, useCategoryOptions } from '@/lib/catalo
 import { formatDateTime } from '@/lib/format';
 import { useSession } from '@/lib/state/session';
 import { useToast } from '@/lib/state/toast';
+import { useApi } from '@/lib/use-api';
 
 export interface ProductDetail {
   id: string;
@@ -37,6 +38,7 @@ export interface ProductDetail {
   moderationNote: string | null;
   returnPolicyDays: number | null;
   warrantyMonths: number | null;
+  sizeChartId?: string | null;
   isFeatured: boolean;
   tracksExpiry?: boolean;
   soldCount: number;
@@ -65,6 +67,7 @@ interface Fields {
   specs: SpecRow[];
   returnPolicyDays: string;
   warrantyMonths: string;
+  sizeChartId: string;
   tracksExpiry: boolean;
   seoTitle: string;
   seoDescription: string;
@@ -85,6 +88,7 @@ function fieldsOf(p: ProductDetail | null): Fields {
     returnPolicyDays: p?.returnPolicyDays != null ? String(p.returnPolicyDays) : '',
     warrantyMonths: p?.warrantyMonths != null ? String(p.warrantyMonths) : '',
     tracksExpiry: !!p?.tracksExpiry,
+    sizeChartId: p?.sizeChartId ?? '',
     seoTitle: p?.seoTitle ?? '',
     seoDescription: p?.seoDescription ?? '',
   };
@@ -109,6 +113,7 @@ function payload(f: Fields, create: boolean) {
     returnPolicyDays: intOrNull(f.returnPolicyDays),
     warrantyMonths: intOrNull(f.warrantyMonths),
     tracksExpiry: f.tracksExpiry,
+    sizeChartId: f.sizeChartId || null,
     seoTitle: orNull(f.seoTitle),
     seoDescription: orNull(f.seoDescription),
   };
@@ -126,6 +131,7 @@ export function ProductEditor({ product, onReload }: { product: ProductDetail | 
   const [brandQuery] = useState('');
   const brands = useBrands(brandQuery);
   const canEdit = can('products.manage');
+  const sizeCharts = useApi<{ id: string; name: string }[]>('/admin/size-charts');
 
   const [f, setF] = useState<Fields>(() => fieldsOf(product));
   const [saved, setSaved] = useState<Fields>(() => fieldsOf(product));
@@ -437,10 +443,23 @@ export function ProductEditor({ product, onReload }: { product: ProductDetail | 
 </fieldset>
 
           <fieldset disabled={!canEdit} className="contents">
-<Card title="Returns and warranty">
+<Card title="Returns, warranty and sizes">
             <div className="grid grid-cols-2 gap-4">
               <TextField label="Return window (days)" inputMode="numeric" value={f.returnPolicyDays} onChange={(e) => set({ returnPolicyDays: e.target.value.replace(/\D/g, '') })} placeholder="Store default" hint="0 = not returnable" />
               <TextField label="Warranty (months)" inputMode="numeric" value={f.warrantyMonths} onChange={(e) => set({ warrantyMonths: e.target.value.replace(/\D/g, '') })} placeholder="None" />
+            </div>
+            <div className="mt-4 border-t border-ink-100 pt-4">
+              <SelectField
+                label="Size guide"
+                hint="Opens from the Size option on the product page. Empty = the category's guide (if it has one) when the product comes in sizes."
+                value={f.sizeChartId}
+                onChange={(e) => set({ sizeChartId: e.target.value })}
+                data-testid="product-size-chart"
+              >
+                <option value="">Category default</option>
+                {f.sizeChartId && sizeCharts.data && !sizeCharts.data.some((c) => c.id === f.sizeChartId) ? <option value={f.sizeChartId}>The store's own guide</option> : null}
+                {(sizeCharts.data ?? []).map((c) => <option key={c.id} value={c.id}>{c.name}</option>)}
+              </SelectField>
             </div>
             <div className="mt-4 border-t border-ink-100 pt-4" data-testid="tracks-expiry">
               <Switch checked={f.tracksExpiry} onChange={(tracksExpiry) => set({ tracksExpiry })} label="Has an expiry date" description="Food, cosmetics, medicine: the expiry date is required when stock arrives, the oldest dates ship first, and expired units are taken off sale every night." />

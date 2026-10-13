@@ -91,6 +91,7 @@ export interface SellerProductDetail {
   brandId?: string | null;
   categoryId: string;
   warrantyMonths: number | null;
+  sizeChartId?: string | null;
   returnPolicyDays: number | null;
   moderationNote: string | null;
   images: { id: string; url: string | null; sortOrder: number; variantId?: string | null }[];

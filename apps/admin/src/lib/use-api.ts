@@ -62,7 +62,8 @@ export function useAction() {
       try {
         const r = await fn();
         if (success) toast.success(typeof success === 'function' ? success(r) : success);
-        return r;
+        // an empty success (HTTP 204) must not look like a failure to callers that check `!== undefined`
+        return r === undefined ? (true as R) : r;
       } catch (e) {
         toast.error(errorMessage(e));
         return undefined;
