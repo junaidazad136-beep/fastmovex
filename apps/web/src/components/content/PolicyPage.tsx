@@ -42,8 +42,8 @@ export function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: Locale 
   return (
     <div className="container-page py-8 sm:py-10" data-testid={`policy-page-${kind}`}>
       <header className="max-w-3xl">
-        <h1 className="text-3xl font-bold tracking-tight text-ink-900">{p.title}</h1>
-        <p className="mt-3 text-[15px] leading-7 text-ink-600">{p.intro}</p>
+        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-ink-900">{p.title}</h1>
+        <p className="mt-2 text-sm leading-6 text-ink-600 sm:mt-3 sm:text-[15px] sm:leading-7">{p.intro}</p>
         <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
           <span className="text-ink-500">{t('policies.updated', { date: formatDate(p.updated, locale) })}</span>
           <Link href={`/${other}${POLICY_PATH[kind]}`} hrefLang={other} lang={other} className="link inline-flex items-center gap-1.5 font-medium" data-testid="policy-other-lang">

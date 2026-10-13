@@ -10,10 +10,10 @@ import type { Locale } from '@/lib/i18n/config';
 export function RichText({ text, locale }: { text: string; locale: Locale }) {
   const blocks = text.replace(/\r\n/g, '\n').split(/\n{2,}/).map((b) => b.trim()).filter(Boolean);
   return (
-    <div className="space-y-4 text-[15px] leading-7 text-ink-700">
+    <div className="space-y-4 text-sm leading-6 text-ink-700 sm:text-[15px] sm:leading-7">
       {blocks.map((block, i) => {
         const lines = block.split('\n');
-        if (lines[0].startsWith('## ') && lines.length === 1) return <h2 key={i} className="pt-4 text-xl font-bold tracking-tight text-ink-900">{inline(lines[0].slice(3), locale)}</h2>;
+        if (lines[0].startsWith('## ') && lines.length === 1) return <h2 key={i} className="pt-4 text-[17px] font-bold tracking-tight text-ink-900 sm:text-xl">{inline(lines[0].slice(3), locale)}</h2>;
         if (lines[0].startsWith('### ') && lines.length === 1) return <h3 key={i} className="pt-2 text-lg font-semibold text-ink-900">{inline(lines[0].slice(4), locale)}</h3>;
         if (lines.every((ln) => /^[-•] /.test(ln))) {
           return (
@@ -28,7 +28,7 @@ export function RichText({ text, locale }: { text: string; locale: Locale }) {
           const rest = lines.slice(1).join('\n');
           return (
             <div key={i} className="space-y-4">
-              {level === 2 ? <h2 className="pt-4 text-xl font-bold tracking-tight text-ink-900">{inline(lines[0].slice(3), locale)}</h2> : <h3 className="pt-2 text-lg font-semibold text-ink-900">{inline(lines[0].slice(4), locale)}</h3>}
+              {level === 2 ? <h2 className="pt-4 text-[17px] font-bold tracking-tight text-ink-900 sm:text-xl">{inline(lines[0].slice(3), locale)}</h2> : <h3 className="pt-2 text-lg font-semibold text-ink-900">{inline(lines[0].slice(4), locale)}</h3>}
               <RichText text={rest} locale={locale} />
             </div>
           );

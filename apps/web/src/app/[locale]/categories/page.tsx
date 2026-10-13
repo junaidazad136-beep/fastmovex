@@ -26,7 +26,7 @@ export default async function CategoriesPage({ params }: PageProps<'/[locale]/ca
   const cats = await serverApi.categories();
   return (
     <div className="container-page py-5 sm:py-7">
-      <h1 className="mb-4 text-[22px] font-bold tracking-tight text-ink-900 sm:mb-5 sm:text-2xl">{t('nav.allCategories')}</h1>
+      <h1 className="mb-4 text-xl font-bold tracking-tight text-ink-900 sm:mb-5 sm:text-2xl">{t('nav.allCategories')}</h1>
       <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4">
         {cats.map((c, i) => (
           <li key={c.slug}>
@@ -35,7 +35,7 @@ export default async function CategoriesPage({ params }: PageProps<'/[locale]/ca
               className="group relative flex aspect-[2/1] overflow-hidden rounded-2xl bg-gradient-to-b from-[#F4F2F7] to-[#E6E3EC] p-3 ring-1 ring-black/[0.03] transition hover:ring-brand-200 sm:p-4"
               data-testid="category-card"
             >
-              <span className="relative z-10 line-clamp-2 max-w-[60%] text-[15px] font-medium leading-[19px] text-ink-900 sm:text-base sm:leading-5">{pick(locale, c.name, c.nameAr)}</span>
+              <span className="relative z-10 line-clamp-2 max-w-[60%] text-sm font-medium leading-[18px] sm:text-[15px] sm:leading-[19px] text-ink-900 sm:text-base sm:leading-5">{pick(locale, c.name, c.nameAr)}</span>
               <span aria-hidden className="absolute bottom-0 end-0 h-[86%] w-[55%]">
                 {c.imageUrl ? (
                   <Image

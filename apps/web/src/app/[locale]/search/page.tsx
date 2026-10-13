@@ -44,7 +44,7 @@ export default async function SearchPage({ params, searchParams }: PageProps<'/[
         minorUnits={market.currency.minorUnits}
         heading={
           <div className="mb-2">
-            <h1 className="text-2xl font-bold tracking-tight">{query.q ? t('search.resultsFor', { q: result.spelling?.auto ? result.spelling.corrected : query.q }) : t('search.allProducts')}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{query.q ? t('search.resultsFor', { q: result.spelling?.auto ? result.spelling.corrected : query.q }) : t('search.allProducts')}</h1>
             {brand ? (
               <Link href={paths.brand(locale, brand.slug)} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-3.5 py-2 text-sm font-medium text-brand-800 hover:bg-brand-100" data-testid="search-brand-link">
                 <Tag className="size-4" aria-hidden />{t('search.brandPage', { name: brand.name })}<ArrowRight className="size-4 rtl:rotate-180" aria-hidden />

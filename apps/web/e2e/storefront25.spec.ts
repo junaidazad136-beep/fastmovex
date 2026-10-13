@@ -6,7 +6,8 @@ test.describe('Storefront look (FastMoveX)', () => {
     await page.setViewportSize({ width: 430, height: 932 });
     await page.goto('/en');
     await expect(page.getByRole('img', { name: 'FastMoveX' }).first()).toBeVisible();
-    await expect(page.getByText('Shop smart · Live better').first()).toBeVisible();
+    await expect(page.getByTestId('logo-tagline').first()).toBeVisible();
+    await expect(page.getByTestId('logo-tagline').first()).toHaveText(/SHOP SMART\s*LIVE BETTER/);
     await expect(page.getByTestId('location-button')).toContainText('Qatar');
     await expect(page.getByTestId('popular-chip').first()).toBeVisible();
     await expect(page.getByRole('heading', { name: 'Flash Deals' })).toBeVisible();

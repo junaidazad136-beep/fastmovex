@@ -77,7 +77,7 @@ export default async function CategoryPage({ params, searchParams }: PageProps<'
         categoryBase={`/${locale}/c/`}
         heading={
           <div className="mb-3">
-            <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{name}</h1>
             {cat.children.length > 0 && (
               <ul className="no-scrollbar mt-4 flex gap-2 overflow-x-auto" aria-label={t('category.subcategories')}>
                 {cat.children.map((c) => (

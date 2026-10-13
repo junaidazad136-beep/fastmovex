@@ -142,7 +142,7 @@ export function NewProductForm() {
 
   return (
     <form onSubmit={submit} className="mx-auto max-w-2xl space-y-4" data-testid="new-product">
-      <h1 className="text-2xl font-bold tracking-tight">{t('seller.form.newTitle')}</h1>
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.form.newTitle')}</h1>
       <section className="card p-4 sm:p-5"><BasicsFields f={f} setF={setF} /></section>
       <section className="card space-y-3 p-4 sm:p-5">
         <h2 className="font-semibold">{t('seller.form.priceStock')}</h2>

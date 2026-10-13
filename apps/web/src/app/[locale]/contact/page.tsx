@@ -28,8 +28,8 @@ export default async function ContactPage({ params, searchParams }: PageProps<'/
   const order = typeof sp.order === 'string' ? sp.order.slice(0, 40) : undefined;
   return (
     <div className="container-page py-10">
-      <h1 className="text-3xl font-bold tracking-tight">{t('contact.title')}</h1>
-      <p className="mt-2 max-w-2xl text-ink-500">{t('contact.intro')}</p>
+      <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{t('contact.title')}</h1>
+      <p className="mt-1.5 max-w-2xl text-sm text-ink-500 sm:mt-2 sm:text-base">{t('contact.intro')}</p>
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <ContactForm order={order} />
         {email || phone || address ? (

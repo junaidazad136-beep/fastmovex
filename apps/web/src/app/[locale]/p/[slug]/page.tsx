@@ -145,7 +145,7 @@ export default async function ProductPage({ params }: PageProps<'/[locale]/p/[sl
           {description && (
             <section aria-labelledby="desc">
               <h2 id="desc" className="section-title mb-3">{t('product.description')}</h2>
-              <div className="whitespace-pre-line text-[15px] leading-7 text-ink-700">{description}</div>
+              <div className="whitespace-pre-line text-sm leading-6 text-ink-700 sm:text-[15px] sm:leading-7">{description}</div>
             </section>
           )}
           {(specs.length > 0 || p.brand) && (

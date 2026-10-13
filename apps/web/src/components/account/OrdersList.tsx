@@ -46,7 +46,7 @@ export function OrdersList() {
 
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">{t('order.myOrders')}</h1>
+      <h1 className="mb-4 text-xl sm:text-2xl font-bold tracking-tight">{t('order.myOrders')}</h1>
       <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <ul className="no-scrollbar flex gap-2 overflow-x-auto">
           {FILTERS.map((s) => (

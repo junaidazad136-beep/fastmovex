@@ -26,8 +26,8 @@ export default async function DeliveryInfo({ params }: PageProps<'/[locale]/help
   const points = [t('policy.delivery1'), t('policy.delivery2'), t('policy.delivery3'), ...(market.paymentMethods.includes('COD') ? [t('policy.delivery4')] : [])];
   return (
     <article className="container-page max-w-3xl py-10">
-      <h1 className="text-3xl font-bold tracking-tight">{t('policy.deliveryTitle')}</h1>
-      <p className="mt-2 text-ink-500">{t('policy.deliveryIntro')}</p>
+      <h1 className="text-xl sm:text-3xl font-bold tracking-tight">{t('policy.deliveryTitle')}</h1>
+      <p className="mt-1.5 text-sm text-ink-500 sm:mt-2 sm:text-base">{t('policy.deliveryIntro')}</p>
       {feeLine && <p className="mt-6 rounded-2xl bg-sand-50 p-4 font-medium text-sand-700" data-testid="delivery-fee-line">{feeLine}</p>}
       <ul className="mt-6 list-disc space-y-3 ps-5 leading-7 text-ink-700">
         {points.map((p) => <li key={p}>{p}</li>)}

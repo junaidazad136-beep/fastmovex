@@ -36,7 +36,7 @@ export function Countdown({ endsAt, className = '', pill = false }: { endsAt: st
     <span className={`tabular inline-flex items-center gap-1 ${className}`} dir="ltr" role="timer" aria-live="off">
       {cells.map(([v, u], i) => (
         <span key={i} className="inline-flex items-baseline rounded-md bg-ink-900 px-1.5 py-0.5 text-xs font-bold text-white">
-          {pad(v)}<span className="ms-0.5 text-[10px] font-medium text-white/70">{u}</span>
+          {pad(v)}<span className="ms-0.5 text-[11px] font-medium text-white/70">{u}</span>
         </span>
       ))}
     </span>

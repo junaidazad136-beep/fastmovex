@@ -133,7 +133,7 @@ export function Checkout() {
   return (
     <div>
       <div className="mb-6 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success-600"><Lock className="size-3.5" aria-hidden />{t('checkout.secure')}</span>
       </div>
       <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
@@ -149,7 +149,7 @@ export function Checkout() {
                     <label className={`flex cursor-pointer items-start gap-3 rounded-xl border p-3.5 transition ${addressId === a.id ? 'border-brand-600 bg-brand-50/50 ring-1 ring-brand-600' : 'border-ink-200 hover:border-ink-300'}`}>
                       <input type="radio" name="address" checked={addressId === a.id} onChange={() => setAddressId(a.id)} className="mt-1 size-4 accent-brand-600" />
                       <span className="min-w-0 text-sm">
-                        <span className="flex items-center gap-2 font-semibold text-ink-900">{a.label ?? a.recipientName}{a.isDefault && <span className="rounded bg-ink-100 px-1.5 py-0.5 text-[10px] font-medium text-ink-600">{t('address.isDefault')}</span>}</span>
+                        <span className="flex items-center gap-2 font-semibold text-ink-900">{a.label ?? a.recipientName}{a.isDefault && <span className="rounded bg-ink-100 px-1.5 py-0.5 text-[11px] font-medium text-ink-600">{t('address.isDefault')}</span>}</span>
                         <span className="mt-0.5 block text-ink-600">{a.recipientName} · <span dir="ltr">{a.phone}</span></span>
                         <span className="block text-ink-500">{formatAddress(a, t)}</span>
                       </span>

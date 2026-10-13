@@ -40,7 +40,7 @@ export function Wishlist() {
   if (items === null) return <div className="skeleton h-40" />;
   return (
     <div>
-      <h1 className="mb-4 text-2xl font-bold tracking-tight">{t('wishlist.title')}</h1>
+      <h1 className="mb-4 text-xl sm:text-2xl font-bold tracking-tight">{t('wishlist.title')}</h1>
       {items.length === 0 ? (
         <EmptyState icon={<Heart className="size-7" aria-hidden />} title={t('wishlist.empty')} text={t('wishlist.emptyHint')} action={<Link href={paths.home(l)} className="btn-primary">{t('cart.startShopping')}</Link>} />
       ) : (

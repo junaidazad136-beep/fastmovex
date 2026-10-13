@@ -26,7 +26,7 @@ export function Faq({ items }: { items: FaqItem[] }) {
         {shown.map((f) => (
           <li key={f.id}>
             <details className="group">
-              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 font-medium text-ink-900 [&::-webkit-details-marker]:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between gap-4 p-4 text-sm font-medium text-ink-900 sm:text-base [&::-webkit-details-marker]:hidden">
                 {pick(l, f.question, f.questionAr)}
                 <ChevronDown className="size-4 shrink-0 text-ink-400 transition group-open:rotate-180" aria-hidden />
               </summary>

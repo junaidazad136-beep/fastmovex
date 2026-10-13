@@ -33,8 +33,8 @@ export default async function PoliciesHub({ params }: PageProps<'/[locale]/polic
   );
   return (
     <div className="container-page max-w-4xl py-8 sm:py-10">
-      <h1 className="text-3xl font-bold tracking-tight text-ink-900">{t('policies.title')}</h1>
-      <p className="mt-2 text-ink-600">{t('policies.intro')}</p>
+      <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-ink-900">{t('policies.title')}</h1>
+      <p className="mt-1.5 text-sm text-ink-600 sm:mt-2 sm:text-base">{t('policies.intro')}</p>
       <h2 className="mt-8 text-lg font-bold text-ink-900">{t('policies.forCustomers')}</h2>
       {group('customers')}
       <h2 className="mt-8 text-lg font-bold text-ink-900">{t('policies.forSellers')}</h2>

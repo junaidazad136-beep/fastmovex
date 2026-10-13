@@ -28,8 +28,8 @@ export default async function OffersPage({ params }: PageProps<'/[locale]/offers
   return (
     <div className="pb-6">
       <div className="container-page pt-8">
-        <h1 className="flex items-center gap-2 text-3xl font-bold tracking-tight"><BadgePercent className="size-7 text-deal-600" aria-hidden />{t('offers.title')}</h1>
-        <p className="mt-2 text-ink-500">{t('offers.intro')}</p>
+        <h1 className="flex items-center gap-2 text-xl sm:text-3xl font-bold tracking-tight"><BadgePercent className="size-6 text-deal-600 sm:size-7" aria-hidden />{t('offers.title')}</h1>
+        <p className="mt-1.5 text-sm text-ink-500 sm:mt-2 sm:text-base">{t('offers.intro')}</p>
       </div>
       {empty ? (
         <div className="container-page mt-10">

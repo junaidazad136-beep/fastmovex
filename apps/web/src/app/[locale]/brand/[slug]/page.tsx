@@ -71,7 +71,7 @@ export default async function BrandPage({ params, searchParams }: PageProps<'/[l
             {b.logoUrl ? <span className="relative size-14 shrink-0 overflow-hidden rounded-2xl border border-ink-100 bg-white"><Image src={b.logoUrl} alt="" fill sizes="56px" className="object-contain p-1.5" /></span> : null}
             <div>
               <p className="text-xs font-medium uppercase tracking-wide text-ink-500">{t('brand.label')}</p>
-              <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
+              <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{name}</h1>
             </div>
           </div>
         }

@@ -75,7 +75,7 @@ export function Reviews({ initial, endpoint, title }: { initial: ReviewPage; end
           )}
           <div>
             <div className="flex items-end gap-2">
-              <span className="tabular text-4xl font-bold">{ratingAvg.toFixed(1)}</span>
+              <span className="tabular text-[28px] font-bold sm:text-4xl">{ratingAvg.toFixed(1)}</span>
               <span className="pb-1 text-sm text-ink-500">/ 5</span>
             </div>
             <Stars value={ratingAvg} size="size-5" label={t('product.ratingOutOf', { rating: ratingAvg })} />

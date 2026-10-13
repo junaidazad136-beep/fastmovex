@@ -7,10 +7,10 @@ import { inline } from './RichText';
 export function PolicyBody({ sections, locale, headingLevel = 2 }: { sections: PolicySection[]; locale: Locale; headingLevel?: 2 | 3 }) {
   const H = headingLevel === 2 ? 'h2' : 'h3';
   return (
-    <div className="space-y-10 text-[15px] leading-7 text-ink-700">
+    <div className="space-y-8 text-sm leading-6 text-ink-700 sm:space-y-10 sm:text-[15px] sm:leading-7">
       {sections.map((s) => (
         <section key={s.id} id={s.id} className="scroll-mt-32 space-y-4" data-testid={`policy-${s.id}`}>
-          <H className={`${headingLevel === 2 ? 'text-xl' : 'text-lg'} font-bold tracking-tight text-ink-900`}>{s.h}</H>
+          <H className={`${headingLevel === 2 ? 'text-[17px] sm:text-xl' : 'text-base sm:text-lg'} font-bold tracking-tight text-ink-900`}>{s.h}</H>
           {s.steps && (
             <ol className="space-y-3">
               {s.steps.map((x, i) => (

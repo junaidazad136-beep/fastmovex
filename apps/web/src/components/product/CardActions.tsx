@@ -21,7 +21,7 @@ export function CardDelivery() {
         : promise.kind === 'date' ? new Intl.DateTimeFormat(t.locale === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB', { weekday: 'short', day: 'numeric', timeZone: 'UTC' }).format(new Date(`${promise.date}T00:00:00Z`))
           : t('card.days');
   return (
-    <p className="flex items-center gap-1 text-[10.5px] text-ink-500 @min-[150px]:gap-1.5 @min-[150px]:text-[12px]" data-testid="card-delivery">
+    <p className="flex items-center gap-1 text-[11px] text-ink-500 @min-[150px]:gap-1.5 @min-[150px]:text-[12px]" data-testid="card-delivery">
       <Truck className="size-3.5 shrink-0" aria-hidden />
       <span className="truncate">{label}</span>
     </p>

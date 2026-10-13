@@ -33,7 +33,7 @@ export function SellerDashboard() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <p className="text-sm text-ink-500">{t('seller.home.hello', { name: user?.fullName.split(' ')[0] ?? '' })}</p>
-          <h1 className="text-2xl font-bold tracking-tight">{me.store?.name ?? me.businessName}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{me.store?.name ?? me.businessName}</h1>
         </div>
         <div className="flex flex-wrap gap-2">
           {me.store && <Link href={paths.store(l, me.store.slug)} className="btn-secondary px-3 py-2 text-sm"><ExternalLink className="size-4" aria-hidden />{t('seller.home.viewShop')}</Link>}

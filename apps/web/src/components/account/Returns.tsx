@@ -22,7 +22,7 @@ export function Returns() {
   if (items === null) return <div className="skeleton h-40" />;
   return (
     <div>
-      <h1 className="mb-1 text-2xl font-bold tracking-tight">{t('returns.title')}</h1>
+      <h1 className="mb-1 text-xl sm:text-2xl font-bold tracking-tight">{t('returns.title')}</h1>
       <p className="mb-4 text-sm text-ink-500">{t('returns.howTo')} <Link href={paths.returnsPolicy(l)} className="link">{t('help.returnsPolicy')}</Link></p>
       {items.length === 0 ? <EmptyState icon={<RotateCcw className="size-7" aria-hidden />} title={t('returns.empty')} /> : (
         <ul className="space-y-3">

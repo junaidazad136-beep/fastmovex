@@ -209,7 +209,7 @@ export function GuestCheckout() {
   return (
     <form onSubmit={place} noValidate data-testid="guest-checkout">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success-600"><Lock className="size-3.5" aria-hidden />{t('checkout.secure')}</span>
       </div>
 

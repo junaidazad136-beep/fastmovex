@@ -44,7 +44,7 @@ export default async function ContentPageRoute({ params }: PageProps<'/[locale]/
   const body = locale === 'ar' && page.bodyAr.trim() ? page.bodyAr : page.body;
   return (
     <article className="container-page max-w-3xl py-10">
-      <h1 className="text-3xl font-bold tracking-tight text-ink-900">{pick(locale, page.title, page.titleAr)}</h1>
+      <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-ink-900">{pick(locale, page.title, page.titleAr)}</h1>
       <p className="mt-2 text-sm text-ink-500">{t('pages.updated', { date: formatDate(page.updatedAt, locale) })}</p>
       <div className="mt-8"><RichText text={body} locale={locale} /></div>
     </article>

@@ -135,7 +135,7 @@ export function Overview() {
 
   return (
     <div className="space-y-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t('account.title')}</h1>
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('account.title')}</h1>
       <section className="card p-5" aria-labelledby="acc-profile">
         <h2 id="acc-profile" className="mb-3 font-bold">{t('account.profile')}</h2>
         <dl className="grid gap-3 text-sm sm:grid-cols-3">

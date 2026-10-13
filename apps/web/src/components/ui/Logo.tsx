@@ -21,7 +21,7 @@ function Tagline({ text, tone }: { text: string; tone: 'light' | 'dark' }) {
   const dot = <span className="mx-[0.8em] inline-block size-[0.45em] shrink-0 rounded-full bg-gradient-to-br from-[#C13CFE] to-[#6711FA]" aria-hidden />;
   const word = (w: string) => (arabic ? <span>{w}</span> : <span className="me-[-0.3em] tracking-[0.3em]">{w.toUpperCase()}</span>);
   return (
-    <span className={`mt-[3px] flex items-center justify-center whitespace-nowrap font-bold leading-none ${color} ${arabic ? 'text-[9px] font-semibold supports-[container-type:inline-size]:text-[6.8cqw]' : 'text-[6px] supports-[container-type:inline-size]:text-[4.4cqw]'}`}>
+    <span data-testid="logo-tagline" className={`mt-[3px] flex items-center justify-center whitespace-nowrap font-bold leading-none ${color} ${arabic ? 'text-[9px] font-semibold supports-[container-type:inline-size]:text-[6.8cqw]' : 'text-[6px] supports-[container-type:inline-size]:text-[4.4cqw]'}`}>
       {b !== undefined ? <>{word(a)}{dot}{word(b)}</> : word(text)}
     </span>
   );

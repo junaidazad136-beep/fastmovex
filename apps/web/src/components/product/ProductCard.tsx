@@ -37,11 +37,11 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
           />
         ) : null}
         <div className="absolute start-1.5 top-1.5 flex max-w-[calc(100%-34px)] flex-col items-start gap-1 @min-[150px]:start-2 @min-[150px]:top-2">
-          {badge ? <span className="max-w-full truncate rounded-md bg-brand-600 px-1 py-0.5 text-[8.5px] font-bold text-white @min-[150px]:px-1.5 @min-[150px]:text-[10.5px]" data-testid="card-badge">{badge}</span> : null}
+          {badge ? <span className="max-w-full truncate rounded-md bg-brand-600 px-1 py-0.5 text-[11px] font-bold text-white @min-[150px]:px-1.5 @min-[150px]:text-[11px]" data-testid="card-badge">{badge}</span> : null}
           {!badge && percent > 0 ? (
-            <span className="tabular rounded-md bg-brand-600 px-1 py-0.5 text-[10px] font-bold text-white @min-[150px]:px-1.5 @min-[150px]:text-[11px]" dir="ltr">-{percent}%</span>
+            <span className="tabular rounded-md bg-brand-600 px-1 py-0.5 text-[11px] font-bold text-white @min-[150px]:px-1.5 @min-[150px]:text-[12px]" dir="ltr">-{percent}%</span>
           ) : null}
-          {p.isSponsored && <span className="rounded-md bg-white/90 px-1.5 py-0.5 text-[10px] font-medium text-ink-500">{t('product.sponsored')}</span>}
+          {p.isSponsored && <span className="rounded-md bg-white/90 px-1.5 py-0.5 text-[11px] font-medium text-ink-500">{t('product.sponsored')}</span>}
         </div>
         <div className="absolute end-0.5 top-0.5 @min-[150px]:end-1.5 @min-[150px]:top-1.5">
           <WishlistButton productId={p.id} compact />

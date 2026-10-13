@@ -34,7 +34,7 @@ export function TicketList() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t('help.myTickets')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('help.myTickets')}</h1>
         <Link href={paths.newTicket(l)} className="btn-primary"><Plus className="size-4" aria-hidden />{t('help.newTicket')}</Link>
       </div>
       {items.length === 0 ? <EmptyState icon={<LifeBuoy className="size-7" aria-hidden />} title={t('help.ticketsEmpty')} /> : (

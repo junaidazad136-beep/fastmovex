@@ -33,7 +33,7 @@ export function MobileTabBar() {
               <span className="relative">
                 <Icon className={`size-[23px] ${active ? 'fill-brand-600 text-brand-600' : ''}`} strokeWidth={active ? 2 : 1.8} aria-hidden />
                 {!!badge && badge > 0 && (
-                  <span className="tabular absolute -end-2.5 -top-1.5 min-w-[18px] rounded-full bg-brand-600 px-1 text-center text-[10.5px] font-bold leading-[18px] text-white ring-2 ring-white">{badge > 99 ? '99+' : badge}</span>
+                  <span className="tabular absolute -end-2.5 -top-1.5 min-w-[18px] rounded-full bg-brand-600 px-1 text-center text-[11px] font-bold leading-[18px] text-white ring-2 ring-white">{badge > 99 ? '99+' : badge}</span>
                 )}
               </span>
               {label}

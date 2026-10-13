@@ -63,7 +63,7 @@ export default async function StorePage({ params, searchParams }: PageProps<'/[l
             {s.logoUrl ? <Image src={s.logoUrl} alt="" fill sizes="96px" className="object-cover" /> : <Store className="size-8 text-ink-400" aria-hidden />}
           </span>
           <div className="min-w-0 flex-1">
-            <h1 className="text-2xl font-bold tracking-tight">{name}</h1>
+            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{name}</h1>
             <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-ink-500">
               {s.verified && <span className="inline-flex items-center gap-1 font-medium text-success-600"><BadgeCheck className="size-4" aria-hidden />{t('store.verified')}</span>}
               {s.ratingCount > 0 && <span className="inline-flex items-center gap-1"><Stars value={s.ratingAvg} label={t('product.ratingOutOf', { rating: s.ratingAvg })} /> {s.ratingAvg.toFixed(1)} ({s.ratingCount})</span>}

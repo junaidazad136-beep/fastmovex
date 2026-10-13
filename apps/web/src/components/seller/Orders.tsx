@@ -76,7 +76,7 @@ export function SellerOrders() {
   return (
     <div className="space-y-4" data-testid="seller-orders">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">{t('seller.orders.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.orders.title')}</h1>
         <form onSubmit={(e) => { e.preventDefault(); void load(); }} className="relative w-full sm:w-64">
           <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-ink-400" aria-hidden />
           <input className="input ps-9" dir="ltr" placeholder={t('seller.orders.search')} aria-label={t('seller.orders.search')} value={q} onChange={(e) => setQ(e.target.value)} />

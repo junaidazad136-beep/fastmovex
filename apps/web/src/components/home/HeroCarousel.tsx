@@ -46,11 +46,11 @@ function SlideBody({ s, eager }: { s: HeroSlide; eager: boolean }) {
         <Image src={s.imageUrl} alt="" fill priority={eager} sizes="(min-width: 1320px) 640px, 48vw" className="object-contain p-2 md:p-6" quality={80} />
       </div>
       <div className="relative flex h-full max-w-[64%] flex-col justify-center gap-1.5 ps-4 text-white md:max-w-[56%] md:gap-3 md:ps-12">
-        {s.kicker ? <span className="w-fit rounded-md bg-[#7422E6] px-2 py-0.5 text-[9.5px] font-bold uppercase tracking-wide md:text-xs">{s.kicker}</span> : null}
+        {s.kicker ? <span className="w-fit rounded-md bg-[#7422E6] px-2 py-0.5 text-[11px] font-bold uppercase tracking-wide md:text-xs">{s.kicker}</span> : null}
         <p className="text-[22px] font-black uppercase leading-[1.05] tracking-tight md:text-5xl">
           {s.headline.split('\n').map((line, i) => <span key={i} className="block"><Accented text={line} /></span>)}
         </p>
-        {s.subline ? <p className="line-clamp-1 text-[10.5px] text-white/85 md:text-base">{s.subline}</p> : null}
+        {s.subline ? <p className="line-clamp-1 text-[12px] text-white/85 md:text-base">{s.subline}</p> : null}
         {s.cta && s.link ? (
           <span className="mt-1 inline-flex w-fit items-center gap-1.5 rounded-full bg-[#7422E6] px-3.5 py-1.5 text-[12px] font-semibold shadow-lg shadow-[#7422E6]/30 md:px-6 md:py-2.5 md:text-base">
             {s.cta} <ArrowRight className="size-3.5 rtl:rotate-180 md:size-4" aria-hidden />

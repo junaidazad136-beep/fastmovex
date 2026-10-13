@@ -68,7 +68,7 @@ export function BecomeSeller({ onCreated, guest = false }: { onCreated?: () => P
     <div className="mx-auto grid max-w-6xl gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,26rem)] lg:gap-10" data-testid="become-seller">
       <div className="min-w-0 space-y-6">
         <section className="rounded-3xl bg-gradient-to-br from-brand-700 to-brand-500 p-6 text-white sm:p-8">
-          <h1 className="text-2xl font-extrabold tracking-tight sm:text-3xl">{t('seller.join.title')}</h1>
+          <h1 className="text-xl font-extrabold tracking-tight sm:text-3xl">{t('seller.join.title')}</h1>
           <p className="mt-3 text-white/90">{t('seller.join.lead')}</p>
           <ul className="mt-6 space-y-3">
             {points.map(({ Icon, text }) => (

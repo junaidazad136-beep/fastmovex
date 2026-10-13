@@ -39,7 +39,7 @@ export function SellerProducts() {
   return (
     <div className="space-y-4" data-testid="seller-products">
       <div className="flex flex-wrap items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">{t('seller.products.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.products.title')}</h1>
         <Link href={paths.sellerNewProduct(l)} className="btn-primary px-3 py-2 text-sm" data-testid="add-product"><Plus className="size-4" aria-hidden />{t('seller.products.add')}</Link>
       </div>
       <form onSubmit={(e) => { e.preventDefault(); void load(); }} className="relative">

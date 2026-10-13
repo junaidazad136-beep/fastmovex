@@ -96,11 +96,11 @@ export function ValueProps({ t }: { t: T }) {
     <section className="container-page mt-4 sm:mt-6" aria-label={t('home.whyUs')}>
       <ul className="no-scrollbar flex divide-x divide-ink-100 overflow-x-auto rounded-2xl border border-ink-100 bg-white py-2.5 rtl:divide-x-reverse lg:grid lg:grid-cols-4 lg:py-3.5">
         {items.map(({ Icon, title, text }) => (
-          <li key={title} className="flex shrink-0 items-center gap-1.5 px-2 lg:gap-2.5 lg:px-5">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 lg:size-11 lg:rounded-xl"><Icon className="size-4 lg:size-[22px]" aria-hidden /></span>
+          <li key={title} className="flex shrink-0 items-center gap-2 px-3 lg:gap-2.5 lg:px-5">
+            <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 lg:size-11 lg:rounded-xl"><Icon className="size-[18px] lg:size-[22px]" aria-hidden /></span>
             <span className="leading-tight">
-              <span className="block whitespace-nowrap text-[10px] font-semibold text-ink-900 lg:text-sm">{title}</span>
-              <span className="block whitespace-nowrap text-[8.5px] text-ink-500 lg:text-xs">{text}</span>
+              <span className="block whitespace-nowrap text-[12px] font-semibold text-ink-900 lg:text-sm">{title}</span>
+              <span className="block whitespace-nowrap text-[11px] text-ink-500 lg:text-xs">{text}</span>
             </span>
           </li>
         ))}

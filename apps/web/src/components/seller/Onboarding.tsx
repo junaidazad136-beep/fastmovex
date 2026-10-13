@@ -52,7 +52,7 @@ export function Onboarding({ me, reload }: { me: SellerMe; reload: () => Promise
     <div className="mx-auto max-w-3xl space-y-5" data-testid="seller-onboarding">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight">{t('seller.onboarding.title')}</h1>
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.onboarding.title')}</h1>
           <p className="mt-1 text-sm text-ink-500">{me.store?.name ?? me.businessName}</p>
         </div>
         <Link href={paths.sellerPolicy(t.locale)} target="_blank" className="link inline-flex items-center gap-1.5 text-sm" data-testid="onboarding-policy"><FileText className="size-4" aria-hidden />{t('seller.nav.policy')}</Link>

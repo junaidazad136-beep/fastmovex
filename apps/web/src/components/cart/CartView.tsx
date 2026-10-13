@@ -199,7 +199,7 @@ export function CartView() {
 
   return (
     <div className="container-page py-6">
-      <h1 className="text-2xl font-bold tracking-tight">{t('cart.title')} <span className="text-base font-normal text-ink-500">({t.plural('common.items', cart.totals.itemCount)})</span></h1>
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('cart.title')} <span className="text-sm font-normal text-ink-500 sm:text-base">({t.plural('common.items', cart.totals.itemCount)})</span></h1>
       {cart.groups.length > 1 && <p className="mt-2 text-sm text-ink-500">{t('cart.separateDelivery')}</p>}
       <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-4">

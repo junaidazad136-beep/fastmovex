@@ -60,7 +60,7 @@ export function TrackOrder({ order, token, placed }: { order?: string; token?: s
     <div className="mx-auto max-w-lg space-y-6">
       <div className="card p-6 sm:p-8">
         <PackageSearch className="size-9 text-brand-600" aria-hidden />
-        <h1 className="mt-3 text-2xl font-bold tracking-tight">{t('track.title')}</h1>
+        <h1 className="mt-3 text-xl sm:text-2xl font-bold tracking-tight">{t('track.title')}</h1>
         <p className="mt-1 text-sm text-ink-500">{t('track.intro')}</p>
         {order && !token && <p className="mt-3 rounded-xl bg-warning-50 px-3.5 py-2.5 text-sm text-warning-600">{t('track.linkInvalid')}</p>}
         <form onSubmit={submit} className="mt-5 space-y-4" noValidate>

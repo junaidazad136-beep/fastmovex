@@ -129,7 +129,7 @@ export function MyReviews() {
   return (
     <div className="space-y-8">
       <section>
-        <h1 className="mb-4 text-2xl font-bold tracking-tight">{t('reviews.toReview')}</h1>
+        <h1 className="mb-4 text-xl sm:text-2xl font-bold tracking-tight">{t('reviews.toReview')}</h1>
         {pending.length === 0 ? <p className="text-sm text-ink-500">{t('reviews.none')}</p> : (
           <ul className="grid gap-3 sm:grid-cols-2">
             {pending.map((r) => (

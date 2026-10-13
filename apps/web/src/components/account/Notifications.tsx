@@ -79,7 +79,7 @@ export function Notifications() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t('notifications.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('notifications.title')}</h1>
         {unread > 0 && <button type="button" onClick={markAll} className="btn-ghost text-sm">{t('notifications.markAllRead')}</button>}
       </div>
       <BrowserPush />

@@ -266,7 +266,7 @@ export function OrderDetailView({ number, placed, guestToken }: { number: string
       )}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="flex items-center gap-2 text-xl font-bold tracking-tight sm:text-2xl">
+          <h1 className="flex items-center gap-2 text-lg font-bold tracking-tight sm:text-2xl">
             <span dir="ltr" data-testid="order-number">{order.orderNumber}</span>
             <button type="button" onClick={() => { void navigator.clipboard?.writeText(order.orderNumber); setCopied(true); window.setTimeout(() => setCopied(false), 1500); }} aria-label={copied ? t('common.copied') : t('common.copy')} className="rounded-lg p-1 text-ink-400 hover:bg-ink-100 hover:text-ink-700">
               {copied ? <Check className="size-4" aria-hidden /> : <Copy className="size-4" aria-hidden />}

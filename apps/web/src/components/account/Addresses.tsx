@@ -29,7 +29,7 @@ export function Addresses() {
   return (
     <div>
       <div className="mb-4 flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">{t('address.title')}</h1>
+        <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('address.title')}</h1>
         <button type="button" onClick={() => setEditing('new')} className="btn-primary"><Plus className="size-4" aria-hidden />{t('address.add')}</button>
       </div>
       {list === null ? <div className="skeleton h-32" /> : list.length === 0 ? (
@@ -38,7 +38,7 @@ export function Addresses() {
         <ul className="grid gap-3 sm:grid-cols-2">
           {list.map((a) => (
             <li key={a.id} className={`card p-4 text-sm ${a.isDefault ? 'ring-1 ring-brand-600' : ''}`}>
-              <p className="flex items-center gap-2 font-semibold">{a.label ?? a.recipientName}{a.isDefault && <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[10px] font-semibold text-brand-700">{t('address.isDefault')}</span>}</p>
+              <p className="flex items-center gap-2 font-semibold">{a.label ?? a.recipientName}{a.isDefault && <span className="rounded bg-brand-50 px-1.5 py-0.5 text-[11px] font-semibold text-brand-700">{t('address.isDefault')}</span>}</p>
               <p className="mt-1 text-ink-600">{a.recipientName} · <span dir="ltr">{a.phone}</span></p>
               <p className="text-ink-500">{formatAddress(a, t)}</p>
               <div className="mt-3 flex flex-wrap gap-2">

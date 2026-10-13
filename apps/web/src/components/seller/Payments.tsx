@@ -52,7 +52,7 @@ export function SellerPayments() {
   const date = (d: string) => new Date(d).toLocaleDateString(l === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'short', year: 'numeric' });
   return (
     <div className="space-y-5" data-testid="seller-payments">
-      <h1 className="text-2xl font-bold tracking-tight">{t('seller.pay.title')}</h1>
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.pay.title')}</h1>
       <section className="card p-5">
         <dl className="grid grid-cols-2 gap-4 sm:grid-cols-4">
           <Amount label={t('seller.pay.available')} value={b && money(b.availableMinor)} strong />
@@ -109,7 +109,7 @@ export function SellerStore() {
   const { me, reloadMe } = useSeller();
   return (
     <div className="space-y-5" data-testid="seller-store">
-      <h1 className="text-2xl font-bold tracking-tight">{t('seller.store.title')}</h1>
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.store.title')}</h1>
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold">{t('seller.store.profile')}</h2>
         <LogoBlock me={me} onDone={reloadMe} />

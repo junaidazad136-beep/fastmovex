@@ -15,7 +15,7 @@ export function SeoText({ title, text, faqTitle, faq, locale }: { title: string;
       {paragraphs.length ? (
         <div>
           <h2 className="text-lg font-bold tracking-tight">{title}</h2>
-          <div className="mt-3 space-y-3 text-[15px] leading-7 text-ink-700">{paragraphs.map((p, i) => <p key={i} className="whitespace-pre-line">{p}</p>)}</div>
+          <div className="mt-3 space-y-3 text-sm leading-6 text-ink-700 sm:text-[15px] sm:leading-7">{paragraphs.map((p, i) => <p key={i} className="whitespace-pre-line">{p}</p>)}</div>
         </div>
       ) : null}
       {items.length ? (
