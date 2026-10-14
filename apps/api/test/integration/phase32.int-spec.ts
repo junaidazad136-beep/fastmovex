@@ -99,4 +99,35 @@ describe('Phase 32 — Seller Center pages (real database)', () => {
     await api().patch(`/api/v1/seller/coupons/${c.id}`).set(bearer(s.oud)).send({ isActive: false }).expect(404);
     expect((await api().patch(`/api/v1/seller/coupons/${c.id}`).set(bearer(s.gadgets)).send({ isActive: false }).expect(200)).body.isActive).toBe(false);
   });
+
+  it("a seller's spreadsheet: checked first, then saved into their own store only", async () => {
+    const oudProduct = await prisma.product.findFirstOrThrow({ where: { deletedAt: null, store: { seller: { owner: { email: 'seller.oud@demo.fastmovex.test' } } } } });
+    const csv = (rows: string[][]) => Buffer.from(['handle,title,category,brand,sku,option1_name,option1_value,price,stock,status', ...rows.map((r) => r.join(','))].join('\n'));
+    const file = csv([
+      [`mug-${run}`, `Travel Mug ${run}`, 'electronics', '', `MUG-B-${run}`, 'Colour', 'Black', '45.00', '10', 'draft'],
+      [`mug-${run}`, '', '', '', `MUG-W-${run}`, 'Colour', 'White', '45.00', '8', ''],
+      [`bad-${run}`, `Bad brand ${run}`, 'electronics', 'NoSuchBrand', `BAD-${run}`, '', '', '10', '1', ''],
+    ]);
+    const check = (await api().post('/api/v1/seller/products/import').query({ dryRun: 'true' }).set(bearer(s.gadgets)).attach('file', file, 'p.csv').expect(200)).body;
+    expect(check).toMatchObject({ dryRun: true, products: { created: 1 }, variants: { created: 2 } });
+    expect(check.errors).toEqual([expect.objectContaining({ message: expect.stringContaining('brand "NoSuchBrand" is not on FastMoveX') })]);
+    expect(await prisma.product.count({ where: { title: `Travel Mug ${run}` } })).toBe(0);
+
+    const saved = (await api().post('/api/v1/seller/products/import').set(bearer(s.gadgets)).attach('file', file, 'p.csv').expect(200)).body;
+    expect(saved.dryRun).toBe(false);
+    const mug = await prisma.product.findFirstOrThrow({ where: { title: `Travel Mug ${run}` }, include: { store: { include: { seller: { include: { owner: true } } } }, variants: { include: { inventory: true } } } });
+    expect(mug.store.seller.owner.email).toBe('seller.gadgets@demo.fastmovex.test');
+    expect(mug.status).toBe('DRAFT');
+    expect(mug.variants.map((v) => v.inventory?.onHand).sort()).toEqual([10, 8].sort());
+
+    // the store's own export has its products and no one else's
+    const exp = (await api().get('/api/v1/seller/products/export.csv').set(bearer(s.gadgets)).expect(200)).text;
+    expect(exp).toContain(`MUG-B-${run}`);
+    expect(exp).not.toContain(oudProduct.slug);
+    // re-importing a changed stock updates it
+    const again = (await api().post('/api/v1/seller/products/import').set(bearer(s.gadgets)).attach('file', csv([[`mug-${run}`, '', '', '', `MUG-B-${run}`, 'Colour', 'Black', '49.00', '25', '']]), 'p.csv').expect(200)).body;
+    expect(again).toMatchObject({ products: { updated: 1 }, stockChanges: 1, errors: [] });
+    const black = await prisma.productVariant.findFirstOrThrow({ where: { sku: `MUG-B-${run}` }, include: { inventory: true } });
+    expect([black.priceMinor, black.inventory?.onHand]).toEqual([4900n, 25]);
+  });
 });

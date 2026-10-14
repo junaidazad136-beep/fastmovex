@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ChevronRight, ImageOff, Plus, Search } from 'lucide-react';
+import { AlertTriangle, ChevronRight, FileSpreadsheet, ImageOff, Plus, Search } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useCallback, useEffect, useState } from 'react';
@@ -40,7 +40,10 @@ export function SellerProducts() {
     <div className="space-y-4" data-testid="seller-products">
       <div className="flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.products.title')}</h1>
-        <Link href={paths.sellerNewProduct(l)} className="btn-primary px-3 py-2 text-sm" data-testid="add-product"><Plus className="size-4" aria-hidden />{t('seller.products.add')}</Link>
+        <div className="flex gap-2">
+          <Link href={paths.sellerBulk(l)} className="btn-secondary px-3 py-2 text-sm" data-testid="bulk-link"><FileSpreadsheet className="size-4" aria-hidden />{t('seller.bulk.short')}</Link>
+          <Link href={paths.sellerNewProduct(l)} className="btn-primary px-3 py-2 text-sm" data-testid="add-product"><Plus className="size-4" aria-hidden />{t('seller.products.add')}</Link>
+        </div>
       </div>
       <form onSubmit={(e) => { e.preventDefault(); void load(); }} className="relative">
         <Search className="pointer-events-none absolute start-3 top-1/2 size-4 -translate-y-1/2 text-ink-400" aria-hidden />

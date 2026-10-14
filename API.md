@@ -339,6 +339,18 @@ FastMoveX's guides (no store) can be category defaults; a store's own guides onl
 | PATCH | `/seller/size-charts/{id}` | 🔒 seller (own guides only) |
 | DELETE | `/seller/size-charts/{id}` | 🔒 seller (own guides only) |
 
+### Seller bulk upload
+
+The staff spreadsheet (`/admin/products/import`), limited to the seller's own store. Products are matched by `handle` or by
+a SKU inside that store; sellers cannot add brands (an unknown brand is a line error) and cannot publish directly:
+`status=active` sends a product that has photos for review, `archived` archives it. New products are drafts.
+
+| Method | Path | Auth |
+|---|---|---|
+| GET | `/seller/products/import-template.csv` | 🔒 seller |
+| GET | `/seller/products/export.csv` | 🔒 seller — the store's products |
+| POST | `/seller/products/import?dryRun=true` | 🔒 seller — multipart `file`; 30 an hour; returns `{ products, variants, stockChanges, errors[{ line, sku, message }], warnings }` |
+
 ### Automatic Arabic
 
 Sellers and staff may write product text in English or Arabic; the API writes the other language (DeepL, when

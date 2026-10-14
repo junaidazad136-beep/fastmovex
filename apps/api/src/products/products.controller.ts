@@ -5,6 +5,7 @@ import {
 import { Request, Response } from 'express';
 import { FileInterceptor } from '@nestjs/platform-express';
 import { ApiBearerAuth, ApiConsumes, ApiQuery, ApiTags } from '@nestjs/swagger';
+import { Throttle } from '@nestjs/throttler';
 import { AuthUser, SellerContext } from '../common/auth-user';
 import { CurrentSeller, CurrentUser, Public, RequirePermissions } from '../common/decorators/auth.decorators';
 import { SellerGuard } from '../common/guards/seller.guard';
@@ -45,10 +46,34 @@ export class PublicProductsController {
 @UseGuards(SellerGuard) // approved sellers only; seller comes from the token, never the URL
 @Controller({ path: 'seller', version: '1' })
 export class SellerProductsController {
-  constructor(private readonly products: SellerProductsService) {}
+  constructor(private readonly products: SellerProductsService, private readonly csv: CatalogCsvService) {}
 
   @Get('products') list(@CurrentSeller() s: SellerContext, @Query() q: SellerProductsQuery) {
     return this.products.list(s, q);
+  }
+
+  // ---- bulk upload: the same spreadsheet as staff use, limited to the seller's own store (before products/:id)
+
+  @Get('products/export.csv')
+  async exportCsv(@CurrentSeller() s: SellerContext, @Res() res: Response) {
+    const scope = await this.csv.sellerScope(s);
+    res.set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': `attachment; filename="my-products-${new Date().toISOString().slice(0, 10)}.csv"` }).send(await this.csv.export(false, scope.storeId));
+  }
+
+  @Get('products/import-template.csv')
+  templateCsv(@Res() res: Response) {
+    res.set({ 'content-type': 'text/csv; charset=utf-8', 'content-disposition': 'attachment; filename="fastmovex-products-template.csv"' }).send(this.csv.template());
+  }
+
+  @Throttle({ default: { limit: 30, ttl: 3_600_000 } })
+  @ApiConsumes('multipart/form-data')
+  @ApiQuery({ name: 'dryRun', required: false, description: 'true = check the file and show what would change, without saving' })
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: 5 * 1024 * 1024, files: 1 } }))
+  @HttpCode(200) @Post('products/import')
+  async importCsv(@CurrentSeller() s: SellerContext, @UploadedFile() file: Express.Multer.File | undefined, @Query('dryRun') dryRun: string | undefined, @CurrentUser() u: AuthUser) {
+    if (!file?.buffer?.length) throw new BadRequestException('Attach a CSV file in the "file" field');
+    if (file.buffer.includes(0)) throw new BadRequestException('This is not a text (CSV) file. In Excel choose File → Save as → CSV UTF-8.');
+    return this.csv.import(file.buffer, dryRun === 'true' || dryRun === '1', u.id, await this.csv.sellerScope(s));
   }
 
   @Post('products') create(@CurrentSeller() s: SellerContext, @Body() dto: CreateProductDto, @CurrentUser() u: AuthUser) {

@@ -23,6 +23,7 @@ export const paths = {
   sellerProducts: (l: Locale) => `/${l}/seller/products`,
   sellerProduct: (l: Locale, id: string) => `/${l}/seller/products/${id}`,
   sellerNewProduct: (l: Locale) => `/${l}/seller/products/new`,
+  sellerBulk: (l: Locale) => `/${l}/seller/products/import`,
   sellerPayments: (l: Locale) => `/${l}/seller/payments`,
   sellerStore: (l: Locale) => `/${l}/seller/store`,
   sellerReturns: (l: Locale) => `/${l}/seller/returns`,

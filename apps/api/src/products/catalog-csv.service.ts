@@ -2,6 +2,7 @@ import { BadRequestException, Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { parse } from 'csv-parse/sync';
 import { AuditService } from '../audit/audit.service';
+import { SellerContext } from '../common/auth-user';
 import { slugify } from '../common/utils/slug';
 import { toCsv } from '../analytics/export.service';
 import { PrismaService } from '../prisma/prisma.service';
@@ -76,6 +77,9 @@ function options(r: Row): Record<string, string> {
   return assertOptionValues(o);
 }
 
+/** Whose catalogue a file works on: FastMoveX's own store (staff), or one seller's store (the seller). */
+export type CatalogScope = (SellerContext & { storeId: string; staff: true }) | (SellerContext & { storeId: string; staff: false });
+
 @Injectable()
 export class CatalogCsvService {
   constructor(
@@ -87,9 +91,10 @@ export class CatalogCsvService {
 
   // --------------------------------------------------------------- export
 
-  async export(house = true): Promise<Buffer> {
+  /** Staff: FastMoveX's own products (or every seller's, house=false). A seller: only their store's (`storeId`). */
+  async export(house = true, storeId?: string): Promise<Buffer> {
     const products = await this.prisma.product.findMany({
-      where: { deletedAt: null, store: { seller: { isHouse: house } } },
+      where: { deletedAt: null, ...(storeId ? { storeId } : { store: { seller: { isHouse: house } } }) },
       orderBy: { createdAt: 'asc' },
       take: 50_000,
       include: {
@@ -148,14 +153,23 @@ export class CatalogCsvService {
     });
   }
 
+  /** A seller's own store, for their imports and exports. */
+  async sellerScope(seller: SellerContext): Promise<CatalogScope> {
+    const store = await this.prisma.store.findUniqueOrThrow({ where: { sellerId: seller.id }, select: { id: true } });
+    return { ...seller, storeId: store.id, staff: false };
+  }
+
   /**
-   * Creates or updates products of FastMoveX's own store. Rows are grouped by `handle`; a product is matched by its handle
-   * (the product slug from an export) or by any of its SKUs, so re-importing an edited export updates in place.
-   * `dryRun` validates everything and reports what would change, without writing.
+   * Creates or updates products of one store: FastMoveX's own (staff, the default) or a seller's (`scope`). Rows are grouped
+   * by `handle`; a product is matched by its handle (the product slug from an export) or by any of its SKUs — always inside
+   * that store — so re-importing an edited export updates in place. `dryRun` validates and reports without writing.
+   * Sellers cannot add brands (an unknown brand is an error) or publish directly: status "active" sends a product with
+   * photos for review, "archived" archives it.
    */
-  async import(buffer: Buffer, dryRun: boolean, actorId: string): Promise<ImportReport> {
+  async import(buffer: Buffer, dryRun: boolean, actorId: string, scope?: CatalogScope): Promise<ImportReport> {
     const rows = this.parse(buffer);
-    const house = await this.admin.house();
+    const house: CatalogScope = scope ?? { ...(await this.admin.house()), staff: true };
+    const staff = house.staff;
     const { currencyCode } = await this.prisma.country.findUniqueOrThrow({ where: { code: house.countryCode }, select: { currencyCode: true } });
     const { minorUnits } = await this.prisma.currency.findUniqueOrThrow({ where: { code: currencyCode }, select: { minorUnits: true } });
     const report: ImportReport = { dryRun, rows: rows.length, products: { created: 0, updated: 0 }, variants: { created: 0, updated: 0 }, stockChanges: 0, errors: [], warnings: [] };
@@ -210,6 +224,7 @@ export class CatalogCsvService {
         const categoryId = first.category ? categories.get(first.category.trim()) : undefined;
         if (first.category && !categoryId) { issue(first, `category "${first.category}" not found — use a category slug, e.g. electronics`); continue; }
         const brandName = first.brand?.trim();
+        if (brandName && !staff && !brands.has(brandName.toLowerCase())) { issue(first, `brand "${brandName}" is not on FastMoveX yet — leave it empty or ask support to add it`); continue; }
         const tags = first.tags ? [...new Set(first.tags.split(',').map((t) => t.trim().toLowerCase()).filter(Boolean))].slice(0, 20) : undefined;
         const status = first.status?.trim().toLowerCase();
         if (status && !['draft', 'active', 'archived'].includes(status)) { issue(first, 'status: draft, active or archived'); continue; }
@@ -226,7 +241,7 @@ export class CatalogCsvService {
           if (!categoryId) { issue(first, 'category is required for a new product'); continue; }
           const missingPrice = parsed.find((p) => p.price === null);
           if (missingPrice) { issue(missingPrice.r, 'price is required for a new variant'); continue; }
-          if (status === 'active') report.warnings.push({ line: first.__line, handle, message: 'New products are created as drafts: add photos in the dashboard, then publish' });
+          if (status === 'active') report.warnings.push({ line: first.__line, handle, message: staff ? 'New products are created as drafts: add photos in the dashboard, then publish' : 'New products are saved as drafts: add photos, then send them for review' });
           report.products.created++;
           report.variants.created += parsed.length;
           if (dryRun) continue;
@@ -251,7 +266,8 @@ export class CatalogCsvService {
           else report.variants.created++;
         }
         if (!ok) { report.products.updated--; continue; }
-        if (status === 'active' && !existing._count.images) report.warnings.push({ line: first.__line, handle, message: 'Not published: the product has no photos yet' });
+        if (status === 'active' && !existing._count.images) report.warnings.push({ line: first.__line, handle, message: staff ? 'Not published: the product has no photos yet' : 'Not sent for review: the product has no photos yet' });
+        if (!staff && existing.status === 'ARCHIVED') { issue(first, 'This product is archived and cannot be changed'); report.products.updated--; continue; }
         if (dryRun) {
           for (const p of parsed) {
             const id = bySku.get(p.sku.toUpperCase());
@@ -266,7 +282,8 @@ export class CatalogCsvService {
           continue;
         }
         const brandId = brandName ? await this.brandId(brandName, brands) : undefined;
-        await this.admin.update(existing.id, { ...productFields, categoryId, brandId }, actorId);
+        if (staff) await this.admin.update(existing.id, { ...productFields, categoryId, brandId }, actorId);
+        else await this.products.update(house, existing.id, { ...productFields, categoryId, brandId }, actorId);
         for (const p of parsed) {
           const id = bySku.get(p.sku.toUpperCase());
           try {
@@ -298,14 +315,22 @@ export class CatalogCsvService {
             issue(p.r, (e as Error).message);
           }
         }
-        if (status === 'active' && existing._count.images) await this.admin.setStatus(existing.id, 'ACTIVE', actorId).catch((e: Error) => issue(first, e.message));
-        if (status === 'draft' || status === 'archived') await this.admin.setStatus(existing.id, status === 'draft' ? 'DRAFT' : 'ARCHIVED', actorId);
+        if (staff) {
+          if (status === 'active' && existing._count.images) await this.admin.setStatus(existing.id, 'ACTIVE', actorId).catch((e: Error) => issue(first, e.message));
+          if (status === 'draft' || status === 'archived') await this.admin.setStatus(existing.id, status === 'draft' ? 'DRAFT' : 'ARCHIVED', actorId);
+        } else {
+          // a seller sends for review (FastMoveX checks before it goes live) or archives
+          if (status === 'active' && existing._count.images && ['DRAFT', 'REJECTED'].includes(existing.status)) {
+            await this.products.update(house, existing.id, { submitForReview: true }, actorId).catch((e: Error) => issue(first, e.message));
+          }
+          if (status === 'archived') await this.products.archive(house, existing.id, actorId);
+        }
       } catch (e) {
         issue(first, (e as Error).message);
       }
     }
     if (!dryRun) {
-      await this.audit.log({ actorId, action: 'product.csv_import', entityType: 'Catalog', entityId: house.storeId, after: { rows: report.rows, products: report.products, variants: report.variants, errors: report.errors.length } as unknown as Prisma.InputJsonValue });
+      await this.audit.log({ actorId, action: staff ? 'product.csv_import' : 'product.seller_csv_import', entityType: 'Catalog', entityId: house.storeId, after: { rows: report.rows, products: report.products, variants: report.variants, errors: report.errors.length } as unknown as Prisma.InputJsonValue });
     }
     return report;
   }

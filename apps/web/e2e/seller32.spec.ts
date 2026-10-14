@@ -75,4 +75,26 @@ test.describe('Seller Center pages (phase 32)', () => {
     await page.goto('/ar/seller/reports');
     await expect(page.getByTestId('report-tiles')).toContainText('أرباحك');
   });
+
+  test('bulk upload: the file is checked line by line, then saved as drafts', async ({ page }) => {
+    const run = Math.random().toString(36).slice(2, 7);
+    const csv = ['handle,title,category,sku,option1_name,option1_value,price,stock',
+      `e2e-cap-${run},E2E Cap ${run},fashion,CAP-R-${run},Colour,Red,39.00,5`,
+      `e2e-cap-${run},,,CAP-B-${run},Colour,Blue,39.00,4`,
+      `e2e-bad-${run},E2E Bad ${run},no-such-category,BAD-${run},,,10.00,1`].join('\n');
+    await signIn(page, SELLER);
+    await page.goto('/en/seller/products');
+    await page.getByTestId('bulk-link').click();
+    await expect(page.getByRole('heading', { name: 'Bulk upload (spreadsheet)' })).toBeVisible();
+    await page.getByTestId('bulk-file').setInputFiles({ name: 'products.csv', mimeType: 'text/csv', buffer: Buffer.from(csv) });
+    await page.getByTestId('bulk-check').click();
+    const report = page.getByTestId('bulk-report');
+    await expect(report).toContainText('Check result');
+    await expect(page.getByTestId('bulk-errors')).toContainText('Line 4');
+    await expect(page.getByTestId('bulk-errors')).toContainText('category "no-such-category" not found');
+    await page.getByTestId('bulk-save').click();
+    await expect(report).toContainText('Saved');
+    await page.getByRole('link', { name: 'Go to my products' }).click();
+    await expect(page.getByTestId('seller-products')).toContainText(`E2E Cap ${run}`);
+  });
 });
