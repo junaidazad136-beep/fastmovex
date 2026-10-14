@@ -2,13 +2,14 @@
 
 import { Heart } from 'lucide-react';
 import { usePathname } from 'next/navigation';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useT } from '@/lib/i18n/client';
 import { errorMessage } from '@/lib/errors';
 import { useSession } from '@/lib/state/session';
 import { useToast } from '@/lib/state/toast';
 import { useWishlist } from '@/lib/state/wishlist';
 import { paths } from '@/lib/urls';
+import { haptic } from '@/lib/haptics';
 
 export function WishlistButton({ productId, compact = false, className }: { productId: string; compact?: boolean; className?: string }) {
   const t = useT();
@@ -16,9 +17,11 @@ export function WishlistButton({ productId, compact = false, className }: { prod
   const wishlist = useWishlist();
   const toast = useToast();
   const pathname = usePathname();
-  const [busy, setBusy] = useState(false);
+  const busy = useRef(false);
+  const [popKey, setPopKey] = useState(0);
   const saved = wishlist.has(productId);
 
+  /** the heart fills (or empties) the moment it is tapped; the wishlist puts it back if the server says no */
   async function onClick(e: React.MouseEvent) {
     e.preventDefault();
     e.stopPropagation();
@@ -26,14 +29,18 @@ export function WishlistButton({ productId, compact = false, className }: { prod
       toast({ tone: 'info', message: t('product.signInToSave'), action: { label: t('nav.signIn'), href: paths.login(t.locale, pathname) } });
       return;
     }
-    setBusy(true);
+    if (busy.current) return; // a double tap while the first is on its way
+    busy.current = true;
+    haptic('tap');
+    if (!saved) setPopKey((k) => k + 1);
     try {
       const now = await wishlist.toggle(productId);
       toast({ tone: 'success', message: now ? t('product.savedToWishlist') : t('product.removedFromWishlist') });
     } catch (err) {
+      haptic('error');
       toast({ tone: 'error', message: errorMessage(err, t) });
     } finally {
-      setBusy(false);
+      busy.current = false;
     }
   }
 
@@ -42,13 +49,13 @@ export function WishlistButton({ productId, compact = false, className }: { prod
     <button
       type="button"
       onClick={onClick}
-      disabled={busy || status === 'loading'}
+      disabled={status === 'loading'}
       aria-pressed={saved}
       aria-label={label}
       title={label}
       className={className ?? (compact ? 'pcard-fav' : 'btn-secondary size-12 shrink-0 p-0')}
     >
-      <Heart className={`size-[18px] ${saved ? 'fill-brand-600 text-brand-600' : ''}`} aria-hidden />
+      <Heart key={popKey} className={`size-[18px] ${saved ? 'fill-brand-600 text-brand-600' : ''} ${popKey ? 'pop' : ''}`} aria-hidden />
     </button>
   );
 }

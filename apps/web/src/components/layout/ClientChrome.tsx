@@ -8,6 +8,7 @@ import { track } from '@/lib/analytics';
 import { useT } from '@/lib/i18n/client';
 import { useToast } from '@/lib/state/toast';
 import { useCart } from '@/lib/state/cart';
+import { NavProgress } from './NavProgress';
 
 /** Offline banner + service worker registration + one-off notices that belong to the whole app. */
 export function ClientChrome() {
@@ -19,6 +20,13 @@ export function ClientChrome() {
 
   // anonymous visit analytics (see lib/analytics.ts): one page view per route
   useEffect(() => { track('page_view', pathname); }, [pathname]);
+
+  // iPhones only show a pressed look (:active) on pages that listen for touches
+  useEffect(() => {
+    const noop = () => {};
+    document.addEventListener('touchstart', noop, { passive: true });
+    return () => document.removeEventListener('touchstart', noop);
+  }, []);
 
   useEffect(() => {
     const on = () => { setOffline(false); };
@@ -40,6 +48,7 @@ export function ClientChrome() {
 
   return (
     <>
+      <NavProgress />
       {offline && (
         <div role="status" className="fixed inset-x-0 top-0 z-[70] flex items-center justify-center gap-2 bg-ink-900 px-4 py-2 text-sm text-white">
           <WifiOff className="size-4" aria-hidden />

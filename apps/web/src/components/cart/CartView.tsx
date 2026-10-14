@@ -15,8 +15,10 @@ import { useToast } from '@/lib/state/toast';
 import { paths, pick } from '@/lib/urls';
 import { EmptyState } from '../ui/EmptyState';
 import { Spinner } from '../ui/Spinner';
+import { CartSkeleton } from '../ui/Skeletons';
+import { haptic } from '@/lib/haptics';
 
-function Line({ item, busy, onQty, onRemove }: { item: CartItem; busy: boolean; onQty: (q: number) => void; onRemove: () => void }) {
+function Line({ item, onQty, onRemove }: { item: CartItem; onQty: (q: number) => void; onRemove: () => void }) {
   const t = useT();
   const money = useMoney();
   const title = pick(t.locale, item.title, item.titleAr);
@@ -53,14 +55,13 @@ function Line({ item, busy, onQty, onRemove }: { item: CartItem; busy: boolean; 
         ))}
         <div className="mt-2.5 flex items-center gap-3">
           <div className="flex items-center rounded-lg border border-ink-200 bg-white">
-            <button type="button" disabled={busy || item.quantity <= 1} onClick={() => onQty(item.quantity - 1)} aria-label={t('product.decrease')} className="flex size-8 items-center justify-center text-ink-700 disabled:text-ink-300"><Minus className="size-3.5" aria-hidden /></button>
+            <button type="button" disabled={item.quantity <= 1} onClick={() => onQty(item.quantity - 1)} aria-label={t('product.decrease')} className="flex size-8 items-center justify-center text-ink-700 disabled:text-ink-300"><Minus className="size-3.5" aria-hidden /></button>
             <span className="tabular w-8 text-center text-sm font-semibold" aria-label={t('cart.quantity', { title })}>{item.quantity}</span>
-            <button type="button" disabled={busy || item.quantity >= maxQ} onClick={() => onQty(item.quantity + 1)} aria-label={t('product.increase')} className="flex size-8 items-center justify-center text-ink-700 disabled:text-ink-300"><Plus className="size-3.5" aria-hidden /></button>
+            <button type="button" disabled={item.quantity >= maxQ} onClick={() => onQty(item.quantity + 1)} aria-label={t('product.increase')} className="flex size-8 items-center justify-center text-ink-700 disabled:text-ink-300"><Plus className="size-3.5" aria-hidden /></button>
           </div>
-          <button type="button" disabled={busy} onClick={onRemove} className="inline-flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-danger-600" aria-label={t('cart.remove', { title })}>
+          <button type="button" onClick={onRemove} className="inline-flex items-center gap-1 text-xs font-medium text-ink-500 hover:text-danger-600" aria-label={t('cart.remove', { title })}>
             <Trash2 className="size-3.5" aria-hidden />{t('common.remove')}
           </button>
-          {busy && <Spinner className="size-4 text-ink-400" />}
         </div>
       </div>
     </li>
@@ -166,25 +167,19 @@ export function CartView() {
   const toast = useToast();
   const { status } = useSession();
   const { market } = useShop();
-  const { cart, loading, update, remove, acknowledgePrices } = useCart();
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const { cart, loading, syncing, update, remove, acknowledgePrices } = useCart();
   const [acking, setAcking] = useState(false);
 
-  async function run(id: string, fn: () => Promise<unknown>, done?: string) {
-    setBusyId(id);
-    try {
-      await fn();
-      if (done) toast({ tone: 'success', message: done });
-    } catch (e) {
-      toast({ tone: 'error', message: errorMessage(e, t) });
-    } finally {
-      setBusyId(null);
-    }
+  /** the line changes on screen at once (see the cart state); a failure puts it back and says why */
+  function run(fn: () => Promise<unknown>, done?: string) {
+    haptic('tap');
+    if (done) toast({ tone: 'success', message: done });
+    fn().catch((e) => { haptic('error'); toast({ tone: 'error', message: errorMessage(e, t) }); });
   }
 
-  if (loading && !cart) {
-    return <div className="container-page py-8"><div className="skeleton h-8 w-48" /><div className="skeleton mt-6 h-40" /></div>;
-  }
+  if (loading && !cart) return <CartSkeleton />;
+  /** checkout waits the moment it takes for a just-tapped change to reach the server */
+  const wait = syncing ? 'pointer-events-none opacity-80' : '';
   if (!cart || cart.groups.length === 0) {
     return (
       <div className="container-page py-10">
@@ -230,9 +225,8 @@ export function CartView() {
                   <Line
                     key={item.id}
                     item={item}
-                    busy={busyId === item.id}
-                    onQty={(q) => run(item.id, () => update(item.id, q))}
-                    onRemove={() => run(item.id, () => remove(item.id), t('cart.removed'))}
+                    onQty={(q) => run(() => update(item.id, q))}
+                    onRemove={() => run(() => remove(item.id), t('cart.removed'))}
                   />
                 ))}
               </ul>
@@ -242,17 +236,17 @@ export function CartView() {
         <aside className="card sticky top-36 space-y-5 p-5">
           <h2 className="text-base font-bold">{t('cart.summary')}</h2>
           <Coupon cart={cart} />
-          <Totals cart={cart} />
+          <div className={`transition-opacity ${syncing ? 'opacity-50' : ''}`} aria-busy={syncing || undefined} data-testid="cart-totals"><Totals cart={cart} /></div>
           {status === 'user' ? (
             cart.canCheckout ? (
-              <Link href={paths.checkout(l)} className="btn-primary btn-lg w-full" data-testid="go-checkout">{t('cart.checkout')}</Link>
+              <Link href={paths.checkout(l)} className={`btn-primary btn-lg w-full ${wait}`} aria-disabled={syncing || undefined} data-testid="go-checkout">{t('cart.checkout')}</Link>
             ) : (
               <button type="button" disabled className="btn-primary btn-lg w-full">{t('cart.checkout')}</button>
             )
           ) : market.guestCheckout ? (
             <div className="space-y-2">
               {cart.canCheckout ? (
-                <Link href={paths.checkout(l)} className="btn-primary btn-lg w-full" data-testid="go-checkout">{t('cart.checkout')}</Link>
+                <Link href={paths.checkout(l)} className={`btn-primary btn-lg w-full ${wait}`} aria-disabled={syncing || undefined} data-testid="go-checkout">{t('cart.checkout')}</Link>
               ) : (
                 <button type="button" disabled className="btn-primary btn-lg w-full">{t('cart.checkout')}</button>
               )}

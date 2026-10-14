@@ -24,6 +24,8 @@ import { FormError } from '../auth/fields';
 import { Dialog } from '../ui/Dialog';
 import { Spinner } from '../ui/Spinner';
 import { PolicyLinks } from '../content/PolicyLinks';
+import { haptic } from '@/lib/haptics';
+import { startNav } from '@/components/layout/NavProgress';
 
 export const PENDING_ORDER_KEY = 'fmx_pending_order';
 /** Guest checkout: the order's access token, so the payment return page can open the order without an account. */
@@ -103,7 +105,9 @@ export function Checkout() {
         window.location.assign(res.payment.redirectUrl);
         return;
       }
+      haptic('done');
       await refresh();
+      startNav();
       router.replace(`${paths.order(l, res.orderNumber)}?placed=1`);
     } catch (e) {
       if (e instanceof ApiError && (SLOT_REASONS as readonly string[]).includes(e.reason ?? '')) {

@@ -11,8 +11,8 @@ import { useCart } from '@/lib/state/cart';
 import { useMoney } from '@/lib/state/shop';
 import { useToast } from '@/lib/state/toast';
 import { paths, pick } from '@/lib/urls';
-import { Spinner } from '../ui/Spinner';
 import { effectivePrice } from './Price';
+import { haptic } from '@/lib/haptics';
 
 interface Line { key: string; variantId: string; title: string; label?: string | null; imageUrl: string | null; priceMinor: string; href: string | null; main: boolean }
 
@@ -38,25 +38,24 @@ export function BoughtTogether({ main, items }: {
     })),
   ];
   const [off, setOff] = useState<Set<string>>(() => new Set());
-  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [state, setState] = useState<'idle' | 'done'>('idle');
   if (!main || !others.length) return null;
 
   const chosen = lines.filter((l) => !off.has(l.key));
   const total = chosen.reduce((s, l) => s + BigInt(l.priceMinor), 0n);
   const toggle = (key: string) => setOff((s) => { const n = new Set(s); if (n.has(key)) n.delete(key); else n.add(key); return n; });
 
-  async function addAll() {
-    setState('busy');
-    try {
-      // one after another: a guest's first add creates the cart the next ones go into
-      for (const l of chosen) await cart.add(l.variantId, 1);
-      setState('done');
-      toast({ tone: 'success', message: t('product.addedAll'), action: { label: t('product.viewCart'), href: paths.cart(t.locale) } });
-      window.setTimeout(() => setState('idle'), 2500);
-    } catch (e) {
-      setState('idle');
-      toast({ tone: 'error', message: errorMessage(e, t) });
-    }
+  /** all chosen items show as added at once; the cart sends them one after another (see the cart state) */
+  function addAll() {
+    haptic('success');
+    setState('done');
+    Promise.all(chosen.map((l) => cart.add(l.variantId, 1))).then(
+      () => {
+        toast({ tone: 'success', message: t('product.addedAll'), action: { label: t('product.viewCart'), href: paths.cart(t.locale) } });
+        window.setTimeout(() => setState('idle'), 2500);
+      },
+      (e) => { setState('idle'); haptic('error'); toast({ tone: 'error', message: errorMessage(e, t) }); },
+    );
   }
 
   return (
@@ -106,11 +105,11 @@ export function BoughtTogether({ main, items }: {
             <button
               type="button"
               onClick={addAll}
-              disabled={!chosen.length || state === 'busy'}
+              disabled={!chosen.length}
               className="btn-primary h-11 rounded-full px-5 max-sm:w-full"
               data-testid="together-add"
             >
-              {state === 'busy' ? <Spinner /> : state === 'done' ? <Check className="size-5" aria-hidden /> : null}
+              {state === 'done' ? <Check className="pop size-5" aria-hidden /> : null}
               {state === 'done'
                 ? t('product.added')
                 : chosen.length === lines.length ? t('product.addAllToCart', { count: chosen.length }) : t('product.addSelectedToCart', { count: chosen.length })}

@@ -11,6 +11,7 @@ import { decimalToMinor } from '@/lib/money';
 import { useShop } from '@/lib/state/shop';
 import { pick } from '@/lib/urls';
 import { Dialog } from '../ui/Dialog';
+import { startNav } from '@/components/layout/NavProgress';
 
 interface Props {
   query: ListingQuery;
@@ -158,7 +159,7 @@ export function Filters({ variant, className = '', ...props }: Props & { total: 
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, start] = useTransition();
-  const navigate = (url: string) => { setOpen(false); start(() => router.push(url, { scroll: false })); };
+  const navigate = (url: string) => { setOpen(false); startNav(); start(() => router.push(url, { scroll: false })); };
   const activeCount = props.query.brands.length + (props.query.min || props.query.max ? 1 : 0) + (props.query.rating ? 1 : 0) + (props.query.inStock ? 1 : 0);
   if (variant === 'sidebar') {
     return (

@@ -2,13 +2,14 @@
 
 import { Check, ShoppingCart, Truck } from 'lucide-react';
 import Link from 'next/link';
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useDeliveryPromise } from '@/lib/delivery-promise';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
 import { useCart } from '@/lib/state/cart';
 import { useToast } from '@/lib/state/toast';
 import { paths } from '@/lib/urls';
+import { haptic } from '@/lib/haptics';
 
 /** "Tomorrow" / "Today" / "Thu 12" / "1–2 days" under a card's price (from the real delivery windows). */
 export function CardDelivery() {
@@ -36,7 +37,8 @@ export function CardAddButton({ productId, slug, title, variantId, inStock }: { 
   const t = useT();
   const cart = useCart();
   const toast = useToast();
-  const [state, setState] = useState<'idle' | 'busy' | 'done'>('idle');
+  const [done, setDone] = useState(false);
+  const timer = useRef<number | undefined>(undefined);
   const cls = 'relative z-10 mt-1.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg text-[12.5px] font-semibold transition-colors @min-[150px]:mt-2 @min-[150px]:h-9 @min-[150px]:text-[13px]';
 
   if (!inStock) {
@@ -49,22 +51,21 @@ export function CardAddButton({ productId, slug, title, variantId, inStock }: { 
       </Link>
     );
   }
-  async function add() {
-    setState('busy');
-    try {
-      await cart.add(variantId!, 1);
-      setState('done');
-      toast({ tone: 'success', message: t('product.added'), action: { label: t('product.viewCart'), href: paths.cart(t.locale) } });
-      window.setTimeout(() => setState('idle'), 1600);
-    } catch (e) {
-      setState('idle');
-      toast({ tone: 'error', message: errorMessage(e, t) });
-    }
+  /** "Added ✓" and the cart badge change the moment it is tapped; a refusal (sold out meanwhile) puts it back. */
+  function add() {
+    haptic('success');
+    setDone(true);
+    window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => setDone(false), 1600);
+    cart.add(variantId!, 1).then(
+      () => toast({ tone: 'success', message: t('product.added'), action: { label: t('product.viewCart'), href: paths.cart(t.locale) } }),
+      (e) => { window.clearTimeout(timer.current); setDone(false); haptic('error'); toast({ tone: 'error', message: errorMessage(e, t) }); },
+    );
   }
   return (
-    <button type="button" onClick={add} disabled={state === 'busy'} className={`${cls} bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800 disabled:opacity-70`} aria-label={t('card.addTitle', { title })} data-testid="card-add" data-product={productId}>
-      {state === 'done' ? <Check className="size-4" aria-hidden /> : <ShoppingCart className="size-4" aria-hidden />}
-      {state === 'done' ? t('card.added') : t('card.add')}
+    <button type="button" onClick={add} className={`${cls} bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800`} aria-label={t('card.addTitle', { title })} data-testid="card-add" data-product={productId}>
+      {done ? <Check className="pop size-4" aria-hidden /> : <ShoppingCart className="size-4" aria-hidden />}
+      {done ? t('card.added') : t('card.add')}
     </button>
   );
 }

@@ -9,6 +9,7 @@ import { useT } from '@/lib/i18n/client';
 import { paths } from '@/lib/urls';
 import { Dialog } from '../ui/Dialog';
 import { Spinner } from '../ui/Spinner';
+import { startNav } from '@/components/layout/NavProgress';
 
 /**
  * Camera barcode search: the back camera reads the EAN/UPC on the pack (ZXing, works on iPhone and Android), then the
@@ -27,8 +28,8 @@ export function BarcodeScanner({ open, onClose }: { open: boolean; onClose: () =
     setMissing(null);
     try {
       const r = await api<SearchResult>(`/search?q=${encodeURIComponent(code)}&limit=2`, { auth: 'none' });
-      if (r.total === 1 && r.items[0]) { onClose(); router.push(paths.product(t.locale, r.items[0].slug)); return; }
-      if (r.total > 1) { onClose(); router.push(paths.search(t.locale, { q: code })); return; }
+      if (r.total === 1 && r.items[0]) { onClose(); startNav(); router.push(paths.product(t.locale, r.items[0].slug)); return; }
+      if (r.total > 1) { onClose(); startNav(); router.push(paths.search(t.locale, { q: code })); return; }
       setMissing(code);
     } catch {
       setMissing(code);

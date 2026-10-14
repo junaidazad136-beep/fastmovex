@@ -92,6 +92,33 @@
   ::selection {
     @apply bg-brand-100 text-brand-900;
   }
+
+  /*
+   * Press feedback: every tap answers at once, the way phone apps do. Buttons sink a little, links dim, product
+   * cards sink as a whole. Instant on press; easing back on release. `no-press` turns it off for one element.
+   */
+  button,
+  [role='button'],
+  summary,
+  a[href] {
+    transition-property: color, background-color, border-color, opacity, scale, box-shadow;
+    transition-duration: 150ms;
+    transition-timing-function: ease-out;
+  }
+  button:not(:disabled):active,
+  [role='button']:not([aria-disabled='true']):active,
+  summary:active {
+    scale: 0.96;
+    transition-duration: 0s;
+  }
+  a[href]:not([class*='btn']):active {
+    opacity: 0.6;
+    transition-duration: 0s;
+  }
+  a[href][class*='btn']:active {
+    scale: 0.97;
+    transition-duration: 0s;
+  }
 }
 
 /* Reusable building blocks (Tailwind v4 utilities, so they can be combined with variants and @apply) */
@@ -110,7 +137,15 @@
 /* Product card pieces: short class names keep big product grids small in the HTML. */
 /* The card is a size container: four-across rails on phones get smaller type than two-across grids. */
 @utility pcard {
-  @apply @container relative flex h-full flex-col overflow-hidden rounded-xl border border-ink-100 bg-white transition-shadow hover:shadow-[var(--shadow-card)];
+  @apply @container relative flex h-full flex-col overflow-hidden rounded-xl border border-ink-100 bg-white transition-[box-shadow,scale] duration-150 hover:shadow-[var(--shadow-card)];
+  /* the whole card sinks when its link is pressed (the link covers the card) */
+  &:has(a[href]:active) {
+    scale: 0.97;
+    transition-duration: 0s;
+  }
+  & a[href]:active {
+    opacity: 1;
+  }
 }
 @utility pcard-title {
   @apply line-clamp-2 min-h-[2rem] text-[12px] leading-4 font-medium text-ink-900 @min-[150px]:min-h-[2.5rem] @min-[150px]:text-[13.5px] @min-[150px]:leading-5;
@@ -129,7 +164,7 @@
   @apply rounded-[var(--radius-card)] border border-ink-100 bg-white shadow-[var(--shadow-card)];
 }
 @utility btn {
-  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-colors duration-150 select-none disabled:cursor-not-allowed disabled:opacity-55;
+  @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-[color,background-color,border-color,scale] duration-150 select-none disabled:cursor-not-allowed disabled:opacity-55;
 }
 @utility btn-primary {
   @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
@@ -178,6 +213,21 @@
 }
 @utility toast-in {
   animation: var(--animate-toast-in);
+}
+@utility no-press {
+  &:active {
+    scale: none !important;
+    opacity: 1 !important;
+  }
+}
+/* the heart pops when it is filled */
+@utility pop {
+  animation: pop 320ms cubic-bezier(0.3, 1.6, 0.5, 1);
+}
+@keyframes pop {
+  0% { scale: 1; }
+  40% { scale: 1.35; }
+  100% { scale: 1; }
 }
 @utility skeleton {
   @apply animate-pulse rounded-lg bg-ink-100;

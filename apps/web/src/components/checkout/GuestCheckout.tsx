@@ -24,6 +24,8 @@ import { PENDING_ORDER_KEY, PENDING_TOKEN_KEY } from './Checkout';
 import { COD_REASONS, codAvailability, codErrorMessage, GuestPhoneCheck } from './cod';
 import { useMoney } from '@/lib/state/shop';
 import { PolicyLinks } from '../content/PolicyLinks';
+import { haptic } from '@/lib/haptics';
+import { startNav } from '@/components/layout/NavProgress';
 
 const ICON: Record<PaymentMethod, typeof CreditCard> = { CARD: CreditCard, APPLE_PAY: Smartphone, GOOGLE_PAY: Smartphone, COD: Banknote, PAYLATER: CalendarClock };
 const newKey = () => (typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : `${Date.now()}-${Math.random().toString(36).slice(2)}`);
@@ -167,7 +169,9 @@ export function GuestCheckout() {
         window.location.assign(res.payment.redirectUrl);
         return;
       }
+      haptic('done');
       await refresh();
+      startNav();
       router.replace(`${paths.track(l, res.orderNumber, token)}&placed=1`);
     } catch (err) {
       const reason = err instanceof ApiError ? err.reason : undefined;

@@ -11,6 +11,7 @@ import { useMoney } from '@/lib/state/shop';
 import { useToast } from '@/lib/state/toast';
 import { paths, pick } from '@/lib/urls';
 import { BarcodeScanner } from '../search/BarcodeScanner';
+import { startNav } from './NavProgress';
 
 /* eslint-disable @typescript-eslint/no-explicit-any -- the Web Speech API is not in the DOM typings yet */
 type Recognition = { lang: string; interimResults: boolean; maxAlternatives: number; start(): void; abort(): void; onresult: ((e: any) => void) | null; onerror: ((e: any) => void) | null; onend: (() => void) | null };
@@ -144,6 +145,7 @@ export function SearchBox({ autoFocus = false }: { autoFocus?: boolean }) {
   function go(href: string, term?: string) {
     if (term) rememberSearch(term);
     setOpen(false);
+    startNav();
     router.push(href);
   }
 

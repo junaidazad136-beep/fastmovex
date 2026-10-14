@@ -6,7 +6,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { api } from '@/lib/api/client';
 import { ApiError } from '@/lib/api/errors';
 import Link from 'next/link';
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ProductDetail, TogetherCard } from '@/lib/api/types';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
@@ -26,6 +26,8 @@ import { SIZE_OPTION } from '@/lib/size-chart';
 import { Price, effectivePrice } from './Price';
 import { defaultVariant, findVariant, isValueAvailable, optionNames, optionValues, selectValue } from './variants';
 import { WishlistButton } from './WishlistButton';
+import { startNav } from '@/components/layout/NavProgress';
+import { haptic } from '@/lib/haptics';
 
 const MAX_QTY = 99;
 
@@ -39,8 +41,8 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
   const names = useMemo(() => optionNames(product.variants), [product.variants]);
   const [selected, setSelected] = useState<Record<string, string>>(() => ({ ...(defaultVariant(product.variants)?.optionValues ?? {}) }));
   const [qty, setQty] = useState(1);
-  const [busy, setBusy] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const addedTimer = useRef<number | undefined>(undefined);
   const [buying, setBuying] = useState(false);
   const router = useRouter();
   // Server-rendered buttons only work once hydrated; keep them disabled until then so an early tap is never lost.
@@ -55,19 +57,22 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
   const maxQty = Math.min(MAX_QTY, variant?.lowStockCount ?? MAX_QTY);
   const price = variant ? effectivePrice(variant) : null;
 
-  async function add() {
+  /** "Added ✓" and the cart badge change the moment it is tapped; if the shop refuses (sold out meanwhile), it goes back. */
+  function add() {
     if (!variant) return;
-    setBusy(true);
-    try {
-      await cart.add(variant.id, qty);
-      setJustAdded(true);
-      window.setTimeout(() => setJustAdded(false), 2500);
-      toast({ tone: 'success', message: t('product.added'), action: { label: t('product.viewCart'), href: paths.cart(t.locale) } });
-    } catch (e) {
-      toast({ tone: 'error', message: errorMessage(e, t) });
-    } finally {
-      setBusy(false);
-    }
+    haptic('success');
+    setJustAdded(true);
+    window.clearTimeout(addedTimer.current);
+    addedTimer.current = window.setTimeout(() => setJustAdded(false), 2500);
+    cart.add(variant.id, qty).then(
+      () => toast({ tone: 'success', message: t('product.added'), action: { label: t('product.viewCart'), href: paths.cart(t.locale) } }),
+      (e) => {
+        window.clearTimeout(addedTimer.current);
+        setJustAdded(false);
+        haptic('error');
+        toast({ tone: 'error', message: errorMessage(e, t) });
+      },
+    );
   }
 
   /** "Buy Now": a one-item cart of its own, straight to checkout; the shopper's cart is left as it is. */
@@ -76,6 +81,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
     setBuying(true);
     try {
       const { cartToken } = await api<{ cartToken: string }>('/cart/buy-now', { method: 'POST', auth: 'none', body: { variantId: variant.id, quantity: qty } });
+      startNav();
       router.push(`${paths.checkout(t.locale)}?buy=${encodeURIComponent(cartToken)}`);
     } catch (e) {
       setBuying(false);
@@ -83,7 +89,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
     }
   }
   const goods = price ? BigInt(price.now) * BigInt(qty) : 0n;
-  const canBuy = ready && !!variant?.inStock && !busy && !buying;
+  const canBuy = ready && !!variant?.inStock && !buying;
 
   const storeName = pick(t.locale, product.store.name, product.store.nameAr);
   const chart = product.sizeChart ?? null;
@@ -258,9 +264,9 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
               <Plus className="size-4" aria-hidden />
             </button>
           </div>
-          <button type="button" onClick={add} disabled={!ready || !variant?.inStock || busy} className="btn-primary btn-lg flex-1 max-md:hidden" data-testid="add-to-cart">
-            {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : null}
-            {busy ? t('product.adding') : justAdded ? t('product.added') : t('product.addToCart')}
+          <button type="button" onClick={add} disabled={!ready || !variant?.inStock} className="btn-primary btn-lg flex-1 max-md:hidden" data-testid="add-to-cart">
+            {justAdded ? <Check className="pop size-5" aria-hidden /> : null}
+            {justAdded ? t('product.added') : t('product.addToCart')}
           </button>
           <span className="max-md:hidden"><WishlistButton productId={product.id} /></span>
         </div>
@@ -312,12 +318,12 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
                 <button
                   type="button"
                   onClick={add}
-                  disabled={!ready || busy || buying}
+                  disabled={!ready || buying}
                   className="btn-primary h-12 min-w-0 flex-1 rounded-xl px-2 text-[15px]"
                   data-testid="sticky-add"
                 >
-                  {busy ? <Spinner /> : justAdded ? <Check className="size-5" aria-hidden /> : null}
-                  <span className="truncate">{busy ? t('product.adding') : justAdded ? t('product.added') : t('product.addToCart')}</span>
+                  {justAdded ? <Check className="pop size-5 shrink-0" aria-hidden /> : null}
+                  <span className="truncate">{justAdded ? t('product.added') : t('product.addToCart')}</span>
                 </button>
                 <button
                   type="button"
