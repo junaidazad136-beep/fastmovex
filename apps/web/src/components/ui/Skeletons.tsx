@@ -7,11 +7,12 @@ function CardSkeleton() {
   return (
     <div className="overflow-hidden rounded-xl border border-ink-100 bg-white">
       <div className="skeleton aspect-square rounded-none" />
-      <div className="space-y-1.5 p-2 sm:p-2.5">
-        <div className="skeleton h-3 w-full sm:h-3.5" />
-        <div className="skeleton h-3 w-3/4 sm:h-3.5" />
-        <div className="skeleton !mt-2.5 h-4 w-2/3 sm:h-5 sm:w-1/2" />
-        <div className="skeleton !mt-2 h-8 w-full sm:h-9" />
+      <div className="space-y-1.5 p-2.5">
+        <div className="skeleton h-3.5 w-full" />
+        <div className="skeleton h-3.5 w-3/4" />
+        <div className="skeleton h-3 w-1/3" />
+        <div className="skeleton !mt-2.5 h-5 w-1/2" />
+        <div className="skeleton !mt-2 h-9 w-full" />
       </div>
     </div>
   );
@@ -36,8 +37,8 @@ export function ListingSkeleton({ banner = false, testId = 'listing-loading' }: 
         <div className="skeleton h-10 flex-1 rounded-xl lg:max-w-40" />
         <div className="skeleton h-10 flex-1 rounded-xl lg:max-w-48" />
       </div>
-      <ul className="grid grid-cols-4 gap-2 sm:gap-4 xl:grid-cols-5">
-        {Array.from({ length: 10 }, (_, i) => <li key={i} className={i >= 8 ? 'max-sm:hidden' : ''}><CardSkeleton /></li>)}
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+        {Array.from({ length: 10 }, (_, i) => <li key={i} className={i >= 4 ? 'max-sm:hidden' : ''}><CardSkeleton /></li>)}
       </ul>
     </div>
   );
