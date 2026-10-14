@@ -42,6 +42,11 @@ class PaymentsQuery {
 class PayoutsQuery { @ApiPropertyOptional({ enum: PayoutStatus }) @IsOptional() @IsEnum(PayoutStatus) status?: PayoutStatus; }
 class CursorQuery { @ApiPropertyOptional() @IsOptional() @IsString() cursor?: string; }
 class PayoutRequestDto { @ApiProperty({ example: '50000' }) @Matches(MINOR_AMOUNT_REGEX) amountMinor: string; }
+class SellerReceivedDto {
+  @ApiPropertyOptional({ enum: ['SELLABLE', 'DAMAGED', 'NOT_ACCEPTED'], default: 'SELLABLE' }) @IsOptional()
+  @IsIn(['SELLABLE', 'DAMAGED', 'NOT_ACCEPTED']) condition?: 'SELLABLE' | 'DAMAGED' | 'NOT_ACCEPTED';
+  @ApiPropertyOptional({ description: 'Required unless sellable' }) @IsOptional() @Transform(trim) @IsString() @MaxLength(300) note?: string;
+}
 class ReceivedDto {
   @ApiProperty({ enum: ['SELLABLE', 'DAMAGED', 'NOT_ACCEPTED'], description: 'What the item looked like when it came back' })
   @IsIn(['SELLABLE', 'DAMAGED', 'NOT_ACCEPTED']) condition: 'SELLABLE' | 'DAMAGED' | 'NOT_ACCEPTED';
@@ -96,9 +101,10 @@ export class SellerFinanceController {
   decide(@CurrentSeller() s: SellerContext, @Param('id', ParseUUIDPipe) id: string, @Body() dto: DecisionDto, @CurrentUser() u: AuthUser) {
     return this.returns.decide(id, dto.decision, u.id, s.id, dto.resolution);
   }
+  /** The item is back with the seller: sellable (default), damaged, or not accepted (with what was wrong). */
   @HttpCode(200) @Post('returns/:id/received')
-  received(@CurrentSeller() s: SellerContext, @Param('id', ParseUUIDPipe) id: string, @CurrentUser() u: AuthUser) {
-    return this.returns.markReceived(id, u.id, s.id);
+  received(@CurrentSeller() s: SellerContext, @Param('id', ParseUUIDPipe) id: string, @Body() dto: SellerReceivedDto, @CurrentUser() u: AuthUser) {
+    return this.returns.markReceived(id, u.id, s.id, { condition: dto.condition, note: dto.note });
   }
 }
 

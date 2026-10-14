@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, BellOff, FileText, Home, Package, ShoppingBag, Store, Wallet } from 'lucide-react';
+import { BarChart3, Bell, BellOff, FileText, Home, MessageCircleQuestion, Package, RotateCcw, ShoppingBag, Star, Store, TicketPercent, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -154,6 +154,11 @@ function Approved({ me, reloadMe, children }: { me: SellerMe; reloadMe: () => Pr
     { href: paths.seller(l), label: t('seller.nav.home'), Icon: Home, exact: true },
     { href: paths.sellerOrders(l), label: t('seller.nav.orders'), Icon: ShoppingBag, badge: open },
     { href: paths.sellerProducts(l), label: t('seller.nav.products'), Icon: Package },
+    { href: paths.sellerReturns(l), label: t('seller.nav.returns'), Icon: RotateCcw, badge: summary?.todo?.returns },
+    { href: paths.sellerQuestions(l), label: t('seller.nav.questions'), Icon: MessageCircleQuestion, badge: summary?.todo?.questions },
+    { href: paths.sellerReviews(l), label: t('seller.nav.reviews'), Icon: Star },
+    { href: paths.sellerCoupons(l), label: t('seller.nav.coupons'), Icon: TicketPercent },
+    { href: paths.sellerReports(l), label: t('seller.nav.reports'), Icon: BarChart3 },
     { href: paths.sellerPayments(l), label: t('seller.nav.payments'), Icon: Wallet },
     { href: paths.sellerStore(l), label: t('seller.nav.store'), Icon: Store },
   ];
@@ -172,7 +177,7 @@ function Approved({ me, reloadMe, children }: { me: SellerMe; reloadMe: () => Pr
               <li key={href} className="shrink-0">
                 <Link href={href} aria-current={active(href, exact) ? 'page' : undefined} className={`flex items-center gap-2.5 whitespace-nowrap rounded-xl px-3 py-2 text-sm font-medium transition ${active(href, exact) ? 'bg-brand-50 text-brand-700' : 'text-ink-700 hover:bg-ink-100'} max-lg:border max-lg:border-ink-200 max-lg:bg-white`}>
                   <Icon className="size-4" aria-hidden />{label}
-                  {!!badge && <span className="tabular min-w-5 rounded-full bg-brand-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white" data-testid="seller-open-orders">{badge}</span>}
+                  {!!badge && <span className="tabular min-w-5 rounded-full bg-brand-600 px-1.5 text-center text-[11px] font-bold leading-5 text-white" data-testid={href === paths.sellerOrders(l) ? 'seller-open-orders' : undefined}>{badge}</span>}
                 </Link>
               </li>
             ))}

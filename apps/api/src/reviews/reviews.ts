@@ -200,15 +200,28 @@ export class ReviewsService {
     return items.map((i) => ({ orderItemId: i.id, title: i.productTitle, imageUrl: this.storage.publicUrl(i.imageKey), orderNumber: i.order.orderNumber }));
   }
 
-  async forSeller(seller: SellerContext, cursor?: string) {
+  /** The store's published reviews (products and the store itself), newest first; the first page also has the summary. */
+  async forSeller(seller: SellerContext, q: ReviewsQuery = {}) {
+    const mine: Prisma.ReviewWhereInput = { status: 'APPROVED', OR: [{ sellerId: seller.id }, { product: { store: { sellerId: seller.id } } }] };
     const rows = await this.prisma.review.findMany({
-      where: { status: 'APPROVED', OR: [{ sellerId: seller.id }, { product: { store: { sellerId: seller.id } } }], ...afterCursor(decodeCursor(cursor)) },
+      where: { ...mine, ...(q.rating && { rating: q.rating }), ...afterCursor(decodeCursor(q.cursor)) },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 26,
-      select: { id: true, target: true, rating: true, body: true, createdAt: true, product: { select: { title: true, slug: true } }, user: { select: { fullName: true } } },
+      select: { id: true, target: true, rating: true, body: true, createdAt: true, images: true, product: { select: { title: true, titleAr: true, slug: true } }, user: { select: { fullName: true } } },
     });
     const p = toPage(rows, 25);
-    return { nextCursor: p.nextCursor, items: p.items.map(({ user, ...r }) => ({ ...r, author: displayName(user.fullName) })) };
+    let summary: { count: number; average: number; byStar: number[] } | undefined;
+    if (!q.cursor) {
+      const groups = await this.prisma.review.groupBy({ by: ['rating'], where: mine, _count: { _all: true } });
+      const byStar = [1, 2, 3, 4, 5].map((n) => groups.find((g) => g.rating === n)?._count._all ?? 0);
+      const count = byStar.reduce((a, b) => a + b, 0);
+      summary = { count, average: count ? Math.round((byStar.reduce((a, n, i) => a + n * (i + 1), 0) / count) * 10) / 10 : 0, byStar };
+    }
+    return {
+      ...(summary && { summary }),
+      nextCursor: p.nextCursor,
+      items: p.items.map(({ user, images, ...r }) => ({ ...r, author: displayName(user.fullName), images: ((images as string[]) ?? []).map((k) => this.storage.publicUrl(k)) })),
+    };
   }
 
   async adminList(q: AdminReviewsQuery) {
@@ -268,7 +281,7 @@ export class ReviewsController {
 @Controller({ path: 'seller/reviews', version: '1' })
 export class SellerReviewsController {
   constructor(private readonly svc: ReviewsService) {}
-  @Get() list(@CurrentSeller() s: SellerContext, @Query('cursor') cursor?: string) { return this.svc.forSeller(s, cursor); }
+  @Get() list(@CurrentSeller() s: SellerContext, @Query() q: ReviewsQuery) { return this.svc.forSeller(s, q); }
 }
 
 @ApiTags('Admin / Reviews') @ApiBearerAuth() @RequirePermissions('reviews.moderate')

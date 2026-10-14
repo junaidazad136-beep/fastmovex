@@ -216,7 +216,7 @@ export class OrdersService {
    * sound), products by status and how many are running low. Counts only; one round trip.
    */
   async sellerSummary(sellerId: string) {
-    const [byStatus, newest, products, low] = await Promise.all([
+    const [byStatus, newest, products, low, questions, returns] = await Promise.all([
       this.prisma.sellerOrder.groupBy({ by: ['status'], where: { sellerId }, _count: { _all: true } }),
       this.prisma.sellerOrder.findFirst({ where: { sellerId, status: 'CONFIRMED' }, orderBy: { createdAt: 'desc' }, select: { id: true, createdAt: true } }),
       this.prisma.product.groupBy({ by: ['status'], where: { store: { sellerId }, deletedAt: null }, _count: { _all: true } }),
@@ -225,6 +225,8 @@ export class OrdersService {
         FROM "Product" p JOIN "Store" s ON s.id = p."storeId" JOIN "ProductVariant" v ON v."productId" = p.id AND v."isActive"
         JOIN "Inventory" i ON i."variantId" = v.id
         WHERE s."sellerId" = ${sellerId}::uuid AND p."deletedAt" IS NULL AND p.status = 'ACTIVE' AND i."onHand" - i.reserved <= i."lowStockThreshold"`,
+      this.prisma.productQuestion.count({ where: { status: 'PENDING', product: { store: { sellerId } } } }),
+      this.prisma.returnRequest.count({ where: { status: { in: ['REQUESTED', 'APPROVED'] }, orderItem: { sellerOrder: { sellerId } } } }),
     ]);
     const o = (st: OrderStatus[]) => byStatus.filter((r) => st.includes(r.status)).reduce((n, r) => n + r._count._all, 0);
     const p = (st: string) => products.find((r) => r.status === st)?._count._all ?? 0;
@@ -232,6 +234,8 @@ export class OrdersService {
       orders: { new: o(['CONFIRMED']), packing: o(['PREPARING']), ready: o(['READY_FOR_PICKUP']), onTheWay: o(['SHIPPED', 'OUT_FOR_DELIVERY']), delivered: o(['DELIVERED']), cancelled: o(['CANCELLED']) },
       newestNew: newest ? { id: newest.id, at: newest.createdAt } : null,
       products: { live: p('ACTIVE'), inReview: p('PENDING_REVIEW'), draft: p('DRAFT'), rejected: p('REJECTED'), lowStock: Number(low[0]?.n ?? 0) },
+      /** waiting for the seller: customers' questions to answer, returns to decide or receive */
+      todo: { questions, returns },
     };
   }
 

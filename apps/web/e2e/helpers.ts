@@ -162,3 +162,28 @@ export function totp(secretBase32: string, at = Date.now()): string {
 export async function settle(page: Page) {
   await expect(page.locator('body > div[hidden][id^="S:"]')).toHaveCount(0, { timeout: 15_000 });
 }
+
+/**
+ * A delivered cash order from a fresh customer for one item of a product (default: the Gadgets store's power bank),
+ * closed by a manager at the counter, and the customer's return request for it. Returns the order number and return id.
+ */
+export async function returnRequest(slug = 'nova-powercore-20000-power-bank', reason = 'Stopped charging after a day'): Promise<{ orderNumber: string; returnId: string }> {
+  const { token } = await freshCustomer();
+  const addresses = await apiCall<{ id: string }[]>(token, 'GET', '/addresses');
+  const product = await apiCall<{ variants: { id: string }[] }>(null, 'GET', `/products/${slug}`);
+  await apiCall(token, 'POST', '/cart/items', { variantId: product.variants[0].id, quantity: 1 });
+  const { orderNumber } = await apiCall<{ orderNumber: string }>(token, 'POST', '/checkout', { addressId: addresses[0].id, paymentMethod: 'COD' }, { 'idempotency-key': `ret-${Date.now()}-${Math.random()}` });
+  const admin = await apiToken('admin@demo.fastmovex.test');
+  const shipmentId = (await apiCall<{ sellerOrders: { id: string }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`)).sellerOrders[0].id;
+  for (const status of ['PREPARING', 'READY_FOR_PICKUP']) await apiCall(admin, 'POST', `/admin/orders/shipments/${shipmentId}/status`, { status });
+  for (let i = 0; i < 30; i++) {
+    const o = await apiCall<{ sellerOrders: { delivery: { id: string } | null }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`);
+    if (o.sellerOrders[0].delivery) break;
+    await new Promise((r) => setTimeout(r, 200));
+  }
+  await apiCall(admin, 'POST', `/admin/orders/shipments/${shipmentId}/status`, { status: 'SHIPPED' });
+  await apiCall(admin, 'POST', `/admin/orders/shipments/${shipmentId}/status`, { status: 'DELIVERED', overrideReason: 'Collected at the warehouse counter' });
+  const order = await apiCall<{ sellerOrders: { items: { id: string }[] }[] }>(admin, 'GET', `/admin/orders/${orderNumber}`);
+  const { id } = await apiCall<{ id: string }>(token, 'POST', `/orders/${orderNumber}/returns`, { orderItemId: order.sellerOrders[0].items[0].id, quantity: 1, reason });
+  return { orderNumber, returnId: id };
+}

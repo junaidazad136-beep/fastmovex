@@ -8,6 +8,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WarehousesService } from '../warehouses/warehouses';
 import { returnDeadline, returnRefundAmount } from './finance-math';
 import { RefundsService } from './refunds.service';
+import { StorageService } from '../storage/storage.service';
 
 const OPEN_RETURN: ReturnStatus[] = ['REQUESTED', 'APPROVED'];
 
@@ -19,6 +20,7 @@ export class ReturnsService {
     private readonly audit: AuditService,
     @Optional() private readonly events?: EventEmitter2,
     @Optional() private readonly warehouseService?: WarehousesService,
+    @Optional() private readonly storage?: StorageService,
   ) {}
 
   private get warehouses(): WarehousesService {
@@ -72,14 +74,29 @@ export class ReturnsService {
     });
   }
 
+  /** The store's returns: only what the seller needs (no customer or staff ids); photos the customer added. */
   async listForSeller(sellerId: string, q: { status?: ReturnStatus; cursor?: string }) {
     const rows = await this.prisma.returnRequest.findMany({
       where: { status: q.status, orderItem: { sellerOrder: { sellerId } }, ...afterCursor(decodeCursor(q.cursor)) },
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 26,
-      include: { orderItem: { select: { productTitle: true, sku: true, quantity: true, order: { select: { orderNumber: true } } } } },
+      select: {
+        id: true, quantity: true, reason: true, images: true, status: true, resolution: true, condition: true, inspectionNote: true, receivedAt: true, createdAt: true,
+        pickup: { select: { status: true, date: true } },
+        orderItem: { select: { productTitle: true, sku: true, quantity: true, unitPriceMinor: true, imageKey: true, sellerOrderId: true, order: { select: { orderNumber: true, currencyCode: true } } } },
+      },
     });
-    return toPage(rows, 25);
+    const page = toPage(rows, 25);
+    const url = (k: string | null) => (k ? this.storage?.publicUrl(k) ?? null : null);
+    return {
+      ...page,
+      items: page.items.map(({ images, orderItem: { imageKey, unitPriceMinor, ...item }, pickup, ...r }) => ({
+        ...r,
+        images: ((images as string[]) ?? []).map(url).filter(Boolean),
+        pickup: pickup ? { status: pickup.status, date: pickup.date.toISOString().slice(0, 10) } : null,
+        orderItem: { ...item, unitPriceMinor: unitPriceMinor.toString(), imageUrl: url(imageKey) },
+      })),
+    };
   }
 
   async listForAdmin(q: { status?: ReturnStatus; cursor?: string }) {

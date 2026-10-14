@@ -1,6 +1,6 @@
 'use client';
 
-import { AlertTriangle, ArrowRight, Bell, BellOff, ExternalLink, Package, PackageCheck, Plus, ShoppingBag, Truck } from 'lucide-react';
+import { AlertTriangle, ArrowRight, Bell, BellOff, ExternalLink, MessageCircleQuestion, Package, PackageCheck, Plus, RotateCcw, ShoppingBag, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { api } from '@/lib/api/client';
@@ -22,6 +22,7 @@ export function SellerDashboard() {
 
   const o = summary?.orders;
   const p = summary?.products;
+  const todo = summary?.todo ?? { questions: 0, returns: 0 };
   const tiles = [
     { label: t('seller.home.newOrders'), value: o?.new, href: `${paths.sellerOrders(l)}?tab=new`, Icon: ShoppingBag, hot: (o?.new ?? 0) > 0, id: 'new' },
     { label: t('seller.home.packing'), value: o?.packing, href: `${paths.sellerOrders(l)}?tab=packing`, Icon: Package, id: 'packing' },
@@ -58,6 +59,17 @@ export function SellerDashboard() {
           </li>
         ))}
       </ul>
+
+      {(todo.questions > 0 || todo.returns > 0) && (
+        <ul className="grid gap-3 sm:grid-cols-2" data-testid="seller-todo">
+          {todo.returns > 0 && (
+            <li><Link href={paths.sellerReturns(l)} className="flex items-center gap-3 rounded-2xl border border-warning-600/30 bg-warning-50 p-4 text-sm font-semibold text-warning-600 hover:shadow-sm"><RotateCcw className="size-5 shrink-0" aria-hidden /><span className="flex-1">{t.plural('seller.home.todoReturns', todo.returns)}</span><ArrowRight className="size-4 rtl:rotate-180" aria-hidden /></Link></li>
+          )}
+          {todo.questions > 0 && (
+            <li><Link href={paths.sellerQuestions(l)} className="flex items-center gap-3 rounded-2xl border border-brand-200 bg-brand-50 p-4 text-sm font-semibold text-brand-800 hover:shadow-sm"><MessageCircleQuestion className="size-5 shrink-0" aria-hidden /><span className="flex-1">{t.plural('seller.home.todoQuestions', todo.questions)}</span><ArrowRight className="size-4 rtl:rotate-180" aria-hidden /></Link></li>
+          )}
+        </ul>
+      )}
 
       <div className="grid gap-4 lg:grid-cols-2">
         <section className="card p-5">

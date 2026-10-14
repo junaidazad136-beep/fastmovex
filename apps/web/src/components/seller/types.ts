@@ -27,6 +27,8 @@ export interface SellerSummary {
   orders: { new: number; packing: number; ready: number; onTheWay: number; delivered: number; cancelled: number };
   newestNew: { id: string; at: string } | null;
   products: { live: number; inReview: number; draft: number; rejected: number; lowStock: number };
+  /** waiting for the seller: questions to answer, returns to decide or receive */
+  todo?: { questions: number; returns: number };
 }
 
 export interface SellerOrderRow {
