@@ -44,7 +44,12 @@ export interface BrandDetail extends SeoText { slug: string; name: string; nameA
 export type PaymentMethod = 'CARD' | 'APPLE_PAY' | 'GOOGLE_PAY' | 'COD' | 'PAYLATER';
 export type AddressField = 'city' | 'zone' | 'street' | 'building' | 'unit' | 'line1' | 'postalCode';
 
-export interface StoreRef { slug: string; name: string; nameAr: string | null }
+export interface StoreRef {
+  slug: string; name: string; nameAr: string | null;
+  /** the store is closed for a holiday until then (nothing can be bought); absent or null = open */
+  awayUntil?: string | null;
+  awayMessage?: string | null;
+}
 
 export interface ProductCard {
   id: string;
@@ -249,9 +254,12 @@ export interface StoreDetail {
   bannerUrl: string | null;
   productCount: number;
   verified: boolean;
+  /** closed for a holiday until then */
+  awayUntil?: string | null;
+  awayMessage?: string | null;
 }
 
-export type LineIssue = 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'PRICE_CHANGED' | 'WRONG_COUNTRY';
+export type LineIssue = 'UNAVAILABLE' | 'STORE_AWAY' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'PRICE_CHANGED' | 'WRONG_COUNTRY';
 export type CouponReason =
   | 'NOT_FOUND' | 'INACTIVE' | 'NOT_STARTED' | 'EXPIRED' | 'USAGE_LIMIT' | 'LOGIN_REQUIRED'
   | 'PER_USER_LIMIT' | 'FIRST_ORDER_ONLY' | 'NEW_CUSTOMERS_ONLY' | 'MIN_ORDER' | 'NO_ELIGIBLE_ITEMS';

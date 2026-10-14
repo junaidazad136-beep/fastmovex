@@ -13,6 +13,7 @@ import { Spinner } from '../ui/Spinner';
 import { useSeller } from './SellerShell';
 import { BankForm, LogoBlock, StoreProfileForm } from './StoreForms';
 import type { SellerBalance, SellerPayout, StatementRow } from './types';
+import { HolidayCard } from './Health';
 
 const PAYOUT_TONE: Record<SellerPayout['status'], string> = {
   REQUESTED: 'bg-sky-50 text-sky-700', APPROVED: 'bg-sky-50 text-sky-700', PROCESSING: 'bg-sky-50 text-sky-700', PAID: 'bg-success-50 text-success-700', REJECTED: 'bg-danger-50 text-danger-600',
@@ -110,6 +111,7 @@ export function SellerStore() {
   return (
     <div className="space-y-5" data-testid="seller-store">
       <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('seller.store.title')}</h1>
+      {me.status === 'APPROVED' && <HolidayCard />}
       <section className="card space-y-4 p-5">
         <h2 className="font-semibold">{t('seller.store.profile')}</h2>
         <LogoBlock me={me} onDone={reloadMe} />

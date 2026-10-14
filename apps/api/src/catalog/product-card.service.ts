@@ -1,6 +1,7 @@
 import { Injectable } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { storeOpen } from '../stores/away';
 
 /** The one product-card shape used by search, home, store pages, wishlist. BigInt money is sent as string. */
 export interface ProductCard {
@@ -74,11 +75,12 @@ export class ProductCardService {
   ) {}
 
   /** One query for any number of ids (no N+1). Keeps the order of `ids`; silently drops ids that are no longer visible. */
-  async hydrate(ids: string[]): Promise<ProductCard[]> {
+  async hydrate(ids: string[], opts: { includeAway?: boolean } = {}): Promise<ProductCard[]> {
     if (!ids.length) return [];
     const nowDate = new Date();
     const rows = await this.prisma.product.findMany({
-      where: { id: { in: ids }, status: 'ACTIVE', deletedAt: null, store: { isActive: true, seller: { status: 'APPROVED' } } },
+      // a store on holiday drops out of lists (a shopper's wishlist still shows its products)
+      where: { id: { in: ids }, status: 'ACTIVE', deletedAt: null, store: { isActive: true, seller: { status: 'APPROVED' }, ...(!opts.includeAway && storeOpen(nowDate)) } },
       select: {
         id: true, slug: true, title: true, titleAr: true, ratingAvg: true, ratingCount: true, soldCount: true, sponsoredUntil: true, countryCode: true,
         store: { select: { slug: true, name: true, nameAr: true } },

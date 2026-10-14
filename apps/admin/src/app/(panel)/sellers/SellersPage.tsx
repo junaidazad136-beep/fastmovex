@@ -2,11 +2,11 @@
 
 import { useState } from 'react';
 import { summaryStale } from '@/components/layout/Shell';
-import { Badge, Card, ConfirmDialog, EmptyState, ErrorState, LoadMore, PageHeader, SearchInput, SkeletonRows, StatusBadge, Table, Tabs } from '@/components/ui';
+import { Badge, Card, ConfirmDialog, Dialog, EmptyState, ErrorState, LoadMore, Loading, PageHeader, SearchInput, SkeletonRows, StatusBadge, Table, Tabs } from '@/components/ui';
 import { api } from '@/lib/api/client';
 import { formatDate } from '@/lib/format';
 import { useSession } from '@/lib/state/session';
-import { qs, useAction, useCursorList, useUrlState } from '@/lib/use-api';
+import { qs, useAction, useApi, useCursorList, useUrlState } from '@/lib/use-api';
 
 interface Seller { id: string; businessName: string; contactEmail: string | null; contactPhone: string | null; status: string; createdAt: string; isHouse?: boolean; store: { name: string; slug: string } | null; _count: { documents: number } }
 
@@ -20,6 +20,7 @@ export function SellersPage() {
   const list = useCursorList<Seller>(ready ? `/admin/sellers${qs({ status: f.status, q: f.q })}` : null);
   const { busy, run } = useAction();
   const [confirm, setConfirm] = useState<{ s: Seller; kind: 'approve' | 'reject' | 'suspend' | 'reinstate' } | null>(null);
+  const [health, setHealth] = useState<Seller | null>(null);
 
   async function act(reason: string) {
     if (!confirm) return;
@@ -53,6 +54,7 @@ export function SellersPage() {
                           <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => setConfirm({ s, kind: 'approve' })}>Approve</button>
                         </>
                       ) : null}
+                      {s.status === 'APPROVED' && !s.isHouse ? <button type="button" className="btn-secondary btn-sm" onClick={() => setHealth(s)} data-testid="seller-health">Health</button> : null}
                       {can('sellers.suspend') && s.status === 'APPROVED' && !s.isHouse ? <button type="button" className="btn-danger btn-sm" disabled={!!busy} onClick={() => setConfirm({ s, kind: 'suspend' })}>Suspend</button> : null}
                       {can('sellers.suspend') && s.status === 'SUSPENDED' ? <button type="button" className="btn-secondary btn-sm" disabled={!!busy} onClick={() => setConfirm({ s, kind: 'reinstate' })}>Reinstate</button> : null}
                     </div>
@@ -65,6 +67,9 @@ export function SellersPage() {
         {list.items?.length === 0 ? <EmptyState title="No sellers here" /> : null}
         <LoadMore hasMore={list.hasMore} loading={list.loading} onClick={list.loadMore} />
       </Card>
+      <Dialog open={!!health} onClose={() => setHealth(null)} title={health ? `Account health — ${health.businessName}` : ''} size="lg">
+        {health ? <HealthView id={health.id} /> : null}
+      </Dialog>
       <ConfirmDialog
         open={!!confirm}
         onClose={() => setConfirm(null)}
@@ -77,5 +82,44 @@ export function SellersPage() {
         busy={!!busy}
       />
     </>
+  );
+}
+
+interface Metric { key: string; value: number | null; count: number; of: number; target: number; limit: number; days: number; state: 'good' | 'warn' | 'bad' | 'none' }
+const METRIC: Record<string, string> = {
+  cancellations: 'Orders the store cancelled', lateDispatch: 'Packed later than 24 h', returns: 'Items returned', rating: 'Customer rating', questions: 'Questions answered in 48 h',
+};
+const STATE: Record<Metric['state'], { label: string; tone: 'green' | 'amber' | 'red' | 'gray' }> = {
+  good: { label: 'On target', tone: 'green' }, warn: { label: 'Near the limit', tone: 'amber' }, bad: { label: 'Past the limit', tone: 'red' }, none: { label: 'Not enough data', tone: 'gray' },
+};
+
+/** The seller's Account Health, as the seller sees it in their Seller Center (cancellations, late packing, returns, rating, answers). */
+function HealthView({ id }: { id: string }) {
+  const h = useApi<{ status: 'good' | 'risk' | 'poor'; metrics: Metric[] }>(`/admin/sellers/${id}/health`);
+  if (h.error) return <ErrorState error={h.error} onRetry={h.reload} />;
+  if (!h.data) return <Loading />;
+  const pct = (v: number) => `${(v * 100).toFixed(1)}%`;
+  return (
+    <div className="space-y-3 text-sm" data-testid="seller-health-view">
+      <p className="flex items-center gap-2">Overall: <Badge tone={h.data.status === 'good' ? 'green' : h.data.status === 'risk' ? 'amber' : 'red'}>{h.data.status === 'good' ? 'Good' : h.data.status === 'risk' ? 'At risk' : 'Poor'}</Badge></p>
+      <Table>
+        <thead><tr><th className="th">Measure</th><th className="th text-end">Value</th><th className="th text-end">Target</th><th className="th">Basis</th><th className="th">State</th></tr></thead>
+        <tbody>
+          {h.data.metrics.map((m) => {
+            const rating = m.key === 'rating';
+            const higher = rating || m.key === 'questions';
+            return (
+              <tr key={m.key}>
+                <td className="td font-medium">{METRIC[m.key] ?? m.key}</td>
+                <td className="td text-end tabular-nums">{m.value === null ? '–' : rating ? m.value.toFixed(1) : pct(m.value)}</td>
+                <td className="td text-end tabular-nums text-ink-600">{rating ? `${m.target.toFixed(1)}+` : higher ? `${pct(m.target)}+` : `< ${pct(m.target)}`}</td>
+                <td className="td text-ink-600">{rating ? `${m.of} reviews` : `${m.count} of ${m.of}`}, {m.days} days</td>
+                <td className="td"><Badge tone={STATE[m.state].tone}>{STATE[m.state].label}</Badge></td>
+              </tr>
+            );
+          })}
+        </tbody>
+      </Table>
+    </div>
   );
 }

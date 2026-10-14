@@ -74,6 +74,12 @@ export default async function StorePage({ params, searchParams }: PageProps<'/[l
         </div>
         {description && <p className="border-t border-ink-100 px-4 py-4 text-sm leading-6 text-ink-600 sm:px-6">{description}</p>}
       </section>
+      {s.awayUntil && (
+        <p className="mt-4 rounded-2xl border border-warning-600/30 bg-warning-50 px-4 py-3 text-sm font-medium text-warning-600" data-testid="store-away" role="status">
+          {t('store.away', { date: formatDate(s.awayUntil, locale, { day: 'numeric', month: 'long' }) })}
+          {s.awayMessage && <span className="mt-1 block font-normal text-ink-700" dir="auto">“{s.awayMessage}”</span>}
+        </p>
+      )}
 
       <div className="mt-8">
         <Listing

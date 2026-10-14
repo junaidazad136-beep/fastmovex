@@ -1,4 +1,4 @@
-export type LineIssue = 'UNAVAILABLE' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'PRICE_CHANGED' | 'WRONG_COUNTRY';
+export type LineIssue = 'UNAVAILABLE' | 'STORE_AWAY' | 'OUT_OF_STOCK' | 'INSUFFICIENT_STOCK' | 'PRICE_CHANGED' | 'WRONG_COUNTRY';
 
 /** Everything the engine needs about one cart line. Built from the DATABASE, never from client input. */
 export interface PricingLine {

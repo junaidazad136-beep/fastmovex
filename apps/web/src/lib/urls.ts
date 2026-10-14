@@ -31,6 +31,7 @@ export const paths = {
   sellerReviews: (l: Locale) => `/${l}/seller/reviews`,
   sellerCoupons: (l: Locale) => `/${l}/seller/coupons`,
   sellerReports: (l: Locale) => `/${l}/seller/reports`,
+  sellerHealth: (l: Locale) => `/${l}/seller/health`,
   orders: (l: Locale) => `/${l}/account/orders`,
   order: (l: Locale, number: string) => `/${l}/account/orders/${number}`,
   addresses: (l: Locale) => `/${l}/account/addresses`,

@@ -89,7 +89,9 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
     }
   }
   const goods = price ? BigInt(price.now) * BigInt(qty) : 0n;
-  const canBuy = ready && !!variant?.inStock && !buying;
+  /** the store is closed for a holiday: the page stays, nothing can be bought until it is back */
+  const away = product.store.awayUntil && new Date(product.store.awayUntil).getTime() > Date.now() ? product.store.awayUntil : null;
+  const canBuy = ready && !!variant?.inStock && !buying && !away;
 
   const storeName = pick(t.locale, product.store.name, product.store.nameAr);
   /** option words in the shopper's language ("Colour" → "اللون"); sizes and codes stay as they are */
@@ -255,6 +257,13 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
           )}
         </div>
 
+        {away && (
+          <div className="mt-4 rounded-2xl border border-warning-600/30 bg-warning-50 p-4 text-sm" data-testid="store-away" role="status">
+            <p className="font-semibold text-warning-600">{t('product.storeAway', { date: new Date(away).toLocaleDateString(t.locale === 'ar' ? 'ar-QA-u-nu-latn' : 'en-GB', { day: 'numeric', month: 'long' }) })}</p>
+            {product.store.awayMessage && <p className="mt-1 text-ink-700" dir="auto">“{product.store.awayMessage}”</p>}
+            <p className="mt-1 text-ink-600">{t('product.storeAwayHint')}</p>
+          </div>
+        )}
         {/* Phones add from the bar at the bottom of the screen; here they pick the quantity (and save to the wishlist). */}
         <div className="mt-4 flex items-stretch gap-3">
           <div className="flex items-center justify-between rounded-xl border border-ink-200 bg-white max-md:flex-1">
@@ -266,7 +275,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
               <Plus className="size-4" aria-hidden />
             </button>
           </div>
-          <button type="button" onClick={add} disabled={!ready || !variant?.inStock} className="btn-primary btn-lg flex-1 max-md:hidden" data-testid="add-to-cart">
+          <button type="button" onClick={add} disabled={!ready || !variant?.inStock || !!away} className="btn-primary btn-lg flex-1 max-md:hidden" data-testid="add-to-cart">
             {justAdded ? <Check className="pop size-5" aria-hidden /> : null}
             {justAdded ? t('product.added') : t('product.addToCart')}
           </button>
@@ -320,12 +329,12 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
                 <button
                   type="button"
                   onClick={add}
-                  disabled={!ready || buying}
+                  disabled={!ready || buying || !!away}
                   className="btn-primary h-12 min-w-0 flex-1 rounded-xl px-2 text-[15px]"
                   data-testid="sticky-add"
                 >
                   {justAdded ? <Check className="pop size-5 shrink-0" aria-hidden /> : null}
-                  <span className="truncate">{justAdded ? t('product.added') : t('product.addToCart')}</span>
+                  <span className="truncate">{justAdded ? t('product.added') : away ? t('product.onHoliday') : t('product.addToCart')}</span>
                 </button>
                 <button
                   type="button"

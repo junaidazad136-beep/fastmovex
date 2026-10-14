@@ -7,6 +7,7 @@ import { pickSizeChart, toSizeChart } from '../size-charts/size-chart';
 import { validGtin } from '../seo/seo-rules';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { isAway } from '../stores/away';
 
 /** A product is visible to customers only if product, store and seller are all live. Single definition used everywhere. */
 export const VISIBLE_PRODUCT = {
@@ -76,7 +77,7 @@ export class PublicProductsService {
         returnPolicyDays: true, warrantyMonths: true, ratingAvg: true, ratingCount: true, soldCount: true, minPriceMinor: true, countryCode: true,
         category: { select: { slug: true, name: true, nameAr: true, path: true } },
         brand: { select: { name: true, nameAr: true, slug: true, logoKey: true } },
-        store: { select: { slug: true, name: true, nameAr: true, logoKey: true, ratingAvg: true, ratingCount: true, seller: { select: { returnWindowDays: true, isHouse: true } } } },
+        store: { select: { slug: true, name: true, nameAr: true, logoKey: true, ratingAvg: true, ratingCount: true, awayUntil: true, awayMessage: true, seller: { select: { returnWindowDays: true, isHouse: true } } } },
         images: { select: { id: true, fileKey: true, kind: true, altText: true, variantId: true }, orderBy: { sortOrder: 'asc' } },
         variants: {
           where: { isActive: true },
@@ -108,7 +109,11 @@ export class PublicProductsService {
       sizeChart: chartRow ? toSizeChart(chartRow) : null,
       // 0 = not returnable; otherwise the product's own window or the seller's default (same rule as return requests)
       returnWindowDays: rest.returnPolicyDays ?? store.seller.returnWindowDays,
-      store: { slug: store.slug, name: store.name, nameAr: store.nameAr, ratingAvg: store.ratingAvg, ratingCount: store.ratingCount, logoUrl: this.storage.publicUrl(store.logoKey), isHouse: store.seller.isHouse },
+      store: {
+        slug: store.slug, name: store.name, nameAr: store.nameAr, ratingAvg: store.ratingAvg, ratingCount: store.ratingCount, logoUrl: this.storage.publicUrl(store.logoKey), isHouse: store.seller.isHouse,
+        // on holiday: the page stays, but nothing can be bought until this date
+        ...(isAway(store.awayUntil) ? { awayUntil: store.awayUntil, awayMessage: store.awayMessage } : { awayUntil: null, awayMessage: null }),
+      },
       images: images.map(({ fileKey, ...i }) => ({ ...i, url: this.storage.publicUrl(fileKey) })),
       variants: variants.map(({ inventory, campaignProducts, barcode, ...v }) => {
         const available = Math.max(0, (inventory?.onHand ?? 0) - (inventory?.reserved ?? 0));

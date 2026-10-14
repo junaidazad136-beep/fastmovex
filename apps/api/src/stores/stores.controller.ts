@@ -4,6 +4,7 @@ import { CacheService } from '../cache/cache.service';
 import { Public } from '../common/decorators/auth.decorators';
 import { PrismaService } from '../prisma/prisma.service';
 import { StorageService } from '../storage/storage.service';
+import { isAway } from './away';
 
 /** Public store page header. Products come from GET /search?store=<slug> (same filters/sorting as search). */
 @ApiTags('Stores')
@@ -22,13 +23,14 @@ export class StoresController {
         where: { slug, isActive: true, seller: { status: 'APPROVED' } },
         select: {
           slug: true, name: true, nameAr: true, description: true, descriptionAr: true, logoKey: true, bannerKey: true, city: true,
-          ratingAvg: true, ratingCount: true, createdAt: true,
+          ratingAvg: true, ratingCount: true, createdAt: true, awayUntil: true, awayMessage: true,
           _count: { select: { products: { where: { status: 'ACTIVE', deletedAt: null } } } },
         },
       });
       if (!s) return null;
-      const { logoKey, bannerKey, _count, ...rest } = s;
-      return { ...rest, logoUrl: this.storage.publicUrl(logoKey), bannerUrl: this.storage.publicUrl(bannerKey), productCount: _count.products, verified: true };
+      const { logoKey, bannerKey, _count, awayUntil, awayMessage, ...rest } = s;
+      const away = isAway(awayUntil);
+      return { ...rest, awayUntil: away ? awayUntil : null, awayMessage: away ? awayMessage : null, logoUrl: this.storage.publicUrl(logoKey), bannerUrl: this.storage.publicUrl(bannerKey), productCount: _count.products, verified: true };
     });
     if (!store) throw new NotFoundException('Store not found');
     return store;

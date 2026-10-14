@@ -4,6 +4,7 @@ import { Prisma } from '@prisma/client';
 import { PrismaService } from '../prisma/prisma.service';
 import { searchWords } from './search-text';
 import { Facets, SearchEngine, SearchHits, SearchParams, Suggestions } from './search.types';
+import { STORE_OPEN_SQL } from '../stores/away';
 
 const { sql, join } = Prisma;
 
@@ -46,6 +47,7 @@ export function buildBaseQuery(p: SearchParams): Prisma.Sql {
     sql`p."status" = 'ACTIVE'`,
     sql`p."deletedAt" IS NULL`,
     sql`s."isActive" = true`,
+    STORE_OPEN_SQL, // not on holiday
     sql`se."status" = 'APPROVED'`,
     sql`p."countryCode" = ${p.countryCode}`,
   ];
@@ -203,7 +205,7 @@ export class PostgresSearchEngine extends SearchEngine {
         FROM "Product" p
         JOIN "Category" c ON c."id" = p."categoryId"
         JOIN "Store" s ON s."id" = p."storeId" JOIN "Seller" se ON se."id" = s."sellerId"
-        WHERE p."status" = 'ACTIVE' AND p."deletedAt" IS NULL AND s."isActive" = true AND se."status" = 'APPROVED'
+        WHERE p."status" = 'ACTIVE' AND p."deletedAt" IS NULL AND s."isActive" = true AND ${STORE_OPEN_SQL} AND se."status" = 'APPROVED'
           AND p."countryCode" = ${countryCode}
           AND (p."title" ILIKE ${prefix} OR ${q} <% p."title" OR fastmovex_search_norm(p."titleAr") LIKE fastmovex_search_norm(${prefix}))
         ORDER BY (p."title" ILIKE ${prefix}) DESC, word_similarity(${q}, p."title") DESC, p."soldCount" DESC

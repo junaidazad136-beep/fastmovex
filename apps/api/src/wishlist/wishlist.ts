@@ -82,7 +82,7 @@ export class WishlistService {
   async items(userId: string, listId: string) {
     await this.ownList(userId, listId);
     const rows = await this.prisma.wishlistItem.findMany({ where: { wishlistId: listId }, orderBy: { addedAt: 'desc' }, take: MAX_ITEMS });
-    const cards = await this.cards.hydrate(rows.map((r) => r.productId));
+    const cards = await this.cards.hydrate(rows.map((r) => r.productId), { includeAway: true });
     const byId = new Map(cards.map((c) => [c.id, c]));
     return rows.map((r) => {
       const card = byId.get(r.productId) ?? null; // null = product no longer sold (kept so the user sees it)

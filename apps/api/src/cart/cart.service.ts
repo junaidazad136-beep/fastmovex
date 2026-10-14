@@ -9,6 +9,7 @@ import { priceCart } from '../pricing/pricing.engine';
 import { CouponRule, LineIssue, PricedCart, PricingLine } from '../pricing/pricing.types';
 import { StorageService } from '../storage/storage.service';
 import { MAX_CART_LINES, MAX_QTY_PER_LINE } from './dto/cart.dto';
+import { isAway } from '../stores/away';
 
 export interface CartContext {
   country: CountryInfo;
@@ -36,7 +37,7 @@ export function arabicOptions(options: unknown, dict: unknown): Record<string, s
   return Object.fromEntries(Object.entries(o).map(([k, v]) => [d[k] ?? k, d[String(v)] ?? String(v)]));
 }
 
-const BLOCKING: LineIssue[] = ['UNAVAILABLE', 'OUT_OF_STOCK', 'INSUFFICIENT_STOCK', 'WRONG_COUNTRY'];
+const BLOCKING: LineIssue[] = ['UNAVAILABLE', 'STORE_AWAY', 'OUT_OF_STOCK', 'INSUFFICIENT_STOCK', 'WRONG_COUNTRY'];
 
 const ITEM_SELECT = {
   id: true, quantity: true, priceSnapshotMinor: true, addedAt: true,
@@ -52,7 +53,7 @@ const ITEM_SELECT = {
           id: true, slug: true, title: true, titleAr: true, optionsAr: true, status: true, deletedAt: true, countryCode: true,
           category: { select: { path: true } },
           images: { select: { fileKey: true }, orderBy: { sortOrder: 'asc' as const }, take: 1 },
-          store: { select: { name: true, nameAr: true, slug: true, isActive: true, sellerId: true, seller: { select: { status: true } } } },
+          store: { select: { name: true, nameAr: true, slug: true, isActive: true, awayUntil: true, sellerId: true, seller: { select: { status: true } } } },
         },
       },
     },
@@ -80,6 +81,7 @@ export function lineIssues(row: ItemRow, countryCode: string, unit: bigint): { i
   const visible = v.isActive && p.status === 'ACTIVE' && !p.deletedAt && p.store.isActive && p.store.seller.status === 'APPROVED';
   const available = Math.max(0, (v.inventory?.onHand ?? 0) - (v.inventory?.reserved ?? 0));
   if (!visible) issues.push('UNAVAILABLE');
+  else if (isAway(p.store.awayUntil)) issues.push('STORE_AWAY');
   else if (p.countryCode !== countryCode) issues.push('WRONG_COUNTRY');
   else if (available === 0) issues.push('OUT_OF_STOCK');
   else if (row.quantity > available) issues.push('INSUFFICIENT_STOCK');
@@ -196,7 +198,7 @@ export class CartService {
       const store = items[0].row.variant.product.store;
       const g = groupBySeller.get(sid);
       return {
-        store: { slug: store.slug, name: store.name, nameAr: store.nameAr },
+        store: { slug: store.slug, name: store.name, nameAr: store.nameAr, awayUntil: isAway(store.awayUntil) ? store.awayUntil : null },
         items: items.map((l) => {
           const p = l.row.variant.product;
           const pl = pricedById.get(l.row.id);
@@ -296,12 +298,13 @@ export class CartService {
         id: true, isActive: true, priceMinor: true, sku: true, optionValues: true, compareAtMinor: true,
         inventory: { select: { onHand: true, reserved: true } },
         campaignProducts: ITEM_SELECT.variant.select.campaignProducts,
-        product: { select: { status: true, deletedAt: true, countryCode: true, store: { select: { isActive: true, seller: { select: { status: true } } } } } },
+        product: { select: { status: true, deletedAt: true, countryCode: true, store: { select: { isActive: true, awayUntil: true, seller: { select: { status: true } } } } } },
       },
     });
     const visible = v && v.isActive && v.product.status === 'ACTIVE' && !v.product.deletedAt && v.product.store.isActive && v.product.store.seller.status === 'APPROVED';
     if (!v || !visible) throw new NotFoundException('This product is no longer available');
     if (v.product.countryCode !== ctx.country.code) throw new BadRequestException('This product is not sold in your country');
+    if (isAway(v.product.store.awayUntil, now)) throw new BadRequestException({ message: 'This store is on holiday and not taking orders right now', reason: 'STORE_AWAY' });
 
     const available = Math.max(0, (v.inventory?.onHand ?? 0) - (v.inventory?.reserved ?? 0));
     if (available === 0) throw new ConflictException({ message: 'Out of stock', available: 0 });

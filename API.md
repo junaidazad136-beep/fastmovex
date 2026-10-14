@@ -351,6 +351,19 @@ a SKU inside that store; sellers cannot add brands (an unknown brand is a line e
 | GET | `/seller/products/export.csv` | 🔒 seller — the store's products |
 | POST | `/seller/products/import?dryRun=true` | 🔒 seller — multipart `file`; 30 an hour; returns `{ products, variants, stockChanges, errors[{ line, sku, message }], warnings }` |
 
+### Account Health and holiday mode
+
+`GET /seller/health` (and staff: `GET /admin/sellers/{id}/health`, sellers.read) returns `{ status: good | risk | poor,
+metrics: [{ key, value, count, of, target, limit, days, state: good | warn | bad | none }] }` for: `cancellations` (orders
+the store cancelled, 30 days, target < 2.5%, limit 5%), `lateDispatch` (ready for pickup more than 24 h after the order,
+30 days, < 4% / 10%), `returns` (items returned of items delivered, 30 days, < 8% / 15%), `rating` (published reviews,
+90 days, ≥ 4.0 / 3.5) and `questions` (answered within 48 h, ≥ 90% / 70%). A measure needs enough cases before it is judged.
+
+`PUT /seller/away { until: ISO date | null, message? }` closes the store until a date (max 90 days): its products leave
+search, categories and home rails, cannot be added to a cart (400, `reason: STORE_AWAY`), cart lines get the blocking
+issue `STORE_AWAY`, and product / store pages carry `store.awayUntil` and `awayMessage`. It reopens by itself.
+`GET /seller/away` returns the current state.
+
 ### Automatic Arabic
 
 Sellers and staff may write product text in English or Arabic; the API writes the other language (DeepL, when

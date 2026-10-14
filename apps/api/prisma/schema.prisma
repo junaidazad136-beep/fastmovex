@@ -557,6 +557,10 @@ model Store {
   nameAr        String?
   description   String?
   descriptionAr String?
+  /// vacation mode: closed until this moment (products hidden from lists and not for sale); null = open
+  awayUntil     DateTime?
+  /// shown to customers while away ("Back on 20 October — orders before that are still delivered")
+  awayMessage   String?
   /// machine-translated fields, as on Product
   autoText      Json     @default("{}")
   translatedAt  DateTime?

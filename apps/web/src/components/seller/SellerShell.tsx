@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Bell, BellOff, FileText, Home, MessageCircleQuestion, Package, RotateCcw, ShoppingBag, Star, Store, TicketPercent, Wallet } from 'lucide-react';
+import { BarChart3, Bell, HeartPulse, BellOff, FileText, Home, MessageCircleQuestion, Package, RotateCcw, ShoppingBag, Star, Store, TicketPercent, Wallet } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -15,6 +15,7 @@ import { RequireAuth } from '../auth/RequireAuth';
 import { BecomeSeller } from './BecomeSeller';
 import { Onboarding } from './Onboarding';
 import type { SellerMe, SellerSummary } from './types';
+import { AwayBanner } from './Health';
 
 interface SellerCtx {
   me: SellerMe;
@@ -159,6 +160,7 @@ function Approved({ me, reloadMe, children }: { me: SellerMe; reloadMe: () => Pr
     { href: paths.sellerReviews(l), label: t('seller.nav.reviews'), Icon: Star },
     { href: paths.sellerCoupons(l), label: t('seller.nav.coupons'), Icon: TicketPercent },
     { href: paths.sellerReports(l), label: t('seller.nav.reports'), Icon: BarChart3 },
+    { href: paths.sellerHealth(l), label: t('seller.nav.health'), Icon: HeartPulse },
     { href: paths.sellerPayments(l), label: t('seller.nav.payments'), Icon: Wallet },
     { href: paths.sellerStore(l), label: t('seller.nav.store'), Icon: Store },
   ];
@@ -194,7 +196,7 @@ function Approved({ me, reloadMe, children }: { me: SellerMe; reloadMe: () => Pr
             </li>
           </ul>
         </nav>
-        <div className="min-w-0">{children}</div>
+        <div className="min-w-0"><AwayBanner href={paths.sellerHealth(l)} />{children}</div>
       </div>
     </Ctx.Provider>
   );
