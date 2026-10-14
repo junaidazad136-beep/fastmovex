@@ -50,7 +50,7 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
           <div className="absolute inset-x-0 bottom-0 bg-ink-900/70 py-1 text-center text-xs font-semibold text-white">{t('product.outOfStock')}</div>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-2 pt-1 @min-[150px]:p-2.5 @min-[150px]:pt-1.5">
+      <div className="flex flex-1 flex-col p-2 pt-1 @max-[80px]:px-1.5 @min-[150px]:p-2.5 @min-[150px]:pt-1.5">
         <h3 className="pcard-title">
           <Link href={paths.product(locale, p.slug)} className="after:absolute after:inset-0 after:content-['']">
             {title}
@@ -67,7 +67,7 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
           {was ? (
             <p className="tabular text-[11px] leading-4 text-ink-400 line-through @min-[150px]:text-[12px]" data-testid="price-was">{formatMoney(was, p.currencyCode, locale, { minorUnits, compact: true })}</p>
           ) : null}
-          <p className="tabular text-[14px] font-extrabold leading-5 text-brand-700 @min-[150px]:text-[16px] @min-[150px]:leading-6" data-testid="price-now">{formatMoney(now, p.currencyCode, locale, { minorUnits, compact: true })}</p>
+          <p className="tabular whitespace-nowrap text-[14px] font-extrabold leading-5 text-brand-700 @max-[80px]:text-[13px] @min-[150px]:text-[16px] @min-[150px]:leading-6" data-testid="price-now">{formatMoney(now, p.currencyCode, locale, { minorUnits, compact: true })}</p>
           {p.inStock && p.lowStockCount !== null ? (
             <p className="text-[11.5px] font-medium text-warning-600">{t.plural('product.onlyLeft', p.lowStockCount)}</p>
           ) : p.inStock ? <CardDelivery /> : null}
@@ -80,7 +80,7 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
 
 export function ProductGrid({ items, t, minorUnits, priorityCount = 0 }: { items: Card[]; t: T; minorUnits?: number; priorityCount?: number }) {
   return (
-    <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4 lg:grid-cols-4 xl:grid-cols-5">
+    <ul className="grid grid-cols-4 gap-2 sm:gap-4 xl:grid-cols-5">
       {items.map((p, i) => (
         <li key={p.id}>
           <ProductCard p={p} t={t} minorUnits={minorUnits} priority={i < priorityCount} />
