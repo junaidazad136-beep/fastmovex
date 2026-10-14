@@ -126,7 +126,7 @@ export function StoreProfileForm({ me, onSaved }: { me: SellerMe; onSaved: () =>
         <Field id="st-city" label={t('seller.store.city')}><input id="st-city" className="input" value={f.city} onChange={set('city')} /></Field>
       </div>
       <Field id="st-desc" label={t('seller.store.description')}><textarea id="st-desc" className="input min-h-24" maxLength={2000} value={f.description} onChange={set('description')} /></Field>
-      <Field id="st-desc-ar" label={t('seller.store.descriptionAr')}><textarea id="st-desc-ar" className="input min-h-24" dir="rtl" maxLength={2000} value={f.descriptionAr} onChange={set('descriptionAr')} /></Field>
+      <Field id="st-desc-ar" label={t('seller.store.descriptionAr')} hint={f.descriptionAr.trim() ? undefined : t('seller.store.descriptionArHint')}><textarea id="st-desc-ar" className="input min-h-24" dir="rtl" maxLength={2000} value={f.descriptionAr} onChange={set('descriptionAr')} /></Field>
       {error && <p className="field-error" role="alert">{error}</p>}
       <button type="submit" className="btn-secondary" disabled={busy}>{busy ? <Spinner /> : <Check className="size-4" aria-hidden />}{t('seller.onboarding.save')}</button>
     </form>

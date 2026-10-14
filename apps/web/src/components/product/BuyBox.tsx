@@ -92,6 +92,8 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
   const canBuy = ready && !!variant?.inStock && !buying;
 
   const storeName = pick(t.locale, product.store.name, product.store.nameAr);
+  /** option words in the shopper's language ("Colour" → "اللون"); sizes and codes stay as they are */
+  const word = (w: string) => (t.locale === 'ar' ? product.optionsAr?.[w] ?? w : w);
   const chart = product.sizeChart ?? null;
   const sizeOption = names.find((n) => SIZE_OPTION.test(n)) ?? null;
   const bought = product.boughtLastMonth ?? 0;
@@ -184,7 +186,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
           return (
             <fieldset key={name} className="mt-4">
               <legend className="mb-2 flex w-full items-center justify-between gap-3 text-sm font-semibold text-ink-800">
-                <span>{name}: <span className="font-normal text-ink-600">{selected[name]}</span></span>
+                <span>{word(name)}: <span className="font-normal text-ink-600">{selected[name] ? word(selected[name]) : null}</span></span>
                 {chart && name === sizeOption && <SizeGuideLink chart={chart} selected={selected[name]} />}
               </legend>
               <div className={visual ? 'no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 pb-1 sm:-mx-6 sm:px-6 md:mx-0 md:flex-wrap md:px-0' : 'flex flex-wrap gap-2'} data-testid={visual ? 'option-cards' : undefined}>
@@ -201,7 +203,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
                         aria-pressed={active}
                         className={`min-w-12 rounded-xl border px-3.5 py-2 text-sm transition ${active ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700 ring-1 ring-brand-600' : 'border-ink-200 bg-white text-ink-800 hover:border-ink-400'} ${available ? '' : 'text-ink-400 line-through decoration-ink-300'}`}
                       >
-                        {value}
+                        {word(value)}
                       </button>
                     );
                   }
@@ -220,7 +222,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
                         {pictures[i] && <Image src={pictures[i]!} alt="" fill sizes="104px" className="object-contain p-1.5" />}
                       </span>
                       <span className="block px-2 pb-2 pt-1.5 leading-tight">
-                        <span className="block truncate text-xs font-medium text-ink-800">{value}</span>
+                        <span className="block truncate text-xs font-medium text-ink-800">{word(value)}</span>
                         {vp && available ? (
                           <span className="tabular mt-0.5 block whitespace-nowrap text-xs font-bold text-ink-900">{money(vp.now)}</span>
                         ) : (

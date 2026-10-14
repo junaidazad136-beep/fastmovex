@@ -198,6 +198,8 @@ export interface ProductDetail {
   variants: Variant[];
   /** size guide: the product's own, or its category's default when it comes in sizes */
   sizeChart?: SizeChart | null;
+  /** Arabic for the option words ("Colour" → "اللون"), written by the shop's translator; missing words show as they are */
+  optionsAr?: Record<string, string> | null;
 }
 
 export type SizeUnit = 'cm' | 'in' | null;
@@ -263,6 +265,8 @@ export interface CartItem {
   imageUrl: string | null;
   sku: string;
   options: Record<string, string>;
+  /** the same options in Arabic ({"اللون": "أسود"}) when the product has Arabic option words */
+  optionsAr?: Record<string, string> | null;
   quantity: number;
   available: number;
   maxQuantity: number;

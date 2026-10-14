@@ -159,7 +159,7 @@ test.describe.serial('Buying stock', () => {
     await (await popup).close();
     await page.getByTestId('po-order').click();
     await page.getByRole('dialog').getByRole('button', { name: 'Mark as sent' }).click();
-    await expect(page.getByText('Ordered', { exact: true })).toBeVisible();
+    await expect(page.locator('span', { hasText: /^Ordered$/ }).first()).toBeVisible(); // the status badge (the table also has an "Ordered" column)
     await expect(page.getByTestId('own-po')).toBeVisible(); // the person who raised it cannot receive it
   });
 

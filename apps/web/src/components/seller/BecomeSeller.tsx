@@ -132,7 +132,7 @@ export function BecomeSeller({ onCreated, guest = false }: { onCreated?: () => P
   );
 }
 
-export function Field({ id, label, hint, children }: { id: string; label: string; hint?: string; children: React.ReactNode }) {
+export function Field({ id, label, hint, children }: { id: string; label: React.ReactNode; hint?: string; children: React.ReactNode }) {
   return (
     <div>
       <label htmlFor={id} className="label">{label}</label>

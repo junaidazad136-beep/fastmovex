@@ -22,7 +22,7 @@ function Line({ item, onQty, onRemove }: { item: CartItem; onQty: (q: number) =>
   const t = useT();
   const money = useMoney();
   const title = pick(t.locale, item.title, item.titleAr);
-  const options = Object.entries(item.options ?? {});
+  const options = Object.entries((t.locale === 'ar' && item.optionsAr) || item.options || {});
   const blocking = item.issues.filter((i) => i !== 'PRICE_CHANGED');
   const maxQ = Math.max(1, Math.min(item.maxQuantity, 99));
   return (

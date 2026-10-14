@@ -111,6 +111,9 @@ Client ids are public (they are in the website's page); there is no client secre
 | `PAYLATER_OUTLET_ID` | *opt* | — | PayLater outlet id (digits). | From PayLater. |
 | `PAYLATER_WEBHOOK_SECRET` | prod, if PayLater is on | — | Signs PayLater's payment notifications. Give PayLater the webhook address `{API_PUBLIC_URL}/api/v1/payments/webhook/paylater`. | Secrets manager. |
 | `PAYLATER_API_URL` | *opt* | `https://connect.paylaterapp.com` | PayLater API base. Use `https://connect.uat.paylaterapp.com` with UAT credentials on staging. | leave the default (must be https) |
+| `DEEPL_API_KEY` | *opt* | — | Automatic Arabic ⇄ English for product names, short lines, descriptions, option words and store pages. Free key: deepl.com → API Free plan → Account → API keys (ends in `:fx`, 500,000 characters a month). Without it nothing is translated and the shop works as before. Status: Admin → Catalogue → Arabic translation. | Secrets manager. Never in chat or git. |
+| `TRANSLATE_PROVIDER` | *opt* | `deepl` | `deepl` (uses the key above), `off`. `fake` is for tests only and refused in production. | leave the default |
+| `TRANSLATE_SWEEP` | *opt* | `on` | The once-a-minute pass over older products, CSV imports and store pages. | leave the default |
 | `API_PUBLIC_URL` | with Dibsy | — | Public address of this API; Dibsy calls `<API_PUBLIC_URL>/api/v1/payments/webhook/dibsy` when a payment changes. | `https://api.fastmovex.qa` (required with Dibsy) |
 
 The return address after paying is the website's own `/{locale}/checkout/return`; the API only accepts return addresses on

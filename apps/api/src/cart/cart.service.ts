@@ -28,6 +28,14 @@ function couponUser(ctx: CartContext): { userId?: string; newCustomer: boolean }
   return { userId: ctx.couponFor, newCustomer: false };
 }
 
+/** The line's options in Arabic ({"اللون": "أسود"}) from the product's option words; words without Arabic stay as they are. */
+export function arabicOptions(options: unknown, dict: unknown): Record<string, string> | null {
+  const d = (dict ?? {}) as Record<string, string>;
+  const o = (options ?? {}) as Record<string, string>;
+  if (!Object.keys(d).length || !Object.keys(o).length) return null;
+  return Object.fromEntries(Object.entries(o).map(([k, v]) => [d[k] ?? k, d[String(v)] ?? String(v)]));
+}
+
 const BLOCKING: LineIssue[] = ['UNAVAILABLE', 'OUT_OF_STOCK', 'INSUFFICIENT_STOCK', 'WRONG_COUNTRY'];
 
 const ITEM_SELECT = {
@@ -41,7 +49,7 @@ const ITEM_SELECT = {
       },
       product: {
         select: {
-          id: true, slug: true, title: true, titleAr: true, status: true, deletedAt: true, countryCode: true,
+          id: true, slug: true, title: true, titleAr: true, optionsAr: true, status: true, deletedAt: true, countryCode: true,
           category: { select: { path: true } },
           images: { select: { fileKey: true }, orderBy: { sortOrder: 'asc' as const }, take: 1 },
           store: { select: { name: true, nameAr: true, slug: true, isActive: true, sellerId: true, seller: { select: { status: true } } } },
@@ -201,6 +209,7 @@ export class CartService {
             imageUrl: this.storage.publicUrl(p.images[0]?.fileKey),
             sku: l.row.variant.sku,
             options: l.row.variant.optionValues,
+            optionsAr: arabicOptions(l.row.variant.optionValues, p.optionsAr),
             quantity: l.row.quantity,
             available: l.available,
             maxQuantity: Math.min(MAX_QTY_PER_LINE, l.available),

@@ -52,6 +52,9 @@ services:
       # https://<project-ref>.supabase.co/storage/v1/object/public/fastmovex-public
       - key: PUBLIC_MEDIA_BASE_URL
         sync: false
+      # DeepL API Free key (ends in :fx) for automatic Arabic; optional
+      - key: DEEPL_API_KEY
+        sync: false
       # https://<website>.vercel.app,https://<admin>.vercel.app
       - key: CORS_ORIGINS
         sync: false

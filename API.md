@@ -339,6 +339,20 @@ FastMoveX's guides (no store) can be category defaults; a store's own guides onl
 | PATCH | `/seller/size-charts/{id}` | 🔒 seller (own guides only) |
 | DELETE | `/seller/size-charts/{id}` | 🔒 seller (own guides only) |
 
+### Automatic Arabic
+
+Sellers and staff may write product text in English or Arabic; the API writes the other language (DeepL, when
+`DEEPL_API_KEY` is set) for `title`, `shortDescription`, `description` and the store's `description`, right after a
+product is saved and otherwise within a minute. Brand names, model numbers, units and short ALL-CAPS codes are kept.
+`autoText` on a product (seller and admin views) lists the fields the machine wrote; text changed by hand drops out of
+it and is never overwritten. `optionsAr` (`GET /products/{slug}`) maps option words to Arabic (`{"Colour": "اللون",
+"Black": "أسود"}`); cart lines carry `optionsAr` (the line's options in Arabic) next to `options`.
+
+| Method | Path | Auth |
+|---|---|---|
+| GET | `/admin/translation` | 🔒 products.read — provider, state, month's usage, products waiting |
+| POST | `/admin/translation/run` | 🔒 products.manage — work through the waiting list now |
+
 ### Search
 
 | Method | Path | Auth |

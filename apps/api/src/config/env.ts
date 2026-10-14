@@ -84,6 +84,14 @@ export const envSchema = z.object({
   PAYLATER_WEBHOOK_SECRET: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(8).optional()),
   /** https://connect.paylaterapp.com (live) or https://connect.uat.paylaterapp.com (sandbox) */
   PAYLATER_API_URL: z.string().url().default('https://connect.paylaterapp.com'),
+  /** Automatic English ⇄ Arabic for product and store text: deepl (needs DEEPL_API_KEY), fake (tests) or off */
+  TRANSLATE_PROVIDER: z.enum(['deepl', 'fake', 'off']).default('deepl'),
+  /** DeepL key from deepl.com → Account → API keys; a key ending in ":fx" is the free plan (500,000 characters a month) */
+  DEEPL_API_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(20, 'DEEPL_API_KEY looks too short').optional()),
+  /** only for tests against a stand-in server; normally chosen from the key */
+  DEEPL_API_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
+  /** the once-a-minute background pass over older products, imports and store pages (tests turn it off) */
+  TRANSLATE_SWEEP: z.enum(['on', 'off']).default('on'),
   /** Public https address of this API, so gateways can call the webhook (e.g. https://api.fastmovex.qa). */
   API_PUBLIC_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
 });
@@ -114,6 +122,8 @@ export function validateEnv(raw: Record<string, unknown>): Env {
     // sign-in keys must come from Google / Apple themselves (a test key server is for local tests only)
     if (env.GOOGLE_JWKS_URL !== 'https://www.googleapis.com/oauth2/v3/certs') problems.push('GOOGLE_JWKS_URL must not be changed in production');
     if (env.APPLE_JWKS_URL !== 'https://appleid.apple.com/auth/keys') problems.push('APPLE_JWKS_URL must not be changed in production');
+    if (env.TRANSLATE_PROVIDER === 'fake') problems.push('TRANSLATE_PROVIDER=fake is for tests only (use deepl or off)');
+    if (env.DEEPL_API_URL) problems.push('DEEPL_API_URL is for tests only; remove it in production');
     if (!!env.VAPID_PUBLIC_KEY !== !!env.VAPID_PRIVATE_KEY) problems.push('Set both VAPID_PUBLIC_KEY and VAPID_PRIVATE_KEY (or neither)');
     if (problems.length) throw new Error(`Unsafe production configuration:\n  ${problems.join('\n  ')}`);
   }

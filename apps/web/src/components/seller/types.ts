@@ -88,6 +88,8 @@ export interface SellerProductDetail {
   descriptionAr: string | null;
   shortDescription?: string | null;
   shortDescriptionAr?: string | null;
+  /** fields the shop translated automatically (English ⇄ Arabic); a field the seller edits leaves this list */
+  autoText?: Record<string, { text: string }>;
   brandId?: string | null;
   categoryId: string;
   warrantyMonths: number | null;

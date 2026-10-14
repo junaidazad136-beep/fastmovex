@@ -1,6 +1,6 @@
 'use client';
 
-import { ImagePlus, Minus, Plus, Send, Trash2 } from 'lucide-react';
+import { ImagePlus, Languages, Minus, Plus, Send, Trash2 } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -59,17 +59,35 @@ function useBrands() {
 }
 const intOrUndefined = (v: string) => (v.trim() === '' ? undefined : Math.max(0, Math.round(Number(v))));
 
-function BasicsFields({ f, setF }: { f: Basics; setF: (f: Basics) => void }) {
+/** The small "Auto-translated" mark next to a field the machine wrote. */
+function AutoBadge() {
+  const t = useT();
+  return (
+    <span className="ms-2 inline-flex items-center gap-1 rounded-full bg-brand-50 px-2 py-0.5 align-middle text-[11px] font-semibold text-brand-700" data-testid="auto-badge">
+      <Languages className="size-3" aria-hidden />{t('seller.form.autoBadge')}
+    </span>
+  );
+}
+
+/**
+ * Sellers may write in either language: the API writes the other one (see the API's translation module) and remembers
+ * which fields it wrote (`auto`). Those fields show a mark; editing one makes it the seller's own.
+ */
+function BasicsFields({ f, setF, auto = [] }: { f: Basics; setF: (f: Basics) => void; auto?: string[] }) {
   const t = useT();
   const cats = useCategories();
   const brands = useBrands();
   const set = (k: keyof Basics) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => setF({ ...f, [k]: e.target.value });
+  const label = (k: keyof Basics, text: string) => <>{text}{auto.includes(k) && <AutoBadge />}</>;
+  /** under an Arabic box: "we write it for you" while empty, "your words are kept" once the machine wrote it */
+  const arHint = (k: keyof Basics) => (auto.includes(k) ? t('seller.form.autoKept') : f[k].trim() ? undefined : t('seller.form.autoEmpty'));
+  const enHint = (k: keyof Basics) => (auto.includes(k) ? t('seller.form.autoKept') : undefined);
   return (
     <div className="space-y-3">
-      <Field id="pf-title" label={t('seller.form.titleEn')}><input id="pf-title" className="input" required minLength={3} maxLength={200} value={f.title} onChange={set('title')} /></Field>
-      <Field id="pf-title-ar" label={t('seller.form.titleAr')}><input id="pf-title-ar" className="input" dir="rtl" maxLength={200} value={f.titleAr} onChange={set('titleAr')} /></Field>
-      <Field id="pf-short" label={t('seller.form.shortLine')} hint={t('seller.form.shortLineHint')}><input id="pf-short" className="input" maxLength={300} value={f.shortDescription} onChange={set('shortDescription')} /></Field>
-      <Field id="pf-short-ar" label={t('seller.form.shortLineAr')}><input id="pf-short-ar" className="input" dir="rtl" maxLength={300} value={f.shortDescriptionAr} onChange={set('shortDescriptionAr')} /></Field>
+      <Field id="pf-title" label={label('title', t('seller.form.titleEn'))} hint={enHint('title') ?? t('seller.form.anyLanguage')}><input id="pf-title" className="input" required minLength={3} maxLength={200} value={f.title} onChange={set('title')} /></Field>
+      <Field id="pf-title-ar" label={label('titleAr', t('seller.form.titleAr'))} hint={arHint('titleAr')}><input id="pf-title-ar" className="input" dir="rtl" maxLength={200} value={f.titleAr} onChange={set('titleAr')} /></Field>
+      <Field id="pf-short" label={label('shortDescription', t('seller.form.shortLine'))} hint={enHint('shortDescription') ?? t('seller.form.shortLineHint')}><input id="pf-short" className="input" maxLength={300} value={f.shortDescription} onChange={set('shortDescription')} /></Field>
+      <Field id="pf-short-ar" label={label('shortDescriptionAr', t('seller.form.shortLineAr'))} hint={arHint('shortDescriptionAr')}><input id="pf-short-ar" className="input" dir="rtl" maxLength={300} value={f.shortDescriptionAr} onChange={set('shortDescriptionAr')} /></Field>
       <Field id="pf-brand" label={t('seller.form.brand')} hint={t('seller.form.brandHint')}>
         <select id="pf-brand" className="input" value={f.brandId} onChange={set('brandId')}>
           <option value="">{t('seller.form.noBrand')}</option>
@@ -82,8 +100,8 @@ function BasicsFields({ f, setF }: { f: Basics; setF: (f: Basics) => void }) {
           {cats.map((c) => <option key={c.id} value={c.id}>{c.label}</option>)}
         </select>
       </Field>
-      <Field id="pf-desc" label={t('seller.form.description')}><textarea id="pf-desc" className="input min-h-28" maxLength={10000} value={f.description} onChange={set('description')} /></Field>
-      <Field id="pf-desc-ar" label={t('seller.form.descriptionAr')}><textarea id="pf-desc-ar" className="input min-h-28" dir="rtl" maxLength={10000} value={f.descriptionAr} onChange={set('descriptionAr')} /></Field>
+      <Field id="pf-desc" label={label('description', t('seller.form.description'))} hint={enHint('description')}><textarea id="pf-desc" className="input min-h-28" maxLength={10000} value={f.description} onChange={set('description')} /></Field>
+      <Field id="pf-desc-ar" label={label('descriptionAr', t('seller.form.descriptionAr'))} hint={arHint('descriptionAr')}><textarea id="pf-desc-ar" className="input min-h-28" dir="rtl" maxLength={10000} value={f.descriptionAr} onChange={set('descriptionAr')} /></Field>
       <div className="grid grid-cols-2 gap-3">
         <Field id="pf-warranty" label={t('seller.form.warranty')}><input id="pf-warranty" className="input" inputMode="numeric" value={f.warrantyMonths} onChange={set('warrantyMonths')} /></Field>
         <Field id="pf-return" label={t('seller.form.returnDays')}><input id="pf-return" className="input" inputMode="numeric" value={f.returnPolicyDays} onChange={set('returnPolicyDays')} /></Field>
@@ -172,14 +190,15 @@ export function EditProduct({ id }: { id: string }) {
   const [error, setError] = useState('');
   const fileRef = useRef<HTMLInputElement>(null);
 
-  const load = useCallback(async () => {
+  /** `fresh`: after a save the form shows what was saved, including the Arabic the shop just wrote */
+  const load = useCallback(async (fresh = false) => {
     try {
       const d = await api<SellerProductDetail>(`/seller/products/${id}`);
       setP(d);
-      setF((x) => x ?? {
+      setF((x) => (x && !fresh ? x : {
         title: d.title, titleAr: d.titleAr ?? '', shortDescription: d.shortDescription ?? '', shortDescriptionAr: d.shortDescriptionAr ?? '', brandId: d.brandId ?? '', categoryId: d.categoryId, description: d.description ?? '', descriptionAr: d.descriptionAr ?? '',
         warrantyMonths: d.warrantyMonths?.toString() ?? '', returnPolicyDays: d.returnPolicyDays?.toString() ?? '', sizeChartId: d.sizeChartId ?? '',
-      });
+      }));
     } catch (e) { setError(errorMessage(e, t)); }
   }, [id, t]);
   useEffect(() => { void load(); }, [load]);
@@ -190,7 +209,7 @@ export function EditProduct({ id }: { id: string }) {
     try {
       await api(`/seller/products/${id}`, { method: 'PATCH', body: { ...basicsBody(f), ...(submitForReview && { submitForReview: true }) } });
       toast({ tone: 'success', message: submitForReview ? t('seller.form.sent') : t('seller.form.saved') });
-      await load();
+      await load(true);
     } catch (e) { toast({ tone: 'error', message: errorMessage(e, t) }); } finally { setBusy(''); }
   }
   async function addPhoto(e: React.ChangeEvent<HTMLInputElement>) {
@@ -273,7 +292,7 @@ export function EditProduct({ id }: { id: string }) {
 
       <section className="card space-y-3 p-4 sm:p-5">
         <h2 className="font-semibold">{t('seller.form.basics')}</h2>
-        <BasicsFields f={f} setF={setF} />
+        <BasicsFields f={f} setF={setF} auto={Object.keys(p?.autoText ?? {})} />
       </section>
 
       <div className="flex flex-col gap-2 sm:flex-row">

@@ -1,7 +1,7 @@
 import {
   CalendarClock, ClipboardCheck, PackageCheck, ClipboardList, CreditCard, Factory, TrendingDown,
   Banknote, BadgePercent, BarChart3, Boxes, Truck, MessageCircleQuestion, FileSpreadsheet, FileText, LayoutTemplate, Mail, FolderTree, Image as ImageIcon, LayoutDashboard, LifeBuoy, MessageSquareText,
-  Package, Phone, PiggyBank, Receipt, Ruler, Search, Warehouse, RotateCcw, ScrollText, Settings, ShieldCheck, ShoppingBag, Store, Tag, Users, UserCog, Zap, type LucideIcon,
+  Languages, Package, Phone, PiggyBank, Receipt, Ruler, Search, Warehouse, RotateCcw, ScrollText, Settings, ShieldCheck, ShoppingBag, Store, Tag, Users, UserCog, Zap, type LucideIcon,
 } from 'lucide-react';
 
 export type SummaryKey =
@@ -48,6 +48,7 @@ export const NAV: NavGroup[] = [
       { href: '/categories', label: 'Categories', icon: FolderTree, perms: ['categories.manage'] },
       { href: '/brands', label: 'Brands', icon: Tag, perms: ['products.moderate'] },
       { href: '/size-charts', label: 'Size guides', icon: Ruler, perms: ['products.read'] },
+      { href: '/translation', label: 'Arabic translation', icon: Languages, perms: ['products.read'] },
     ],
   },
   {

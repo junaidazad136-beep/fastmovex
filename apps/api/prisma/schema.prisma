@@ -557,6 +557,9 @@ model Store {
   nameAr        String?
   description   String?
   descriptionAr String?
+  /// machine-translated fields, as on Product
+  autoText      Json     @default("{}")
+  translatedAt  DateTime?
   logoKey       String?
   bannerKey     String?
   city          String?
@@ -672,6 +675,12 @@ model Product {
   shortDescriptionAr String?
   description      String?
   descriptionAr    String?
+  /// what the machine translated: {field: {text, src}} — a field the seller changed by hand is dropped from here
+  autoText         Json          @default("{}")
+  /// Arabic for the option words of this product's variants ({"Colour": "اللون", "Black": "أسود"}), machine-made
+  optionsAr        Json?
+  /// last time the translation pass looked at this product
+  translatedAt     DateTime?
   specs            Json          @default("{}")
   tags             String[]      @default([]) // lowercase keywords for filtering and search, GIN-indexed
   seoTitle         String?

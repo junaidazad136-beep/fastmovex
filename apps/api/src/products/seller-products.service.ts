@@ -15,6 +15,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { WarehousesService } from '../warehouses/warehouses';
 import { validateUpload } from '../storage/file-validation';
 import { StorageService } from '../storage/storage.service';
+import { TranslationService } from '../translation/translation.service';
 import {
   AdjustStockDto, CreateProductDto, ReorderImagesDto, SellerProductsQuery, UpdateProductDto, UpdateVariantDto, VariantInputDto,
 } from './dto/product.dto';
@@ -34,6 +35,7 @@ export class SellerProductsService {
     @Optional() private readonly events?: EventEmitter2,
     @Optional() private readonly warehouses?: WarehousesService,
     @Optional() private readonly sizeCharts?: SizeChartsService,
+    @Optional() private readonly translation?: TranslationService,
   ) {}
 
   // ----------------------------------------------------------------- products
@@ -81,6 +83,7 @@ export class SellerProductsService {
     });
 
     await this.audit.log({ actorId, action: 'product.create', entityType: 'Product', entityId: product.id });
+    await this.translation?.now(product.id); // the other language is written at once (never fails the save)
     return this.get(seller, product.id);
   }
 
@@ -151,6 +154,7 @@ export class SellerProductsService {
       },
     });
     await this.audit.log({ actorId, action: 'product.update', entityType: 'Product', entityId: id, before: { status: p.status }, after: { status, fields: Object.keys(dto) } });
+    await this.translation?.now(id);
     return this.get(seller, id);
   }
 
@@ -175,6 +179,7 @@ export class SellerProductsService {
     await this.skuGuard(() => this.prisma.$transaction((tx) => this.createVariant(tx, productId, data, actorId, seller.id)));
     await this.refreshMinPrice(productId);
     await this.audit.log({ actorId, action: 'variant.create', entityType: 'Product', entityId: productId, after: { sku: data.sku, priceMinor: data.priceMinor.toString(), options: data.optionValues } as Prisma.InputJsonValue });
+    await this.translation?.now(productId); // new option words ("Colour", "Black") get their Arabic
     return this.get(seller, productId);
   }
 
@@ -204,6 +209,7 @@ export class SellerProductsService {
     // everything else that changed (on/off, SKU, barcode, cost, options, size): which fields, not a price record
     const other = (['isActive', 'sku', 'barcode', 'costPriceMinor', 'optionValues', 'weightGrams', 'lengthMm', 'widthMm', 'heightMm', 'compareAtMinor'] as const).filter((k) => dto[k] !== undefined);
     if (other.length) await this.audit.log({ actorId, action: 'variant.update', entityType: 'ProductVariant', entityId: variantId, after: { fields: other, ...(dto.isActive !== undefined && { isActive: dto.isActive }) } });
+    if (dto.optionValues !== undefined) await this.translation?.now(v.productId);
     return this.get(seller, v.productId);
   }
 

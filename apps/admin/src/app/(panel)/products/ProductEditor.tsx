@@ -30,6 +30,10 @@ export interface ProductDetail {
   shortDescriptionAr: string | null;
   description: string | null;
   descriptionAr: string | null;
+  /** fields the shop translated automatically; a field edited by hand leaves this list */
+  autoText?: Record<string, { text: string }>;
+  /** Arabic for option words ("Colour" → "اللون") */
+  optionsAr?: Record<string, string> | null;
   specs: Record<string, string> | null;
   tags: string[] | null;
   seoTitle: string | null;
@@ -165,6 +169,10 @@ export function ProductEditor({ product, onReload }: { product: ProductDetail | 
   }, [dirty, pending.length]);
 
   const set = (p: Partial<Fields>) => setF((x) => ({ ...x, ...p }));
+  /** "Auto" next to a field the machine translated (see Catalogue → Arabic translation) */
+  const machine = product?.autoText ?? {};
+  const auto = (k: string) => (machine[k] ? <Badge tone="blue" className="ms-2 align-middle">Auto</Badge> : null);
+  const arHint = (k: keyof Fields) => (machine[k] ? 'Written automatically from the English. Edit it and your text is kept.' : String(f[k] ?? '').trim() ? undefined : 'Leave empty: it is written automatically from the English when you save.');
 
   function validate(): string | null {
     if (f.title.trim().length < 3) return 'Title must be at least 3 characters.';
@@ -314,16 +322,16 @@ export function ProductEditor({ product, onReload }: { product: ProductDetail | 
 <Card title="Product details">
             <div className="space-y-4">
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField label="Title (English)" required value={f.title} onChange={(e) => set({ title: e.target.value })} maxLength={200} placeholder="e.g. Stainless Steel Kettle 1.7 L" />
-                <TextField label="Title (Arabic)" dir="rtl" lang="ar" value={f.titleAr} onChange={(e) => set({ titleAr: e.target.value })} maxLength={200} hint="Shown to Arabic shoppers. Falls back to English when empty." />
+                <TextField label={<>Title (English){auto("title")}</>} required value={f.title} onChange={(e) => set({ title: e.target.value })} maxLength={200} placeholder="e.g. Stainless Steel Kettle 1.7 L" />
+                <TextField label={<>Title (Arabic){auto("titleAr")}</>} dir="rtl" lang="ar" value={f.titleAr} onChange={(e) => set({ titleAr: e.target.value })} maxLength={200} hint={arHint("titleAr")} />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <TextField label="Short description (English)" value={f.shortDescription} onChange={(e) => set({ shortDescription: e.target.value })} maxLength={300} hint="One line near the price" />
-                <TextField label="Short description (Arabic)" dir="rtl" lang="ar" value={f.shortDescriptionAr} onChange={(e) => set({ shortDescriptionAr: e.target.value })} maxLength={300} />
+                <TextField label={<>Short description (English){auto("shortDescription")}</>} value={f.shortDescription} onChange={(e) => set({ shortDescription: e.target.value })} maxLength={300} hint="One line near the price" />
+                <TextField label={<>Short description (Arabic){auto("shortDescriptionAr")}</>} dir="rtl" lang="ar" value={f.shortDescriptionAr} onChange={(e) => set({ shortDescriptionAr: e.target.value })} maxLength={300} hint={arHint("shortDescriptionAr")} />
               </div>
               <div className="grid gap-4 md:grid-cols-2">
-                <TextArea label="Description (English)" value={f.description} onChange={(e) => set({ description: e.target.value })} rows={8} maxLength={10000} hint="Plain text. Blank lines start a new paragraph." />
-                <TextArea label="Description (Arabic)" dir="rtl" lang="ar" value={f.descriptionAr} onChange={(e) => set({ descriptionAr: e.target.value })} rows={8} maxLength={10000} />
+                <TextArea label={<>Description (English){auto("description")}</>} value={f.description} onChange={(e) => set({ description: e.target.value })} rows={8} maxLength={10000} hint="Plain text. Blank lines start a new paragraph." />
+                <TextArea label={<>Description (Arabic){auto("descriptionAr")}</>} dir="rtl" lang="ar" value={f.descriptionAr} onChange={(e) => set({ descriptionAr: e.target.value })} rows={8} maxLength={10000} hint={arHint("descriptionAr")} />
               </div>
             </div>
           </Card>
