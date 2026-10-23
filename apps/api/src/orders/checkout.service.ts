@@ -131,7 +131,9 @@ export class CheckoutService {
     // where the visit came from (same rules as the analytics sessions); nothing sent = an app or unknown
     const traffic = dto.traffic ? classify(dto.traffic) : null;
 
-    const orderId = await this.prisma.$transaction(async (tx) => {
+    let orderId: string;
+    try {
+    orderId = await this.prisma.$transaction(async (tx) => {
       // Takes a place in the chosen delivery window (rolled back with everything else if the order fails)
       const slot = this.slots ? await this.slots.book(tx, country.code, dto.deliverySlot, now) : null;
       const order = await tx.order.create({
@@ -202,6 +204,15 @@ export class CheckoutService {
       await tx.cart.update({ where: { id: cart.id }, data: { couponCode: null } });
       return order.id;
     });
+    } catch (e) {
+      // Two taps at the same instant with the same key: the other request won the race, so hand back its order
+      // (this attempt was rolled back whole: stock, delivery slot, coupon).
+      if ((e as { code?: string })?.code === 'P2002') {
+        const winner = await this.existingFor(idempotencyKey, userId);
+        if (winner) return this.result(winner, { reused: true });
+      }
+      throw e;
+    }
 
     await this.audit.log({ actorId: userId, action: 'order.placed', entityType: 'Order', entityId: orderId, after: { orderNumber, totalMinor: priced.totalMinor.toString(), method: dto.paymentMethod } });
 
