@@ -134,15 +134,9 @@ export function CategoryTiles({ items, t, title }: { items: { slug: string; name
   );
 }
 
-/** Small label on a card in the trending / best-seller rails, from what shoppers do with the product. Exported for tests. */
-export function cardBadge(key: string, p: Card, i: number, t: T): string | null {
-  if (key === 'best_sellers') return i < 3 ? t('card.bestSeller') : null;
-  if (key === 'new_arrivals') return t('card.new');
-  if (key !== 'trending') return null;
-  if (i === 0) return t('card.bestSeller');
-  if (p.dealPriceMinor) return t('card.hot');
-  if (p.ratingAvg >= 4.5 && p.ratingCount >= 10) return t('card.popular');
-  return t('card.trending');
+/** Rails already carry their own heading ("Best sellers", "Trending"), so cards show no extra text label: only the discount % badge. */
+export function cardBadge(_key: string, _p: Card, _i: number, _t: T): string | null {
+  return null;
 }
 
 export function ProductRail({ id, title, items, t, minorUnits, endsAt, href, deal = false }: { id: string; title: string; items: Card[]; t: T; minorUnits: number; endsAt?: string | null; href?: string; deal?: boolean }) {
