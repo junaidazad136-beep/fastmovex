@@ -142,7 +142,7 @@ export function ProductBuy({ product, images, title, together = [] }: { product:
             </a>
           )}
         </div>
-        <h1 className={`mt-1 text-sm leading-[19px] lg:mt-2 lg:text-2xl lg:font-bold lg:leading-snug lg:tracking-tight lg:text-ink-900 ${subtitle ? 'text-ink-900' : 'text-ink-700'}`} data-testid="product-title">{title}</h1>
+        <h1 className="mt-1 text-base font-medium leading-snug text-ink-900 lg:mt-2 lg:text-2xl lg:font-bold lg:tracking-tight" data-testid="product-title">{title}</h1>
         {subtitle && <p className="text-sm leading-[19px] text-ink-500 lg:mt-1 lg:text-base" data-testid="product-subtitle">{subtitle}</p>}
         {bought > 0 && (
           <p className="mt-1.5 text-sm text-ink-900" data-testid="bought-last-month">
