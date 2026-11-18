@@ -1,16 +1,22 @@
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '../notifications/notification.events';
 import { BadRequestException, Injectable, NotFoundException, Optional } from '@nestjs/common';
-import { ReturnCondition, ReturnStatus } from '@prisma/client';
+import { ReturnCondition, ReturnReason, ReturnStatus } from '@prisma/client';
 import { AuditService } from '../audit/audit.service';
 import { afterCursor, decodeCursor, toPage } from '../common/utils/pagination';
 import { PrismaService } from '../prisma/prisma.service';
 import { WarehousesService } from '../warehouses/warehouses';
-import { returnDeadline, returnRefundAmount } from './finance-math';
+import { randomUUID } from 'crypto';
+import { ConflictException, ForbiddenException } from '@nestjs/common';
+import { UPLOAD_LIMITS, validateUpload } from '../storage/file-validation';
+import { cleanPhoto } from '../storage/photo';
+import { REPORT_WINDOW_HOURS, refundAfterFee, reportWindowOpen, returnDeadline, returnFee, returnRefundAmount } from './finance-math';
 import { RefundsService } from './refunds.service';
 import { StorageService } from '../storage/storage.service';
 
 const OPEN_RETURN: ReturnStatus[] = ['REQUESTED', 'APPROVED'];
+const MAX_RETURN_PHOTOS = 5;
+const needsPhotos = (r: ReturnReason) => r !== 'CHANGE_OF_MIND';
 
 @Injectable()
 export class ReturnsService {
@@ -28,11 +34,12 @@ export class ReturnsService {
     return this.warehouseService;
   }
 
-  async request(userId: string, orderNumber: string, input: { orderItemId: string; quantity: number; reason: string }, now = new Date()) {
+  async request(userId: string, orderNumber: string, input: { orderItemId: string; quantity: number; reason: string; reasonType?: ReturnReason }, now = new Date()) {
     const item = await this.prisma.orderItem.findFirst({
       where: { id: input.orderItemId, order: { orderNumber, userId } }, // must be the caller's own order
       select: {
         id: true, quantity: true, refundedQty: true, status: true,
+        order: { select: { currencyCode: true } },
         sellerOrder: { select: { deliveredAt: true, status: true, seller: { select: { returnWindowDays: true } } } },
         variant: { select: { product: { select: { returnPolicyDays: true } } } },
         returns: { where: { status: { in: OPEN_RETURN } }, select: { quantity: true } },
@@ -47,31 +54,52 @@ export class ReturnsService {
     if (now > returnDeadline(item.sellerOrder.deliveredAt, policyDays, item.sellerOrder.seller.returnWindowDays)) {
       throw new BadRequestException('The return window for this item has closed');
     }
+    const reasonType: ReturnReason = input.reasonType ?? 'CHANGE_OF_MIND';
+    if (needsPhotos(reasonType) && !reportWindowOpen(item.sellerOrder.deliveredAt, now)) {
+      throw new BadRequestException(`Defects and wrong items must be reported within ${REPORT_WINDOW_HOURS} hours of delivery. You can still return it as "change of mind" (a fee applies).`);
+    }
     const openQty = item.returns.reduce((s, r) => s + r.quantity, 0);
     const returnable = item.quantity - item.refundedQty - openQty;
     if (input.quantity > returnable) throw new BadRequestException(`You can return at most ${returnable} of this item`);
 
     const ret = await this.prisma.$transaction(async (tx) => {
-      const r = await tx.returnRequest.create({ data: { orderItemId: item.id, userId, quantity: input.quantity, reason: input.reason } });
+      const r = await tx.returnRequest.create({ data: { orderItemId: item.id, userId, quantity: input.quantity, reason: input.reason, reasonType, feeMinor: returnFee(reasonType, item.order.currencyCode) } });
       await tx.orderItem.update({ where: { id: item.id }, data: { status: 'RETURN_REQUESTED' } });
       return r;
     });
-    await this.audit.log({ actorId: userId, action: 'return.request', entityType: 'ReturnRequest', entityId: ret.id, after: { quantity: input.quantity } });
-    return ret;
+    await this.audit.log({ actorId: userId, action: 'return.request', entityType: 'ReturnRequest', entityId: ret.id, after: { quantity: input.quantity, reasonType } });
+    return { ...ret, feeMinor: ret.feeMinor.toString(), photosRequired: needsPhotos(reasonType) };
   }
 
-  listForCustomer(userId: string) {
-    return this.prisma.returnRequest.findMany({
+  /** The customer adds a photo to an open return request (needed for defect / wrong item / not as described). */
+  async addPhoto(userId: string, returnId: string, file: Express.Multer.File | undefined) {
+    const ret = await this.prisma.returnRequest.findFirst({ where: { id: returnId, userId }, select: { id: true, status: true, images: true } });
+    if (!ret) throw new NotFoundException('Return not found');
+    if (ret.status !== 'REQUESTED') throw new BadRequestException('Photos can only be added while the request is waiting for review');
+    const images = (ret.images as string[]) ?? [];
+    if (images.length >= MAX_RETURN_PHOTOS) throw new BadRequestException(`Up to ${MAX_RETURN_PHOTOS} photos per return`);
+    if (!this.storage) throw new Error('StorageService is not available');
+    const photo = await cleanPhoto(validateUpload(file, 'image').buffer);
+    const key = `returns/${returnId}/${randomUUID()}.${photo.ext}`;
+    await this.storage.put('private', key, photo.buffer, photo.mime);
+    const res = await this.prisma.returnRequest.updateMany({ where: { id: returnId, userId, status: 'REQUESTED', images: { equals: images } }, data: { images: [...images, key] } });
+    if (res.count !== 1) throw new ConflictException('Another photo is being added. Please try again.');
+    return { photos: images.length + 1 };
+  }
+
+  async listForCustomer(userId: string) {
+    const rows = await this.prisma.returnRequest.findMany({
       where: { userId },
       orderBy: { createdAt: 'desc' },
       take: 50,
       // Customer view: no staff ids
       select: {
-        id: true, quantity: true, reason: true, status: true, resolution: true, createdAt: true, updatedAt: true,
+        id: true, quantity: true, reason: true, reasonType: true, feeMinor: true, status: true, resolution: true, createdAt: true, updatedAt: true,
         orderItem: { select: { productTitle: true, sku: true, order: { select: { orderNumber: true } } } },
         pickup: { select: { status: true, date: true } }, // a driver collects it
       },
     });
+    return rows.map((r) => ({ ...r, feeMinor: r.feeMinor.toString() }));
   }
 
   /** The store's returns: only what the seller needs (no customer or staff ids); photos the customer added. */
@@ -81,7 +109,7 @@ export class ReturnsService {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 26,
       select: {
-        id: true, quantity: true, reason: true, images: true, status: true, resolution: true, condition: true, inspectionNote: true, receivedAt: true, createdAt: true,
+        id: true, quantity: true, reason: true, reasonType: true, feeMinor: true, images: true, status: true, resolution: true, condition: true, inspectionNote: true, receivedAt: true, createdAt: true,
         pickup: { select: { status: true, date: true } },
         orderItem: { select: { productTitle: true, sku: true, quantity: true, unitPriceMinor: true, imageKey: true, sellerOrderId: true, order: { select: { orderNumber: true, currencyCode: true } } } },
       },
@@ -90,8 +118,8 @@ export class ReturnsService {
     const url = (k: string | null) => (k ? this.storage?.publicUrl(k) ?? null : null);
     return {
       ...page,
-      items: page.items.map(({ images, orderItem: { imageKey, unitPriceMinor, ...item }, pickup, ...r }) => ({
-        ...r,
+      items: page.items.map(({ images, orderItem: { imageKey, unitPriceMinor, ...item }, pickup, feeMinor, ...r }) => ({
+        ...r, feeMinor: feeMinor.toString(),
         images: ((images as string[]) ?? []).map(url).filter(Boolean),
         pickup: pickup ? { status: pickup.status, date: pickup.date.toISOString().slice(0, 10) } : null,
         orderItem: { ...item, unitPriceMinor: unitPriceMinor.toString(), imageUrl: url(imageKey) },
@@ -133,6 +161,9 @@ export class ReturnsService {
     const ret = await this.load(returnId, sellerId);
     if (ret.status !== 'REQUESTED') throw new BadRequestException(`Return is already ${ret.status.toLowerCase()}`);
     if (decision === 'REJECTED' && !resolution) throw new BadRequestException('Give the customer a reason for rejecting');
+    if (decision === 'APPROVED' && needsPhotos(ret.reasonType) && ((ret.images as string[]) ?? []).length === 0) {
+      throw new BadRequestException('This return needs photos from the customer before it can be approved. Reject it asking for photos, or wait for them.');
+    }
 
     await this.prisma.$transaction(async (tx) => {
       await tx.returnRequest.update({ where: { id: returnId }, data: { status: decision, resolution, reviewedById: actorId } });
@@ -195,7 +226,7 @@ export class ReturnsService {
       await tx.returnRequest.update({ where: { id: returnId }, data: { status: 'RECEIVED', condition, inspectionNote: note, receivedById: actorId, receivedAt: new Date() } });
       await tx.refund.create({
         data: {
-          paymentId: payment.id, orderId: item.orderId, sellerOrderId: item.sellerOrderId, amountMinor: amount < remaining ? amount : remaining,
+          paymentId: payment.id, orderId: item.orderId, sellerOrderId: item.sellerOrderId, amountMinor: (() => { const net = refundAfterFee(amount, ret.feeMinor); return net < remaining ? net : remaining; })(),
           reason: `Return: ${ret.reason}`.slice(0, 500), status: 'PENDING', createdById: actorId, idempotencyKey: `return_${returnId}`,
         },
       });
@@ -210,7 +241,7 @@ export class ReturnsService {
   private async load(returnId: string, sellerId?: string) {
     const ret = await this.prisma.returnRequest.findUnique({
       where: { id: returnId },
-      select: { id: true, status: true, quantity: true, reason: true, orderItemId: true, orderItem: { select: { sellerOrder: { select: { sellerId: true } } } } },
+      select: { id: true, status: true, quantity: true, reason: true, reasonType: true, feeMinor: true, images: true, orderItemId: true, orderItem: { select: { sellerOrder: { select: { sellerId: true } } } } },
     });
     if (!ret || (sellerId && ret.orderItem.sellerOrder.sellerId !== sellerId)) throw new NotFoundException('Return not found');
     return ret;

@@ -52,3 +52,17 @@ export function shipmentPaidTotal(so: { subtotalMinor: bigint; discountMinor: bi
 export function returnDeadline(deliveredAt: Date, productDays: number | null, sellerDays: number): Date {
   return new Date(deliveredAt.getTime() + (productDays ?? sellerDays) * 86_400_000);
 }
+
+/** Change-of-mind return fee: QAR 10 (minor units) — only that reason, only QAR, never more than the refund. */
+export const CHANGE_OF_MIND_FEE_QAR_MINOR = 1000n;
+export function returnFee(reasonType: string, currencyCode: string): bigint {
+  return reasonType === 'CHANGE_OF_MIND' && currencyCode === 'QAR' ? CHANGE_OF_MIND_FEE_QAR_MINOR : 0n;
+}
+export function refundAfterFee(amount: bigint, fee: bigint): bigint {
+  return fee >= amount ? 0n : amount - fee;
+}
+/** Defect / wrong item / not as described must be reported with photos within 48 h of delivery. */
+export const REPORT_WINDOW_HOURS = 48;
+export function reportWindowOpen(deliveredAt: Date, now: Date): boolean {
+  return now.getTime() - deliveredAt.getTime() <= REPORT_WINDOW_HOURS * 3_600_000;
+}

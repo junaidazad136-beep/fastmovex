@@ -146,6 +146,14 @@ enum ReturnCondition {
   NOT_ACCEPTED // not what was sold / used by the customer: no refund, no restock
 }
 
+/// Why the customer sends it back (decides photos, the 48 h report window and the change-of-mind fee)
+enum ReturnReason {
+  DEFECTIVE        // broken / not working / damaged on arrival
+  WRONG_ITEM       // not what was ordered
+  NOT_AS_DESCRIBED // differs from the listing
+  CHANGE_OF_MIND   // customer no longer wants it (fee applies)
+}
+
 enum ReturnStatus {
   REQUESTED
   APPROVED
@@ -1158,6 +1166,8 @@ model ReturnRequest {
   user        User         @relation(fields: [userId], references: [id])
   quantity    Int
   reason      String
+  reasonType  ReturnReason @default(CHANGE_OF_MIND)
+  feeMinor    BigInt       @default(0) // change-of-mind fee, taken off the refund
   images      Json         @default("[]")
   status      ReturnStatus @default(REQUESTED)
   resolution  String?

@@ -1,6 +1,8 @@
-import { Body, Controller, Get, HttpCode, Module, Param, ParseUUIDPipe, Post, Query, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, Module, Param, ParseUUIDPipe, Post, Query, UploadedFile, UseGuards, UseInterceptors } from '@nestjs/common';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { UPLOAD_LIMITS } from '../storage/file-validation';
 import { ApiBearerAuth, ApiProperty, ApiPropertyOptional, ApiTags } from '@nestjs/swagger';
-import { PaymentMethod, PaymentStatus, PayoutStatus, RefundStatus, ReturnStatus } from '@prisma/client';
+import { PaymentMethod, PaymentStatus, PayoutStatus, RefundStatus, ReturnReason, ReturnStatus } from '@prisma/client';
 import { Transform } from 'class-transformer';
 import { IsEnum, IsIn, IsInt, IsOptional, IsString, IsUUID, Length, Matches, Max, MaxLength, Min } from 'class-validator';
 import { Throttle } from '@nestjs/throttler';
@@ -21,6 +23,8 @@ class ReturnRequestDto {
   @ApiProperty() @IsUUID() orderItemId: string;
   @ApiProperty() @IsInt() @Min(1) @Max(99) quantity: number;
   @ApiProperty({ example: 'Arrived damaged' }) @Transform(trim) @IsString() @Length(5, 500) reason: string;
+  @ApiPropertyOptional({ enum: ReturnReason, default: 'CHANGE_OF_MIND', description: 'Defect / wrong item / not as described need photos and a report within 48 h of delivery; change of mind costs QAR 10' })
+  @IsOptional() @IsEnum(ReturnReason) reasonType?: ReturnReason;
 }
 class DecisionDto {
   @ApiProperty({ enum: ['APPROVED', 'REJECTED'] }) @IsIn(['APPROVED', 'REJECTED']) decision: 'APPROVED' | 'REJECTED';
@@ -73,6 +77,13 @@ export class CustomerReturnsController {
   @Post('orders/:orderNumber/returns')
   request(@CurrentUser() u: AuthUser, @Param('orderNumber') n: string, @Body() dto: ReturnRequestDto) {
     return this.returns.request(u.id, n, dto);
+  }
+
+  @Throttle({ default: { limit: 30, ttl: 3_600_000 } })
+  @Post('me/returns/:id/photos')
+  @UseInterceptors(FileInterceptor('file', { limits: { fileSize: UPLOAD_LIMITS.image, files: 1 } }))
+  addPhoto(@CurrentUser() u: AuthUser, @Param('id', ParseUUIDPipe) id: string, @UploadedFile() file?: Express.Multer.File) {
+    return this.returns.addPhoto(u.id, id, file);
   }
 
   @Get('me/returns') mine(@CurrentUser() u: AuthUser) { return this.returns.listForCustomer(u.id); }
