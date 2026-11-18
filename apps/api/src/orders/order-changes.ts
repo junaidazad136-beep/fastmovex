@@ -1,3 +1,4 @@
+import { parseConfig } from '../pricing/delivery-quoter';
 import {
   BadRequestException, Body, ConflictException, Controller, ForbiddenException, Headers, Get, HttpCode, Injectable, Logger, NotFoundException, Optional, Param, Patch, Post, Put, Query,
   UnauthorizedException,
@@ -36,6 +37,20 @@ export const CUSTOMER_EDITABLE: OrderStatus[] = ['CONFIRMED', 'PREPARING'];
 export const CUSTOMER_CHANGE_LIMIT = 3;
 
 export type ChangeRole = 'STAFF' | 'CUSTOMER' | 'DRIVER';
+
+/**
+ * After items are ADDED (cash orders), the shipment may cross the free-delivery amount: the fee is dropped, as checkout
+ * would have done. Returns what comes off (fee + its VAT when VAT is added on top), or null. Exported for tests.
+ * When items are REDUCED or removed we never add a delivery fee or take a coupon back: a change made by us (or a
+ * refusal at the door) must not make the customer pay more than they agreed to.
+ */
+export function deliveryWaiverAfterAdd(i: { feeMinor: bigint; goodsNetMinor: bigint; config: unknown; tax: { rateBps: number; inclusive: boolean } }): { totalMinor: bigint; taxMinor: bigint } | null {
+  if (i.feeMinor <= 0n) return null;
+  const c = parseConfig(i.config);
+  if (c.freeOver === null || i.goodsNetMinor < c.freeOver) return null;
+  const taxMinor = taxOn(i.feeMinor, i.tax);
+  return { totalMinor: i.tax.inclusive ? i.feeMinor : i.feeMinor + taxMinor, taxMinor };
+}
 
 interface LineMoney { unitPriceMinor: bigint; quantity: number; discountMinor: bigint; taxMinor: bigint; lineTotalMinor: bigint; commissionMinor: bigint }
 
@@ -250,7 +265,7 @@ export class OrderChangesService {
         where: { orderNumber },
         select: {
           id: true, orderNumber: true, userId: true, countryCode: true, currencyCode: true,
-          country: { select: { pricesIncludeTax: true, vatRateBps: true } },
+          country: { select: { pricesIncludeTax: true, vatRateBps: true, deliveryConfig: true } },
           payments: { orderBy: { createdAt: 'desc' }, take: 1, select: { id: true, method: true, status: true } },
           sellerOrders: { select: { id: true, sellerId: true, status: true, subtotalMinor: true, discountMinor: true, taxMinor: true, commissionMinor: true, deliveryFeeMinor: true } },
         },
@@ -313,15 +328,23 @@ export class OrderChangesService {
       });
       await tx.order.update({ where: { id: order.id }, data: { subtotalMinor: { increment: subtotal }, taxMinor: { increment: tax }, totalMinor: { increment: lineTotal } } });
       await tx.payment.update({ where: { id: pay.id }, data: { amountMinor: { increment: lineTotal } } });
-      const summary = `${v.product.title} × ${input.quantity} added`;
+      // The shipment's goods may now reach the free-delivery amount: the delivery fee (and its VAT) is dropped, as checkout would.
+      const waiver = deliveryWaiverAfterAdd({ feeMinor: so.deliveryFeeMinor, goodsNetMinor: soSubtotal - so.discountMinor, config: order.country.deliveryConfig, tax: { rateBps: order.country.vatRateBps, inclusive } });
+      if (waiver) {
+        await tx.sellerOrder.update({ where: { id: so.id }, data: { deliveryFeeMinor: 0n, taxMinor: { decrement: waiver.taxMinor }, sellerNetMinor: { decrement: so.deliveryFeeMinor } } });
+        await tx.order.update({ where: { id: order.id }, data: { deliveryFeeMinor: { decrement: so.deliveryFeeMinor }, taxMinor: { decrement: waiver.taxMinor }, totalMinor: { decrement: waiver.totalMinor } } });
+        await tx.payment.update({ where: { id: pay.id }, data: { amountMinor: { decrement: waiver.totalMinor } } });
+      }
+      const summary = `${v.product.title} × ${input.quantity} added${waiver ? ' · delivery now free' : ''}`;
       await tx.orderChange.create({
         data: {
           orderId: order.id, sellerOrderId: so.id, kind: 'ADDED', byRole: 'STAFF', actorId: actor.id, reason: input.reason.slice(0, 500), summary,
-          before: {}, after: { [item.id]: input.quantity, variantId: v.id } as Prisma.InputJsonValue, amountMinor: lineTotal, // ADDED: how much more
+          before: {}, after: { [item.id]: input.quantity, variantId: v.id, ...(waiver && { deliveryWaivedMinor: waiver.totalMinor.toString() }) } as Prisma.InputJsonValue,
+          amountMinor: lineTotal - (waiver?.totalMinor ?? 0n), // ADDED: how much more the customer pays (net of a delivery fee dropped)
         },
       });
       await tx.orderStatusHistory.create({ data: { orderId: order.id, sellerOrderId: so.id, toStatus: so.status, actorId: actor.id, note: `Order changed: ${summary}`.slice(0, 500) } });
-      return { order, summary, lineTotal, itemId: item.id };
+      return { order, summary, lineTotal: lineTotal - (waiver?.totalMinor ?? 0n), itemId: item.id };
     });
     await this.audit.log({ actorId: actor.id, action: 'order.items_added', entityType: 'Order', entityId: res.order.id, after: { orderNumber, variantId: input.variantId, quantity: input.quantity, reason: input.reason, amountMinor: res.lineTotal.toString() } });
     await this.tellAdded(res.order.userId, orderNumber, res.summary, res.lineTotal, res.order.currencyCode);

@@ -95,4 +95,33 @@ describe('Seller rules — real database', () => {
     await svc.run(new Date(created.getTime() + 30 * 3_600_000));
     expect((await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id } })).lateWarnedAt).toEqual(warned); // once only
   });
+
+  it('3. adding items that reach the free-delivery amount drops the delivery fee; reducing never adds one', async () => {
+    const admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD })).body.accessToken;
+    const before = await prisma.country.findUniqueOrThrow({ where: { code: 'QA' }, select: { deliveryConfig: true } });
+    await prisma.country.update({ where: { code: 'QA' }, data: { deliveryConfig: { flatFeeMinor: '1000', freeOverMinor: '100000000' } } });
+    try {
+      const so = await sellerOrder(); // one item, pays QAR 10 delivery
+      const fresh = await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id }, select: { deliveryFeeMinor: true, subtotalMinor: true, discountMinor: true } });
+      expect(fresh.deliveryFeeMinor).toBe(1000n);
+      const pay0 = await prisma.payment.findFirstOrThrow({ where: { order: { orderNumber: so.orderNumber } }, select: { amountMinor: true } });
+
+      // free delivery starts just above what is in the shipment now
+      await prisma.country.update({ where: { code: 'QA' }, data: { deliveryConfig: { flatFeeMinor: '1000', freeOverMinor: (fresh.subtotalMinor - fresh.discountMinor + 1n).toString() } } });
+      const added = await api().post(`/api/v1/admin/orders/${so.orderNumber}/items`).set(bearer(admin)).send({ variantId: s.variant, quantity: 1, reason: 'Customer called for one more' }).expect(201);
+      const after = await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id }, select: { deliveryFeeMinor: true, subtotalMinor: true } });
+      expect(after.deliveryFeeMinor).toBe(0n);
+      const order = await prisma.order.findUniqueOrThrow({ where: { orderNumber: so.orderNumber }, select: { deliveryFeeMinor: true, totalMinor: true } });
+      expect(order.deliveryFeeMinor).toBe(0n);
+      const pay1 = await prisma.payment.findFirstOrThrow({ where: { order: { orderNumber: so.orderNumber } }, select: { amountMinor: true } });
+      expect(pay1.amountMinor).toBe(order.totalMinor); // cash to collect = the new total
+      expect(pay1.amountMinor - pay0.amountMinor).toBe(BigInt(added.body.amountMinor)); // the extra the customer pays is net of the dropped fee
+
+      // now remove the added unit again: below the free amount, but no fee is added back
+      await api().patch(`/api/v1/admin/orders/${so.orderNumber}/items`).set(bearer(admin)).send({ reason: 'Customer changed mind', changes: [{ itemId: added.body.itemId, quantity: 0 }] }).expect(200);
+      expect((await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id }, select: { deliveryFeeMinor: true } })).deliveryFeeMinor).toBe(0n);
+    } finally {
+      await prisma.country.update({ where: { code: 'QA' }, data: { deliveryConfig: before.deliveryConfig ?? {} } });
+    }
+  });
 });
