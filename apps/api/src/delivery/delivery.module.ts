@@ -62,8 +62,8 @@ export class GuestRescheduleController {
   @ApiHeader({ name: 'X-Order-Token', required: true })
   @HttpCode(200) @Post(':orderNumber/reschedule')
   async reschedule(@Param('orderNumber') n: string, @Body() d: RescheduleDto, @Headers('x-order-token') token?: string) {
-    const o = await this.prisma.order.findUnique({ where: { orderNumber: n.toUpperCase() }, select: { id: true } });
-    if (!o || !this.access.verify(o.id, token)) throw new UnauthorizedException('This link has expired or is not valid.');
+    const o = await this.prisma.order.findUnique({ where: { orderNumber: n.toUpperCase() }, select: { id: true, user: { select: { isGuest: true } } } });
+    if (!o || !o.user.isGuest || !this.access.verify(o.id, token)) throw new UnauthorizedException('This link has expired or is not valid.');
     return this.delivery.reschedule(n.toUpperCase(), { guestOrderId: o.id }, d);
   }
 }

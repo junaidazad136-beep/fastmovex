@@ -94,7 +94,7 @@ describe('Guest checkout, content and home layout — real database', () => {
     const res = await api().post('/api/v1/checkout/guest').set('x-cart-token', token).set('Idempotency-Key', `g-${run}`)
       .send(order({ contact: { fullName: 'Guest Shopper', email, phone: guestPhone, phoneCode: code } })).expect(201);
     expect(res.body).toMatchObject({ orderNumber: expect.any(String) });
-    expect(res.body.orderAccessToken).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(res.body.orderAccessToken).toMatch(/^[0-9a-z]+\.[A-Za-z0-9_-]{43}$/); // expiry . signature
     s.order = res.body.orderNumber;
     s.token = res.body.orderAccessToken;
 
@@ -131,9 +131,9 @@ describe('Guest checkout, content and home layout — real database', () => {
 
   it('the guest can find the order again with the order number and their email or phone', async () => {
     const byEmail = await api().post('/api/v1/orders/guest/lookup').send({ orderNumber: s.order.toLowerCase(), contact: email.toUpperCase() }).expect(200);
-    expect(byEmail.body.token).toBe(s.token);
+    await api().get(`/api/v1/orders/guest/${s.order}`).set('x-order-token', byEmail.body.token).expect(200);
     const byPhone = await api().post('/api/v1/orders/guest/lookup').send({ orderNumber: s.order, contact: guestPhone }).expect(200);
-    expect(byPhone.body.token).toBe(s.token);
+    await api().get(`/api/v1/orders/guest/${s.order}`).set('x-order-token', byPhone.body.token).expect(200);
     await api().post('/api/v1/orders/guest/lookup').send({ orderNumber: s.order, contact: 'someone@else.com' }).expect(401);
     await api().post('/api/v1/orders/guest/lookup').send({ orderNumber: 'FMX-QA-000000-ZZZZZZ', contact: email }).expect(401);
   });

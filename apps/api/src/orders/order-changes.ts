@@ -571,8 +571,8 @@ export class GuestOrderChangesController {
   constructor(private readonly changes: OrderChangesService, private readonly access: OrderAccessService, private readonly prisma: PrismaService) {}
 
   private async guest(orderNumber: string, token?: string) {
-    const o = await this.prisma.order.findUnique({ where: { orderNumber: orderNumber.toUpperCase() }, select: { id: true, userId: true } });
-    if (!o || !this.access.verify(o.id, token)) throw new UnauthorizedException('This link has expired or is not valid. Look the order up with its number and your email.');
+    const o = await this.prisma.order.findUnique({ where: { orderNumber: orderNumber.toUpperCase() }, select: { id: true, userId: true, user: { select: { isGuest: true } } } });
+    if (!o || !o.user.isGuest || !this.access.verify(o.id, token)) throw new UnauthorizedException('This link has expired or is not valid. Look the order up with its number and your email.');
     return o;
   }
   @Public() @Throttle({ default: { limit: 10, ttl: 3_600_000 } }) @ApiHeader({ name: 'X-Order-Token', required: true }) @Put(':orderNumber/address')

@@ -190,6 +190,7 @@ describe('Phase 22 — order changes, phone orders, door refusals, pickups, refu
     // guest order: changes with the order link only
     const g = await customer('Guest Like');
     const go = await order(g, [{ variant: s.bowl, quantity: 1 }]);
+    await prisma.user.update({ where: { id: g.id }, data: { isGuest: true } }); // guest links are for guest orders only
     const token = app.get(OrderAccessService).sign(go.id);
     await api().put(`/api/v1/orders/guest/${go.orderNumber}/address`).send({ address: { recipientName: 'Guest Like', phone: phone(), city: 'Doha', zone: '66', street: '901', building: '12' } }).expect(401);
     await api().put(`/api/v1/orders/guest/${go.orderNumber}/address`).set('x-order-token', token).send({ address: { recipientName: 'Guest Like', phone: phone(), city: 'Doha', zone: '66', street: '901', building: '12' } }).expect(200);

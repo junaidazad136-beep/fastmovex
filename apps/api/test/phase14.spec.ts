@@ -19,7 +19,7 @@ describe('guest order access tokens', () => {
   const s = access();
   it('open exactly one order and cannot be forged', () => {
     const t = s.sign(UUID);
-    expect(t).toMatch(/^[A-Za-z0-9_-]{43}$/);
+    expect(t).toMatch(/^[0-9a-z]+\.[A-Za-z0-9_-]{43}$/);
     expect(s.verify(UUID, t)).toBe(true);
     expect(s.verify('9c704b04-cbc4-4503-8748-425f5db36265', t)).toBe(false); // another order
     expect(s.verify(UUID, t.slice(0, -1) + (t.endsWith('A') ? 'B' : 'A'))).toBe(false);
@@ -27,13 +27,29 @@ describe('guest order access tokens', () => {
     expect(s.verify(UUID, '')).toBe(false);
     expect(s.verify(UUID, 'a'.repeat(500))).toBe(false);
   });
+  it('expire after 60 days; the expiry inside cannot be changed', () => {
+    const now = Date.UTC(2026, 10, 18);
+    const t = s.sign(UUID, now);
+    expect(s.verify(UUID, t, now + 59 * 86_400_000)).toBe(true);
+    expect(s.verify(UUID, t, now + 61 * 86_400_000)).toBe(false);
+    const later = (parseInt(t.split('.')[0], 36) + 86_400 * 365).toString(36);
+    expect(s.verify(UUID, `${later}.${t.split('.')[1]}`, now)).toBe(false); // pushing the date forward breaks the signature
+  });
+  it('old links without an expiry work only until the cut-off date', () => {
+    const { createHmac } = jest.requireActual('crypto') as typeof import('crypto');
+    const key = createHmac('sha256', 'x'.repeat(40)).update('fmx:order-access:v1').digest();
+    const legacy = createHmac('sha256', key).update(UUID).digest('base64url');
+    expect(s.verify(UUID, legacy, Date.UTC(2026, 11, 1))).toBe(true);
+    expect(s.verify(UUID, legacy, Date.UTC(2027, 0, 18))).toBe(false);
+  });
   it('change when the server secret changes (rotating the secret revokes every link)', () => {
     expect(access('y'.repeat(40)).verify(UUID, s.sign(UUID))).toBe(false);
   });
   it('build a tracking link only when the storefront address is configured', () => {
     expect(s.trackUrl('FMX-QA-1', UUID, 'en')).toBeNull();
     const url = access('x'.repeat(40), 'https://fastmovex.qa/').trackUrl('FMX-QA-1', UUID, 'ar');
-    expect(url).toBe(`https://fastmovex.qa/ar/track?order=FMX-QA-1&t=${s.sign(UUID)}`);
+    expect(url).toMatch(/^https:\/\/fastmovex\.qa\/ar\/track\?order=FMX-QA-1&t=[0-9a-z]+\.[A-Za-z0-9_-]{43}$/);
+    expect(s.verify(UUID, new URL(url!).searchParams.get('t')!)).toBe(true);
     expect(access('x'.repeat(40), 'https://fastmovex.qa').trackUrl('FMX-QA-1', UUID, 'fr')).toContain('/en/track');
   });
 });

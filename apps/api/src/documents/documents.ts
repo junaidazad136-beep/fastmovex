@@ -77,6 +77,9 @@ export class DocumentsService {
     if ('staff' in who) return;
     if ('userId' in who) { if (order.userId !== who.userId) throw new NotFoundException('Order not found'); return; }
     if (!this.access.verify(order.id, who.guestToken)) throw new NotFoundException('Order not found');
+    // guest links are only for guest orders (a registered customer's papers need their sign-in)
+    const owner = await this.prisma.user.findUnique({ where: { id: order.userId }, select: { isGuest: true } });
+    if (!owner?.isGuest) throw new NotFoundException('Order not found');
   }
 
   private seller(s: { businessName: string; legalName: string | null; commercialRegNo: string | null; taxNumber: string | null; isHouse: boolean; store: { name: string } | null }, legal: Legal): InvoiceSeller {
