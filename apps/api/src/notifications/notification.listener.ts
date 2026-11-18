@@ -133,6 +133,14 @@ export class NotificationListener {
     });
   }
 
+  @OnEvent(EVENTS.SELLER_BANK_CHANGED, { async: true })
+  onSellerBankChanged(e: IdEvent) {
+    return this.safe('seller.bank_changed', async () => {
+      const s = await this.prisma.seller.findUniqueOrThrow({ where: { id: e.id }, select: { ownerUserId: true, ibanLast4: true } });
+      await this.notifications.notify(s.ownerUserId, 'SELLER_BANK_CHANGED', { last4: s.ibanLast4 ?? '' });
+    });
+  }
+
   @OnEvent(EVENTS.SELLER_REJECTED, { async: true })
   onSellerRejected(e: IdEvent) {
     return this.safe('seller.rejected', async () => {

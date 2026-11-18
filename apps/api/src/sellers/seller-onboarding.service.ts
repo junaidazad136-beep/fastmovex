@@ -1,4 +1,7 @@
-import { BadRequestException, ConflictException, Injectable, NotFoundException } from '@nestjs/common';
+import { EventEmitter2 } from '@nestjs/event-emitter';
+import { PasswordService } from '../auth/password.service';
+import { EVENTS } from '../notifications/notification.events';
+import { BadRequestException, ConflictException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
 import { DocumentType, Prisma } from '@prisma/client';
 import { randomUUID } from 'crypto';
 import { AuditService } from '../audit/audit.service';
@@ -24,6 +27,8 @@ export class SellerOnboardingService {
     private readonly audit: AuditService,
     private readonly crypto: CryptoService,
     private readonly storage: StorageService,
+    private readonly passwords: PasswordService,
+    @Optional() private readonly events?: EventEmitter2,
   ) {}
 
   /** Any logged-in user can apply. They get the SELLER role now; seller routes stay locked until approval. */
@@ -117,16 +122,38 @@ export class SellerOnboardingService {
     return this.getMine(seller.id);
   }
 
+  /**
+   * Bank details. Changing a saved IBAN is the classic way to steal payouts with a stolen session, so it needs the
+   * password again, sends approved-but-unpaid payouts back for a new check, and tells the seller by email.
+   */
   async updateBank(seller: SellerContext, dto: UpdateBankDto, actorId: string) {
     const iban = normalizeIban(dto.iban);
     if (!isValidIban(iban)) throw new BadRequestException('IBAN is not valid. Check it on your bank statement.');
-    await this.prisma.seller.update({
-      where: { id: seller.id },
-      data: { bankName: dto.bankName, accountHolder: dto.accountHolder, ibanEncrypted: this.crypto.encrypt(iban), ibanLast4: iban.slice(-4) },
+    const current = await this.prisma.seller.findUniqueOrThrow({ where: { id: seller.id }, select: { ibanEncrypted: true } });
+    const changing = !!current.ibanEncrypted && this.crypto.decrypt(current.ibanEncrypted) !== iban;
+    if (changing) {
+      const user = await this.prisma.user.findUniqueOrThrow({ where: { id: actorId }, select: { passwordHash: true } });
+      if (!user.passwordHash) {
+        throw new ForbiddenException({ message: 'Set a password for your account first (Forgot password), then change your bank details.', reason: 'PASSWORD_NEEDED' });
+      }
+      if (!dto.currentPassword || !(await this.passwords.verify(user.passwordHash, dto.currentPassword))) {
+        await this.audit.log({ actorId, action: 'seller.bank_update_denied', entityType: 'Seller', entityId: seller.id });
+        throw new ForbiddenException({ message: 'Enter your password to change your bank details.', reason: 'PASSWORD_REQUIRED' });
+      }
+    }
+    const held = await this.prisma.$transaction(async (tx) => {
+      await tx.seller.update({
+        where: { id: seller.id },
+        data: { bankName: dto.bankName, accountHolder: dto.accountHolder, ibanEncrypted: this.crypto.encrypt(iban), ibanLast4: iban.slice(-4) },
+      });
+      if (!changing) return 0;
+      const r = await tx.sellerPayout.updateMany({ where: { sellerId: seller.id, status: 'APPROVED' }, data: { status: 'REQUESTED', approvedById: null, approvedAt: null } });
+      return r.count;
     });
-    // Bank change is a classic fraud vector: always audited (never with the IBAN itself)
-    await this.audit.log({ actorId, action: 'seller.bank_update', entityType: 'Seller', entityId: seller.id, after: { ibanLast4: iban.slice(-4), bankName: dto.bankName } });
-    return { bankName: dto.bankName, accountHolder: dto.accountHolder, ibanLast4: iban.slice(-4) };
+    // always audited (never with the IBAN itself)
+    await this.audit.log({ actorId, action: 'seller.bank_update', entityType: 'Seller', entityId: seller.id, after: { ibanLast4: iban.slice(-4), bankName: dto.bankName, changed: changing, payoutsSentBack: held } });
+    if (changing) this.events?.emit(EVENTS.SELLER_BANK_CHANGED, { id: seller.id });
+    return { bankName: dto.bankName, accountHolder: dto.accountHolder, ibanLast4: iban.slice(-4), payoutsSentBack: held };
   }
 
   async uploadDocument(seller: SellerContext, type: DocumentType, file: Express.Multer.File | undefined, actorId: string) {

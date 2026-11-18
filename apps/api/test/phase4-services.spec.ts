@@ -1,4 +1,4 @@
-import { BadRequestException, ConflictException, NotFoundException } from '@nestjs/common';
+import { BadRequestException, ForbiddenException, ConflictException, NotFoundException } from '@nestjs/common';
 import { CategoriesService } from '../src/categories/categories.service';
 import { CryptoService } from '../src/common/crypto/crypto.service';
 import { SellerProductsService } from '../src/products/seller-products.service';
@@ -11,7 +11,22 @@ const crypto = new CryptoService({ get: () => Buffer.alloc(32, 1).toString('base
 const sellerA = { id: 'seller-A', status: 'APPROVED', countryCode: 'QA' };
 
 describe('Seller onboarding', () => {
-  const make = (prisma: object) => new SellerOnboardingService(prisma as never, audit as never, crypto, storage as never);
+  const passwords = { verify: jest.fn(async (_h: string, p: string) => p === 'right-password') };
+  const make = (prisma: object, events?: { emit: jest.Mock }) => new SellerOnboardingService(prisma as never, audit as never, crypto, storage as never, passwords as never, events as never);
+  const NEW_IBAN = 'QA58DOHB00001234567890ABCDEFG';
+  const OLD_IBAN = 'QA54QNBA000000000000693123456';
+  const bankPrisma = (existing: string | null) => {
+    const sellerUpdate = jest.fn(); const payoutUpdate = jest.fn().mockResolvedValue({ count: 2 });
+    const tx = { seller: { update: sellerUpdate }, sellerPayout: { updateMany: payoutUpdate } };
+    return {
+      sellerUpdate, payoutUpdate,
+      prisma: {
+        seller: { findUniqueOrThrow: jest.fn().mockResolvedValue({ ibanEncrypted: existing ? crypto.encrypt(existing) : null }) },
+        user: { findUniqueOrThrow: jest.fn().mockResolvedValue({ passwordHash: 'hash' }) },
+        $transaction: (fn: (t: typeof tx) => unknown) => fn(tx),
+      },
+    };
+  };
 
   it('approved seller cannot change legal details', async () => {
     await expect(make({}).updateProfile(sellerA, { commercialRegNo: '999' }, 'u')).rejects.toThrow('through support');
@@ -21,13 +36,33 @@ describe('Seller onboarding', () => {
     await expect(make({}).updateBank(sellerA, { bankName: 'QNB', accountHolder: 'X', iban: 'QA00XXXX' }, 'u')).rejects.toBeInstanceOf(BadRequestException);
   });
 
-  it('IBAN is stored encrypted, only last 4 in clear', async () => {
-    const update = jest.fn();
-    await make({ seller: { update } }).updateBank(sellerA, { bankName: 'QNB', accountHolder: 'X', iban: 'QA58DOHB00001234567890ABCDEFG' }, 'u');
-    const data = update.mock.calls[0][0].data;
+  it('IBAN is stored encrypted, only last 4 in clear (first time: no password needed)', async () => {
+    const b = bankPrisma(null);
+    await make(b.prisma).updateBank(sellerA, { bankName: 'QNB', accountHolder: 'X', iban: NEW_IBAN }, 'u');
+    const data = b.sellerUpdate.mock.calls[0][0].data;
     expect(data.ibanEncrypted).not.toContain('DOHB');
-    expect(crypto.decrypt(data.ibanEncrypted)).toBe('QA58DOHB00001234567890ABCDEFG');
+    expect(crypto.decrypt(data.ibanEncrypted)).toBe(NEW_IBAN);
     expect(data.ibanLast4).toBe('DEFG');
+    expect(b.payoutUpdate).not.toHaveBeenCalled();
+  });
+
+  it('changing a saved IBAN needs the password, sends approved payouts back and tells the seller', async () => {
+    const b = bankPrisma(OLD_IBAN);
+    const events = { emit: jest.fn() };
+    await expect(make(b.prisma, events).updateBank(sellerA, { bankName: 'QNB', accountHolder: 'X', iban: NEW_IBAN }, 'u')).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(make(b.prisma, events).updateBank(sellerA, { bankName: 'QNB', accountHolder: 'X', iban: NEW_IBAN, currentPassword: 'wrong' }, 'u')).rejects.toBeInstanceOf(ForbiddenException);
+    expect(b.sellerUpdate).not.toHaveBeenCalled();
+    const res = await make(b.prisma, events).updateBank(sellerA, { bankName: 'QNB', accountHolder: 'X', iban: NEW_IBAN, currentPassword: 'right-password' }, 'u');
+    expect(res.payoutsSentBack).toBe(2);
+    expect(b.payoutUpdate.mock.calls[0][0]).toMatchObject({ where: { status: 'APPROVED' }, data: { status: 'REQUESTED' } });
+    expect(events.emit).toHaveBeenCalledWith('seller.bank_changed', { id: 'seller-A' });
+  });
+
+  it('saving the same IBAN again (e.g. a new bank name) needs no password', async () => {
+    const b = bankPrisma(NEW_IBAN);
+    await make(b.prisma).updateBank(sellerA, { bankName: 'QNB Doha', accountHolder: 'X', iban: NEW_IBAN }, 'u');
+    expect(b.sellerUpdate).toHaveBeenCalled();
+    expect(b.payoutUpdate).not.toHaveBeenCalled();
   });
 
   it('cannot submit without CR document and bank', async () => {

@@ -8,6 +8,7 @@ export const EVENTS = {
   RETURN_UPDATED: 'return.updated',
   SELLER_APPROVED: 'seller.approved',
   SELLER_REJECTED: 'seller.rejected',
+  SELLER_BANK_CHANGED: 'seller.bank_changed',
   PAYOUT_PAID: 'payout.paid',
   TICKET_REPLIED: 'ticket.replied',
   PRICE_CHANGED: 'product.price_changed',

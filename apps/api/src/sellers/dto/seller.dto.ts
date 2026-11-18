@@ -37,6 +37,8 @@ export class UpdateBankDto {
   @ApiProperty({ example: 'Qatar National Bank' }) @Transform(trim) @IsString() @Length(2, 80) bankName: string;
   @ApiProperty() @Transform(trim) @IsString() @Length(2, 120) accountHolder: string;
   @ApiProperty({ example: 'QA58DOHB00001234567890ABCDEFG' }) @IsString() @Length(15, 40) iban: string;
+  @ApiPropertyOptional({ description: 'Your sign-in password. Required to change bank details once they are saved.' })
+  @IsOptional() @IsString() @MaxLength(200) currentPassword?: string;
 }
 
 export class UploadDocumentDto {

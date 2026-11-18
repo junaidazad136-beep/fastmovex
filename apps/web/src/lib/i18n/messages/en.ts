@@ -1350,6 +1350,8 @@ const en = {
       accountHolder: 'Account holder name',
       iban: 'IBAN',
       ibanHint: 'Starts with QA, on your bank statement. We only show the last 4 digits after saving.',
+      bankPassword: 'Your password',
+      bankPasswordHint: 'Needed to change saved bank details. Payouts already approved will be checked again, and we email you.',
       ibanSaved: 'Account ending {last4}',
       send: 'Send for review',
       sent: 'Application sent. We will let you know by email.',

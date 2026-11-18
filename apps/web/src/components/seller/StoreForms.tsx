@@ -17,15 +17,15 @@ export const cleanIban = (v: string) => v.replace(/\s+/g, '').toUpperCase();
 export function BankForm({ me, onSaved }: { me: SellerMe; onSaved: () => Promise<void> }) {
   const t = useT();
   const toast = useToast();
-  const [f, setF] = useState({ bankName: me.bankName ?? '', accountHolder: me.accountHolder ?? '', iban: '' });
+  const [f, setF] = useState({ bankName: me.bankName ?? '', accountHolder: me.accountHolder ?? '', iban: '', currentPassword: '' });
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
   async function save(e: React.FormEvent) {
     e.preventDefault();
     setBusy(true); setError('');
     try {
-      await api('/seller/me/bank', { method: 'PUT', body: { bankName: f.bankName, accountHolder: f.accountHolder, iban: cleanIban(f.iban) } });
-      setF((x) => ({ ...x, iban: '' }));
+      await api('/seller/me/bank', { method: 'PUT', body: { bankName: f.bankName, accountHolder: f.accountHolder, iban: cleanIban(f.iban), ...(me.ibanLast4 && { currentPassword: f.currentPassword }) } });
+      setF((x) => ({ ...x, iban: '', currentPassword: '' }));
       toast({ tone: 'success', message: t('seller.onboarding.saved') });
       await onSaved();
     } catch (err) { setError(errorMessage(err, t)); } finally { setBusy(false); }
@@ -40,8 +40,13 @@ export function BankForm({ me, onSaved }: { me: SellerMe; onSaved: () => Promise
       <Field id="bk-iban" label={t('seller.onboarding.iban')} hint={t('seller.onboarding.ibanHint')}>
         <input id="bk-iban" className="input font-mono" dir="ltr" required placeholder="QA00 XXXX 0000 0000 0000 0000 0000 0" value={f.iban} onChange={(e) => setF({ ...f, iban: e.target.value })} autoComplete="off" />
       </Field>
+      {me.ibanLast4 && (
+        <Field id="bk-pass" label={t('seller.onboarding.bankPassword')} hint={t('seller.onboarding.bankPasswordHint')}>
+          <input id="bk-pass" type="password" className="input" required value={f.currentPassword} onChange={(e) => setF({ ...f, currentPassword: e.target.value })} autoComplete="current-password" data-testid="bank-password" />
+        </Field>
+      )}
       {error && <p className="field-error" role="alert">{error}</p>}
-      <button type="submit" className="btn-secondary" disabled={busy || cleanIban(f.iban).length < 15 || !f.bankName.trim() || !f.accountHolder.trim()}>{busy && <Spinner />}{t('seller.onboarding.save')}</button>
+      <button type="submit" className="btn-secondary" disabled={busy || cleanIban(f.iban).length < 15 || !f.bankName.trim() || !f.accountHolder.trim() || (!!me.ibanLast4 && !f.currentPassword)}>{busy && <Spinner />}{t('seller.onboarding.save')}</button>
     </form>
   );
 }

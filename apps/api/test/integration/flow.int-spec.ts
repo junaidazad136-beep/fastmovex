@@ -150,7 +150,13 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
 
     await api().put('/api/v1/seller/me/bank').set(bearer(s.seller)).send({ bankName: 'QNB', accountHolder: 'Flow Traders', iban: 'QA00XXXX0000000000000000000000' }).expect(400);
     const bank = await api().put('/api/v1/seller/me/bank').set(bearer(s.seller)).send({ bankName: 'QNB', accountHolder: 'Flow Traders', iban: 'QA58 DOHB 0000 1234 5678 90AB CDEF G' }).expect(200);
-    expect(bank.body).toEqual({ bankName: 'QNB', accountHolder: 'Flow Traders', ibanLast4: 'DEFG' });
+    expect(bank.body).toEqual({ bankName: 'QNB', accountHolder: 'Flow Traders', ibanLast4: 'DEFG', payoutsSentBack: 0 });
+    // changing a saved IBAN needs the password again (a stolen session cannot redirect payouts)
+    const other = { bankName: 'QNB', accountHolder: 'Flow Traders', iban: 'QA54 QNBA 0000 0000 0000 6931 2345 6' };
+    await api().put('/api/v1/seller/me/bank').set(bearer(s.seller)).send(other).expect(403);
+    await api().put('/api/v1/seller/me/bank').set(bearer(s.seller)).send({ ...other, currentPassword: 'wrong-password' }).expect(403);
+    await api().put('/api/v1/seller/me/bank').set(bearer(s.seller)).send({ ...other, currentPassword: 'Seller-Pass-123' }).expect(200);
+    await api().put('/api/v1/seller/me/bank').set(bearer(s.seller)).send({ bankName: 'QNB', accountHolder: 'Flow Traders', iban: 'QA58 DOHB 0000 1234 5678 90AB CDEF G', currentPassword: 'Seller-Pass-123' }).expect(200);
     const raw = await prisma.seller.findUniqueOrThrow({ where: { id: s.sellerId }, select: { ibanEncrypted: true } });
     expect(raw.ibanEncrypted).not.toContain('DOHB'); // encrypted at rest
 
