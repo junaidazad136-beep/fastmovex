@@ -94,8 +94,9 @@ export class GuestCheckoutService {
     if (!c.phoneCode) throw new BadRequestException({ message: 'Confirm your mobile number with the code we text you to pay cash on delivery.', reason: 'COD_PHONE_CODE' });
     const target = await this.otp.verify(guestId, 'VERIFY_PHONE', c.phoneCode);
     if (target !== c.phone) throw new BadRequestException({ message: 'The code is wrong or has expired. Ask for a new code.', reason: 'COD_PHONE_CODE' });
-    const owner = await this.prisma.user.findUnique({ where: { phone: c.phone }, select: { id: true } });
-    if (!owner || owner.id === guestId) await this.prisma.user.update({ where: { id: guestId }, data: { phone: c.phone, phoneVerifiedAt: new Date() } });
+    // The code proves the phone, not the email: only mark it proven when it is already this profile's phone.
+    // Never write a new phone onto a guest profile from here (security audit 2026-11-18: profile takeover).
+    if (u.phone === c.phone) await this.prisma.user.update({ where: { id: guestId }, data: { phoneVerifiedAt: new Date() } });
   }
 
   async place(country: CountryInfo, cartToken: string | undefined, dto: GuestCheckoutDto, idempotencyKey: string, meta: { ip?: string }) {
@@ -156,8 +157,10 @@ export class GuestCheckoutService {
   async lookup(dto: OrderLookupDto) {
     const o = await this.prisma.order.findUnique({
       where: { orderNumber: dto.orderNumber },
-      select: { id: true, orderNumber: true, shippingAddress: true, user: { select: { email: true, phone: true } } },
+      select: { id: true, orderNumber: true, shippingAddress: true, user: { select: { email: true, phone: true, isGuest: true } } },
     });
+    // Registered customers manage their orders signed in; the lookup is only for guest orders.
+    if (o && !o.user.isGuest) throw new UnauthorizedException('We could not find an order with these details');
     const contact = dto.contact.replace(/\s/g, '');
     const shipPhone = (o?.shippingAddress as { phone?: string } | null)?.phone;
     const matches = !!o && [o.user.email, o.user.phone, shipPhone].some((v) => !!v && v.toLowerCase() === contact);
@@ -166,8 +169,8 @@ export class GuestCheckoutService {
   }
 
   private async authorise(orderNumber: string, token: string | undefined) {
-    const o = await this.prisma.order.findUnique({ where: { orderNumber: orderNumber.toUpperCase() }, select: { id: true, userId: true } });
-    if (!o || !this.access.verify(o.id, token)) throw new UnauthorizedException('This link has expired or is not valid. Look the order up with its number and your email.');
+    const o = await this.prisma.order.findUnique({ where: { orderNumber: orderNumber.toUpperCase() }, select: { id: true, userId: true, user: { select: { isGuest: true } } } });
+    if (!o || !o.user.isGuest || !this.access.verify(o.id, token)) throw new UnauthorizedException('This link has expired or is not valid. Look the order up with its number and your email.');
     return o;
   }
 
@@ -190,13 +193,9 @@ export class GuestCheckoutService {
     const phoneOwner = await this.prisma.user.findUnique({ where: { phone: c.phone }, select: { id: true } });
     const phone = !phoneOwner || phoneOwner.id === byEmail?.id ? c.phone : undefined;
 
-    if (byEmail) {
-      return this.prisma.user.update({
-        where: { id: byEmail.id },
-        data: { fullName: c.fullName, ...(phone && !byEmail.phone && { phone }), ...(c.marketingOptIn && { marketingOptIn: true }), ...(c.whatsappOptIn && phone && { whatsappOptIn: true, whatsappOptInAt: new Date() }), ...(c.locale && { locale: c.locale }) },
-        select: { id: true },
-      });
-    }
+    // An existing guest profile is never changed from this unauthenticated form: whoever types an email must not be
+    // able to rename it, give it their phone or sign it up for messages. Each order keeps its own name and phone.
+    if (byEmail) return { id: byEmail.id };
     const customer = await this.prisma.role.findUniqueOrThrow({ where: { code: 'CUSTOMER' }, select: { id: true } });
     try {
       return await this.prisma.user.create({

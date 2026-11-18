@@ -20,6 +20,7 @@ import { PrismaService } from '../../src/prisma/prisma.service';
 const DEMO_PASSWORD = process.env.DEMO_PASSWORD || 'Demo-Pass-2026';
 const run = randomBytes(3).toString('hex');
 const PDF = Buffer.concat([Buffer.from('%PDF-1.4\n'), Buffer.alloc(64, 0x20)]);
+const REAL_PNG = Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8DwHwAFBQIAX8jx0gAAAABJRU5ErkJggg==', 'base64');
 const PNG = Buffer.concat([Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]), Buffer.alloc(64)]);
 const phone = () => `+9745${String(Math.floor(Math.random() * 1e7)).padStart(7, '0')}`;
 
@@ -319,10 +320,13 @@ describe('FastMoveX marketplace — full flow on a real database', () => {
 
   it('10. return -> seller approves -> goods received -> finance refunds; ledger still balances', async () => {
     const before = await api().get('/api/v1/seller/finance/balance').set(bearer(s.gadgets)).expect(200);
-    const ret = await api().post(`/api/v1/orders/${s.orderNumber}/returns`).set(bearer(s.customer)).send({ orderItemId: s.powerBankItem, quantity: 1, reason: 'Stopped charging after a day' }).expect(201);
+    const ret = await api().post(`/api/v1/orders/${s.orderNumber}/returns`).set(bearer(s.customer)).send({ orderItemId: s.powerBankItem, quantity: 1, reason: 'Stopped charging after a day', reasonType: 'DEFECTIVE' }).expect(201);
+    expect(ret.body).toMatchObject({ feeMinor: '0', photosRequired: true }); // a defect: no fee, photos needed
     await api().post(`/api/v1/orders/${s.orderNumber}/returns`).set(bearer(s.customer)).send({ orderItemId: s.powerBankItem, quantity: 1, reason: 'Trying to return twice' }).expect(400);
 
     await api().post(`/api/v1/seller/returns/${ret.body.id}/decision`).set(bearer(s.seller)).send({ decision: 'APPROVED' }).expect(404); // not their item
+    await api().post(`/api/v1/seller/returns/${ret.body.id}/decision`).set(bearer(s.gadgets)).send({ decision: 'APPROVED' }).expect(400); // no photo yet
+    await api().post(`/api/v1/me/returns/${ret.body.id}/photos`).set(bearer(s.customer)).attach('file', REAL_PNG, 'broken.png').expect(201);
     await api().post(`/api/v1/seller/returns/${ret.body.id}/decision`).set(bearer(s.gadgets)).send({ decision: 'APPROVED' }).expect(200);
     await api().post(`/api/v1/seller/returns/${ret.body.id}/received`).set(bearer(s.gadgets)).expect(200);
 

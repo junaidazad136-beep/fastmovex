@@ -63,6 +63,12 @@ export class ReturnsService {
     if (input.quantity > returnable) throw new BadRequestException(`You can return at most ${returnable} of this item`);
 
     const ret = await this.prisma.$transaction(async (tx) => {
+      // re-check under a row lock: two requests at once must not both open returns for the same units
+      await tx.$queryRaw`SELECT 1 FROM "OrderItem" WHERE "id" = ${item.id}::uuid FOR UPDATE`;
+      const open = await tx.returnRequest.aggregate({ where: { orderItemId: item.id, status: { in: OPEN_RETURN } }, _sum: { quantity: true } });
+      const fresh = await tx.orderItem.findUniqueOrThrow({ where: { id: item.id }, select: { quantity: true, refundedQty: true } });
+      const left = fresh.quantity - fresh.refundedQty - (open._sum.quantity ?? 0);
+      if (input.quantity > left) throw new BadRequestException(`You can return at most ${Math.max(0, left)} of this item`);
       const r = await tx.returnRequest.create({ data: { orderItemId: item.id, userId, quantity: input.quantity, reason: input.reason, reasonType, feeMinor: returnFee(reasonType, item.order.currencyCode) } });
       await tx.orderItem.update({ where: { id: item.id }, data: { status: 'RETURN_REQUESTED' } });
       return r;

@@ -23,9 +23,12 @@ export class AccountSecurityService {
 
   private findByIdentifier(identifier: string) {
     const id = identifier.includes('@') ? identifier.toLowerCase() : identifier;
+    // A phone only counts once it is proven, and never for a guest profile: guest checkout takes a phone from an
+    // unauthenticated form, so a reset code texted to it would hand the guest's orders to whoever typed it.
+    const where = id.includes('@') ? { email: id } : { phone: id, phoneVerifiedAt: { not: null }, isGuest: false };
     return this.prisma.user.findFirst({
-      where: { OR: [{ email: id }, { phone: id }], deletedAt: null, status: 'ACTIVE' },
-      select: { id: true, email: true, phone: true, locale: true },
+      where: { ...where, deletedAt: null, status: 'ACTIVE' },
+      select: { id: true, email: true, phone: true, locale: true, isGuest: true },
     });
   }
 
@@ -59,6 +62,7 @@ export class AccountSecurityService {
     }
     const target = await this.otp.verify(user.id, 'RESET_PASSWORD', code);
     if (!target) throw new BadRequestException(INVALID_CODE);
+    if (user.isGuest && target !== user.email) throw new BadRequestException(INVALID_CODE); // guests: email only
 
     await this.prisma.user.update({
       where: { id: user.id },

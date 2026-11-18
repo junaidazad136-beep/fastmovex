@@ -273,6 +273,16 @@ export class CheckoutService {
       UPDATE "Coupon" SET "usedCount" = "usedCount" + 1
       WHERE "id" = ${couponId}::uuid AND ("usageLimit" IS NULL OR "usedCount" < "usageLimit")`;
     if (used !== 1) throw new ConflictException('This promo code has just reached its limit');
+    // Per-customer rules are re-checked here under a lock, so parallel checkouts by one customer cannot each pass
+    // the check made while pricing (security audit 2026-11-18).
+    await tx.$executeRaw`SELECT pg_advisory_xact_lock(hashtext(${'coupon:' + couponId + ':' + userId}))`;
+    const c = await tx.coupon.findUniqueOrThrow({ where: { id: couponId }, select: { perUserLimit: true, firstOrderOnly: true } });
+    const mine = await tx.couponRedemption.count({ where: { couponId, userId } });
+    if (mine >= c.perUserLimit) throw new ConflictException('You have already used this promo code');
+    if (c.firstOrderOnly) {
+      const others = await tx.order.count({ where: { userId, id: { not: orderId }, status: { notIn: ['CANCELLED'] } } });
+      if (others > 0) throw new ConflictException('This promo code is for your first order only');
+    }
     await tx.couponRedemption.create({ data: { couponId, userId, orderId, discountMinor } });
   }
 
