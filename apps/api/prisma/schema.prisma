@@ -360,6 +360,7 @@ model User {
   ticketMessages TicketMessage[]
   redemptions    CouponRedemption[]
   returns        ReturnRequest[]
+  warrantyClaims WarrantyClaim[]
   recentlyViewed RecentlyViewed[]
   verificationCodes VerificationCode[]
   // Cash on delivery controls: blocked customers can still pay by card
@@ -530,6 +531,7 @@ model Seller {
   documents       SellerDocument[]
   sellerOrders    SellerOrder[]
   payouts         SellerPayout[]
+  warrantyClaims  WarrantyClaim[]
   warehouses      Warehouse[]
   commissionRules CommissionRule[]
   coupons         Coupon[]
@@ -1083,6 +1085,7 @@ model OrderItem {
   reviews Review[]
   returns ReturnRequest[]
   doorReturns DoorReturn[]
+  warrantyClaims WarrantyClaim[]
 
   @@index([orderId])
   @@index([sellerOrderId])
@@ -2109,4 +2112,47 @@ model WebPushSubscription {
   lastUsedAt DateTime @default(now())
 
   @@index([userId])
+}
+
+// ------------------------------------------------------------ WARRANTY
+/// Where a warranty claim is (policy: faulty after 7 days, during the warranty -> collected, repaired within 14 days, returned)
+enum WarrantyStatus {
+  REQUESTED  // customer reported the fault (with photos)
+  ACCEPTED   // seller or staff agree it is covered; collect it; repair due in 14 days
+  REJECTED   // not covered (damage, misuse, expired) — the customer is told why
+  IN_REPAIR  // collected, with the seller or the brand
+  RESOLVED   // repaired and returned, replaced, or refunded
+}
+
+enum WarrantyResolution {
+  REPAIRED
+  REPLACED
+  REFUNDED
+}
+
+model WarrantyClaim {
+  id          String              @id @default(uuid()) @db.Uuid
+  orderItemId String              @db.Uuid
+  orderItem   OrderItem           @relation(fields: [orderItemId], references: [id])
+  userId      String              @db.Uuid
+  user        User                @relation(fields: [userId], references: [id])
+  sellerId    String              @db.Uuid
+  seller      Seller              @relation(fields: [sellerId], references: [id])
+  description String
+  images      Json                @default("[]")
+  status      WarrantyStatus      @default(REQUESTED)
+  resolution  WarrantyResolution?
+  note        String? // reply the customer reads (reason for rejecting, what was done)
+  warrantyEndsOn DateTime
+  acceptedAt  DateTime?
+  dueAt       DateTime? // 14 days after it was accepted
+  overdueWarnedAt DateTime?
+  resolvedAt  DateTime?
+  createdAt   DateTime            @default(now())
+  updatedAt   DateTime            @updatedAt
+
+  @@index([orderItemId])
+  @@index([userId])
+  @@index([sellerId, status])
+  @@index([status, dueAt])
 }

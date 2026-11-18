@@ -1,6 +1,6 @@
 'use client';
 
-import { BarChart3, Bell, HeartPulse, BellOff, FileText, Home, MessageCircleQuestion, Package, RotateCcw, ShoppingBag, Star, Store, TicketPercent, Wallet } from 'lucide-react';
+import { BarChart3, Bell, HeartPulse, BellOff, FileText, Home, MessageCircleQuestion, Package, RotateCcw, ShoppingBag, Star, Store, TicketPercent, Wallet, ShieldCheck } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
@@ -156,6 +156,7 @@ function Approved({ me, reloadMe, children }: { me: SellerMe; reloadMe: () => Pr
     { href: paths.sellerOrders(l), label: t('seller.nav.orders'), Icon: ShoppingBag, badge: open },
     { href: paths.sellerProducts(l), label: t('seller.nav.products'), Icon: Package },
     { href: paths.sellerReturns(l), label: t('seller.nav.returns'), Icon: RotateCcw, badge: summary?.todo?.returns },
+    { href: paths.sellerWarranty(l), label: t('seller.nav.warranty'), Icon: ShieldCheck },
     { href: paths.sellerQuestions(l), label: t('seller.nav.questions'), Icon: MessageCircleQuestion, badge: summary?.todo?.questions },
     { href: paths.sellerReviews(l), label: t('seller.nav.reviews'), Icon: Star },
     { href: paths.sellerCoupons(l), label: t('seller.nav.coupons'), Icon: TicketPercent },

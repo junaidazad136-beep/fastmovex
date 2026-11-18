@@ -11,6 +11,11 @@ import { useMoney } from '@/lib/state/shop';
 import { paths } from '@/lib/urls';
 import { EmptyState } from '../ui/EmptyState';
 
+interface WarrantyClaimRow {
+  id: string; status: 'REQUESTED' | 'ACCEPTED' | 'REJECTED' | 'IN_REPAIR' | 'RESOLVED'; resolution: 'REPAIRED' | 'REPLACED' | 'REFUNDED' | null;
+  note: string | null; description: string; dueAt: string | null; orderItem: { productTitle: string; order: { orderNumber: string } };
+}
+
 const TONE: Record<ReturnRequest['status'], string> = {
   REQUESTED: 'bg-warning-50 text-warning-600', APPROVED: 'bg-sky-50 text-sky-700', REJECTED: 'bg-danger-50 text-danger-600', RECEIVED: 'bg-sky-50 text-sky-700', REFUNDED: 'bg-success-50 text-success-700',
 };
@@ -20,7 +25,9 @@ export function Returns() {
   const l = t.locale;
   const money = useMoney();
   const [items, setItems] = useState<ReturnRequest[] | null>(null);
+  const [claims, setClaims] = useState<WarrantyClaimRow[]>([]);
   useEffect(() => { api<ReturnRequest[]>('/me/returns').then(setItems).catch(() => setItems([])); }, []);
+  useEffect(() => { api<WarrantyClaimRow[]>('/me/warranty').then(setClaims).catch(() => setClaims([])); }, []);
   if (items === null) return <div className="skeleton h-40" />;
   return (
     <div>
@@ -47,6 +54,27 @@ export function Returns() {
             </li>
           ))}
         </ul>
+      )}
+      {claims.length > 0 && (
+        <section className="mt-8" data-testid="warranty-claims">
+          <h2 className="mb-3 text-lg font-bold">{t('warranty.listTitle')}</h2>
+          <ul className="space-y-3">
+            {claims.map((c) => (
+              <li key={c.id} className="card p-4 text-sm" data-testid="warranty-row">
+                <div className="flex flex-wrap items-start justify-between gap-2">
+                  <div>
+                    <p className="font-semibold">{c.orderItem.productTitle}</p>
+                    <Link href={paths.order(l, c.orderItem.order.orderNumber)} className="text-xs text-ink-500 hover:underline" dir="ltr">{c.orderItem.order.orderNumber}</Link>
+                  </div>
+                  <span className="rounded-full bg-sky-50 px-2.5 py-0.5 text-xs font-semibold text-sky-700">{c.status === 'RESOLVED' && c.resolution ? t(`warranty.resolution.${c.resolution}`) : t(`warranty.status.${c.status}`)}</span>
+                </div>
+                <p className="mt-2 text-ink-600" dir="auto">{c.description}</p>
+                {c.note && <p className="mt-1 text-ink-600">{t('returns.decisionNote', { note: c.note })}</p>}
+                {c.dueAt && (c.status === 'ACCEPTED' || c.status === 'IN_REPAIR') && <p className="mt-1 text-xs text-ink-500">{t('warranty.due', { date: formatDate(c.dueAt, l) })}</p>}
+              </li>
+            ))}
+          </ul>
+        </section>
       )}
     </div>
   );

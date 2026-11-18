@@ -10,6 +10,8 @@ export const EVENTS = {
   SELLER_REJECTED: 'seller.rejected',
   SELLER_BANK_CHANGED: 'seller.bank_changed',
   SELLER_CANCEL_FEE: 'seller.cancel_fee',
+  WARRANTY_UPDATED: 'warranty.updated',
+  WARRANTY_OVERDUE: 'warranty.overdue',
   SELLER_LATE_PACKING: 'seller.late_packing',
   PAYOUT_PAID: 'payout.paid',
   TICKET_REPLIED: 'ticket.replied',

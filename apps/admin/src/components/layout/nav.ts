@@ -32,6 +32,7 @@ export const NAV: NavGroup[] = [
       { href: '/orders/new', label: 'Phone order', icon: Phone, perms: ['orders.create'] },
       { href: '/fulfilment', label: 'Picking & packing', icon: PackageCheck, perms: ['orders.read'] },
       { href: '/returns', label: 'Returns', icon: RotateCcw, perms: ['returns.manage'], badge: 'openReturns' },
+      { href: '/warranty', label: 'Warranty', icon: ShieldCheck, perms: ['returns.manage'] },
       { href: '/deliveries', label: 'Deliveries', icon: Truck, perms: ['delivery.read'], badge: 'deliveriesToAssign' },
       { href: '/payments', label: 'Payments & closing', icon: CreditCard, perms: ['payments.read'], badge: 'cardPaymentsStuck' },
       { href: '/refunds', label: 'Refunds', icon: Receipt, perms: ['payments.read'], badge: 'refundsToApprove' },

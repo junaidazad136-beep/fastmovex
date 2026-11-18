@@ -25,6 +25,7 @@ import { ChangeDelivery, OrderUpdates } from './ChangeDelivery';
 import { MissedDelivery } from './MissedDelivery';
 import { OrderDocuments } from './OrderDocuments';
 import { CashRefunds } from './CashRefunds';
+import { WarrantyDialog } from './WarrantyDialog';
 import { StatusBadge } from './StatusBadge';
 
 const STEP_OF: Partial<Record<OrderStatus, number>> = {
@@ -125,8 +126,8 @@ function ReturnDialog({ order, item, onClose, onDone }: { order: Order; item: Or
   );
 }
 
-function Shipment({ so, order, index, total, onReturn, guest, guestToken, canReschedule, onChanged }: {
-  so: SellerOrder; order: Order; index: number; total: number; onReturn: (i: OrderItem) => void; guest: boolean;
+function Shipment({ so, order, index, total, onReturn, onWarranty, guest, guestToken, canReschedule, onChanged }: {
+  so: SellerOrder; order: Order; index: number; total: number; onReturn: (i: OrderItem) => void; onWarranty: (i: OrderItem) => void; guest: boolean;
   guestToken?: string; canReschedule: boolean; onChanged: () => void;
 }) {
   const t = useT();
@@ -204,10 +205,16 @@ function Shipment({ so, order, index, total, onReturn, guest, guestToken, canRes
                     <RotateCcw className="size-3.5" aria-hidden />{t('order.returnItem')}
                   </button>
                 )}
+                {!guest && i.canClaimWarranty && (
+                  <button type="button" onClick={() => onWarranty(i)} className="btn-secondary px-3 py-1.5 text-xs" data-testid="warranty-item">
+                    <ShieldCheck className="size-3.5" aria-hidden />{t('warranty.button')}
+                  </button>
+                )}
                 {!guest && so.deliveredAt && (
                   <Link href={`${paths.reviews(l)}?item=${i.id}`} className="btn-ghost px-3 py-1.5 text-xs"><Star className="size-3.5" aria-hidden />{t('order.review')}</Link>
                 )}
               </div>
+              {i.openWarrantyClaim && <p className="mt-1 text-xs font-medium text-sky-700" data-testid="warranty-open">{t(`warranty.status.${i.openWarrantyClaim.status}`)}</p>}
               {!guest && i.returnableQty > 0 && i.returnDeadline && <p className="mt-1 text-[11px] text-ink-400">{t('order.returnBy', { date: formatDate(i.returnDeadline, l) })}</p>}
             </div>
             <p className="tabular shrink-0 text-sm font-semibold">{money(i.lineTotalMinor, { currency: order.currencyCode })}</p>
@@ -234,6 +241,7 @@ export function OrderDetailView({ number, placed, guestToken }: { number: string
   const [busy, setBusy] = useState(false);
   const [cancelErr, setCancelErr] = useState('');
   const [returnItem, setReturnItem] = useState<OrderItem | null>(null);
+  const [warrantyItem, setWarrantyItem] = useState<OrderItem | null>(null);
   const [copied, setCopied] = useState(false);
 
   const guest = !!guestToken;
@@ -315,7 +323,7 @@ export function OrderDetailView({ number, placed, guestToken }: { number: string
       <div className="grid gap-5 lg:grid-cols-[minmax(0,1fr)_320px] lg:items-start">
         <div className="space-y-4">
           {order.sellerOrders.map((so, i) => (
-            <Shipment key={so.id} so={so} order={order} index={i} total={order.sellerOrders.length} onReturn={setReturnItem} guest={guest}
+            <Shipment key={so.id} so={so} order={order} index={i} total={order.sellerOrders.length} onReturn={setReturnItem} onWarranty={setWarrantyItem} guest={guest}
               guestToken={guestToken} canReschedule={so.id === missedId} onChanged={() => void load()} />
           ))}
         </div>
@@ -394,6 +402,7 @@ export function OrderDetailView({ number, placed, guestToken }: { number: string
           </div>
         </form>
       </Dialog>
+      <WarrantyDialog orderNumber={order.orderNumber} item={warrantyItem} onClose={() => setWarrantyItem(null)} onDone={() => { setWarrantyItem(null); void load(); }} />
       <ReturnDialog order={order} item={returnItem} onClose={() => setReturnItem(null)} onDone={() => { setReturnItem(null); void load(); }} />
     </div>
   );

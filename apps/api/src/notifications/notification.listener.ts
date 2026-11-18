@@ -174,6 +174,41 @@ export class NotificationListener {
     });
   }
 
+  @OnEvent(EVENTS.WARRANTY_UPDATED, { async: true })
+  onWarranty(e: IdEvent) {
+    return this.safe('warranty.updated', async () => {
+      const c = await this.prisma.warrantyClaim.findUniqueOrThrow({
+        where: { id: e.id },
+        select: { status: true, note: true, resolution: true, userId: true, user: { select: { locale: true } }, seller: { select: { ownerUserId: true } }, orderItem: { select: { productTitle: true, order: { select: { orderNumber: true } } } } },
+      });
+      const orderNumber = c.orderItem.order.orderNumber;
+      if (c.status === 'REQUESTED') {
+        await this.notifications.notify(c.seller.ownerUserId, 'SELLER_WARRANTY_NEW', { product: c.orderItem.productTitle, orderNumber }, { orderNumber });
+        return;
+      }
+      const ar = c.user.locale === 'ar';
+      const words: Record<string, [string, string]> = {
+        ACCEPTED: ['accepted — we will collect the item; the repair takes up to 14 days', 'مقبولة — سنستلم المنتج؛ يستغرق الإصلاح حتى 14 يوماً'],
+        REJECTED: ['not covered by the warranty', 'غير مشمولة بالضمان'],
+        IN_REPAIR: ['the item is being repaired', 'المنتج قيد الإصلاح'],
+        RESOLVED_REPAIRED: ['repaired — we are bringing it back to you', 'تم الإصلاح — سنعيده إليك'],
+        RESOLVED_REPLACED: ['replaced with a new one', 'تم الاستبدال بمنتج جديد'],
+        RESOLVED_REFUNDED: ['refunded', 'تم الاسترداد'],
+      };
+      const key = c.status === 'RESOLVED' ? `RESOLVED_${c.resolution}` : c.status;
+      const status = (words[key] ?? [c.status, c.status])[ar ? 1 : 0];
+      await this.notifications.notify(c.userId, 'WARRANTY_UPDATE', { product: c.orderItem.productTitle, status, note: c.note ? ` ${c.note}` : '' }, { orderNumber });
+    });
+  }
+
+  @OnEvent(EVENTS.WARRANTY_OVERDUE, { async: true })
+  onWarrantyOverdue(e: IdEvent) {
+    return this.safe('warranty.overdue', async () => {
+      const c = await this.prisma.warrantyClaim.findUniqueOrThrow({ where: { id: e.id }, select: { seller: { select: { ownerUserId: true } }, orderItem: { select: { productTitle: true, order: { select: { orderNumber: true } } } } } });
+      await this.notifications.notify(c.seller.ownerUserId, 'SELLER_WARRANTY_OVERDUE', { product: c.orderItem.productTitle, orderNumber: c.orderItem.order.orderNumber }, { orderNumber: c.orderItem.order.orderNumber });
+    });
+  }
+
   @OnEvent(EVENTS.SELLER_REJECTED, { async: true })
   onSellerRejected(e: IdEvent) {
     return this.safe('seller.rejected', async () => {

@@ -27,6 +27,7 @@ export const paths = {
   sellerPayments: (l: Locale) => `/${l}/seller/payments`,
   sellerStore: (l: Locale) => `/${l}/seller/store`,
   sellerReturns: (l: Locale) => `/${l}/seller/returns`,
+  sellerWarranty: (l: Locale) => `/${l}/seller/warranty`,
   sellerQuestions: (l: Locale) => `/${l}/seller/questions`,
   sellerReviews: (l: Locale) => `/${l}/seller/reviews`,
   sellerCoupons: (l: Locale) => `/${l}/seller/coupons`,

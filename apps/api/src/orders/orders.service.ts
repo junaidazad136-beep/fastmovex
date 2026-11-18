@@ -1,3 +1,4 @@
+import { RETURN_INSTEAD_DAYS, warrantyEnds } from '../finance/warranty';
 import { cashRefundsForOrder } from '../finance/cash-refund-bank';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '../notifications/notification.events';
@@ -100,8 +101,9 @@ export class OrdersService {
             seller: { select: { returnWindowDays: true, store: { select: { slug: true, name: true, nameAr: true } } } },
             items: {
               include: {
-                variant: { select: { product: { select: { slug: true, returnPolicyDays: true } } } },
+                variant: { select: { product: { select: { slug: true, returnPolicyDays: true, warrantyMonths: true } } } },
                 returns: { where: { status: { in: ['REQUESTED', 'APPROVED'] } }, select: { quantity: true } },
+                warrantyClaims: { where: { status: { in: ['REQUESTED', 'ACCEPTED', 'IN_REPAIR'] } }, select: { id: true, status: true } },
               },
             },
             delivery: { select: { id: true, method: true, status: true, trackingUrl: true, etaAt: true, courierName: true, courierUserId: true, deliveryCode: true, lastLat: true, lastLng: true, lastLocationAt: true, failedAt: true, failureReason: true, customerRequest: true, customerRequestAt: true } },
@@ -124,13 +126,19 @@ export class OrdersService {
         ...so,
         delivery: delivery && { ...customerDelivery(delivery), eta: etas.get(delivery.id) ?? null },
         seller: { store: seller.store },
-        items: items.map(({ variant, returns, ...i }) => {
+        items: items.map(({ variant, returns, warrantyClaims: claims, ...i }) => {
+          const warrantyClaims = claims ?? [];
           const policyDays = variant.product.returnPolicyDays;
           const deadline = so.deliveredAt && policyDays !== 0 ? returnDeadline(so.deliveredAt, policyDays, seller.returnWindowDays) : null;
           const delivered = ['DELIVERED', 'RETURN_REQUESTED', 'RETURNED'].includes(i.status);
           const open = returns.reduce((s, r) => s + r.quantity, 0);
           const returnableQty = delivered && deadline && now <= deadline ? Math.max(0, i.quantity - i.refundedQty - open) : 0;
-          return { ...i, productSlug: variant.product.slug, returnDeadline: deadline, returnableQty, openReturnQty: open };
+          // warranty: after the first 7 days (before that it is a return), until delivery + warranty months
+          const months = variant.product.warrantyMonths ?? 0;
+          const warrantyEndsOn = so.deliveredAt && months > 0 ? warrantyEnds(so.deliveredAt, months) : null;
+          const canClaimWarranty = !!warrantyEndsOn && delivered && i.refundedQty < i.quantity && !warrantyClaims.length
+            && now <= warrantyEndsOn && now.getTime() - so.deliveredAt!.getTime() > RETURN_INSTEAD_DAYS * 86_400_000;
+          return { ...i, productSlug: variant.product.slug, returnDeadline: deadline, returnableQty, openReturnQty: open, warrantyEndsOn, canClaimWarranty, openWarrantyClaim: warrantyClaims[0] ?? null };
         }),
       })),
     };

@@ -30,6 +30,7 @@ import { ReturnsLogisticsModule } from './delivery/returns-logistics';
 import { DocumentsModule } from './documents/documents';
 import { ReconciliationModule } from './payments/reconciliation';
 import { FinanceModule } from './finance/finance.controllers';
+import { WarrantyModule } from './finance/warranty';
 import { MarketingModule } from './marketing/marketing';
 import { ContentModule } from './content/content';
 import { HomeModule } from './home/home.module';
@@ -103,6 +104,7 @@ import { SeoModule } from './seo/seo';
     PaymentsModule,
     OrdersModule,
     FinanceModule,
+    WarrantyModule,
     EventEmitterModule.forRoot({ wildcard: false, ignoreErrors: false }),
     NotificationsModule,
     ReviewsModule, QuestionsModule, WarehousesModule,

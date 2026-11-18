@@ -431,6 +431,10 @@ export interface OrderItem {
   status: OrderStatus;
   returnDeadline: string | null;
   returnableQty: number;
+  /** warranty: end date, whether a claim can be made now (after the first 7 days), and the open claim if any */
+  warrantyEndsOn?: string | null;
+  canClaimWarranty?: boolean;
+  openWarrantyClaim?: { id: string; status: 'REQUESTED' | 'ACCEPTED' | 'IN_REPAIR' } | null;
   openReturnQty: number;
 }
 
