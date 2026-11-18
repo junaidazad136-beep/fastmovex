@@ -54,7 +54,7 @@
     "qrcode": "1.5.4",
     "reflect-metadata": "^0.2.2",
     "rxjs": "^7.8.1",
-    "sharp": "^0.34.5",
+    "sharp": "^0.35.5",
     "tsx": "^4.19.0",
     "web-push": "^3.6.7",
     "zod": "^3.23.8"
@@ -93,5 +93,18 @@
     "setupFiles": [
       "<rootDir>/test/setup-env.ts"
     ]
+  },
+  "overrides": {
+    "body-parser": "1.20.9",
+    "multer": "2.5.0",
+    "js-yaml": "4.3.2",
+    "lodash": "4.18.1",
+    "qs": "6.17.1",
+    "file-type": "21.3.4",
+    "@nestjs/schedule": {
+      "uuid": "11.1.1"
+    },
+    "effect": "3.22.4",
+    "deepmerge-ts": "8.0.2"
   }
 }
