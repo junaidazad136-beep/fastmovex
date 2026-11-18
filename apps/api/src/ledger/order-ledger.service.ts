@@ -30,6 +30,9 @@ export function buildCaptureEntries(i: CaptureInput): EntryInput[] {
   return entries.filter((e) => e.amountMinor !== 0n);
 }
 
+/** Seller policy: QAR 10 when a seller cancels an order (usually no stock). Not for FastMoveX's own store. */
+export const SELLER_CANCEL_FEE_QAR_MINOR = 1000n;
+
 @Injectable()
 export class OrderLedgerService {
   private readonly logger = new Logger(OrderLedgerService.name);
@@ -79,5 +82,24 @@ export class OrderLedgerService {
       tx,
     );
     return totalMinor;
+  }
+
+  /**
+   * Seller cancelled a shipment: the cancellation fee comes off what FastMoveX owes the seller (their available
+   * balance; it may go below zero and is taken from the next payout). Posted once per shipment.
+   */
+  async postSellerCancelFee(sellerOrderId: string, actorId: string): Promise<bigint> {
+    const so = await this.prisma.sellerOrder.findUniqueOrThrow({
+      where: { id: sellerOrderId },
+      select: { sellerId: true, seller: { select: { isHouse: true } }, order: { select: { orderNumber: true, currencyCode: true } } },
+    });
+    if (so.seller.isHouse || so.order.currencyCode !== 'QAR') return 0n;
+    const fee = SELLER_CANCEL_FEE_QAR_MINOR;
+    await this.ledger.post({
+      type: 'ADJUSTMENT', refType: 'seller_cancel_fee', refId: sellerOrderId, idempotencyKey: `seller_cancel_fee_${sellerOrderId}`,
+      currencyCode: so.order.currencyCode, actorId, description: `Cancellation fee, order ${so.order.orderNumber}`,
+      entries: [{ type: 'SELLER_AVAILABLE', sellerId: so.sellerId, amountMinor: -fee }, { type: 'PLATFORM_REVENUE', amountMinor: fee }],
+    });
+    return fee;
   }
 }

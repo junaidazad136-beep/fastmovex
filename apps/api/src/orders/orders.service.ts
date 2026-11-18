@@ -290,6 +290,9 @@ export class OrdersService {
     const so = await this.prisma.sellerOrder.findFirst({ where: { id: sellerOrderId, sellerId }, select: { id: true } });
     if (!so) throw new NotFoundException('Order not found');
     await this.setSellerOrderStatus(sellerOrderId, 'CANCELLED', 'SELLER', actorId, reason);
+    // seller policy §10: a cancelled order costs the seller a fixed fee (shown before they confirm)
+    const fee = await this.orderLedger.postSellerCancelFee(sellerOrderId, actorId);
+    if (fee > 0n) this.events?.emit(EVENTS.SELLER_CANCEL_FEE, { id: sellerOrderId });
     return this.detailForSeller(sellerId, sellerOrderId);
   }
 

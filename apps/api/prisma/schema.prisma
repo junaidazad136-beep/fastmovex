@@ -1036,6 +1036,7 @@ model SellerOrder {
   deliveredAt      DateTime?
   releasedAt       DateTime? // earnings moved SELLER_PENDING -> SELLER_AVAILABLE (marker only; amounts live in the ledger)
   cancelledAt      DateTime?
+  lateWarnedAt     DateTime? // seller told it is late to pack (once per shipment)
   cancelReason     String?
   /// where the shipment is packed (picked at checkout, staff can change it until it ships)
   warehouseId      String?        @db.Uuid

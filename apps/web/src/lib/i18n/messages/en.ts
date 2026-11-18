@@ -1419,7 +1419,7 @@ const en = {
       shipped: 'I will deliver it myself',
       cancel: 'Cancel this order',
       cancelTitle: 'Cancel this order?',
-      cancelHint: 'Only if you cannot send it (out of stock, damaged). The customer is told and refunded.',
+      cancelHint: 'Only if you cannot send it (out of stock, damaged). The customer is told and refunded. A cancellation fee of QAR 10 is taken from your balance (seller policy §10).',
       cancelReason: 'Reason (shown to our team)',
       cancelled: 'Order cancelled',
       updated: 'Order updated',

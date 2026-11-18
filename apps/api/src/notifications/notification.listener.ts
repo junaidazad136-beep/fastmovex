@@ -1,3 +1,4 @@
+import { SELLER_CANCEL_FEE_QAR_MINOR } from '../ledger/order-ledger.service';
 import { tzFor } from '../analytics/range';
 import { slotLabel } from '../delivery/slots';
 import { Injectable, Logger, Optional } from '@nestjs/common';
@@ -154,6 +155,22 @@ export class NotificationListener {
     return this.safe('seller.bank_changed', async () => {
       const s = await this.prisma.seller.findUniqueOrThrow({ where: { id: e.id }, select: { ownerUserId: true, ibanLast4: true } });
       await this.notifications.notify(s.ownerUserId, 'SELLER_BANK_CHANGED', { last4: s.ibanLast4 ?? '' });
+    });
+  }
+
+  @OnEvent(EVENTS.SELLER_CANCEL_FEE, { async: true })
+  onSellerCancelFee(e: IdEvent) {
+    return this.safe('seller.cancel_fee', async () => {
+      const so = await this.prisma.sellerOrder.findUniqueOrThrow({ where: { id: e.id }, select: { seller: { select: { ownerUserId: true } }, order: { select: { orderNumber: true, currencyCode: true } } } });
+      await this.notifications.notify(so.seller.ownerUserId, 'SELLER_CANCEL_FEE', { orderNumber: so.order.orderNumber, fee: formatMoney(SELLER_CANCEL_FEE_QAR_MINOR, so.order.currencyCode) }, { orderNumber: so.order.orderNumber });
+    });
+  }
+
+  @OnEvent(EVENTS.SELLER_LATE_PACKING, { async: true })
+  onSellerLatePacking(e: IdEvent & { hours?: number }) {
+    return this.safe('seller.late_packing', async () => {
+      const so = await this.prisma.sellerOrder.findUniqueOrThrow({ where: { id: e.id }, select: { seller: { select: { ownerUserId: true } }, order: { select: { orderNumber: true } } } });
+      await this.notifications.notify(so.seller.ownerUserId, 'SELLER_LATE_PACKING', { orderNumber: so.order.orderNumber, hours: e.hours ?? 24 }, { orderNumber: so.order.orderNumber });
     });
   }
 

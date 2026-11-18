@@ -2,7 +2,7 @@
 export type NotificationType =
   | 'ORDER_PLACED' | 'GUEST_ORDER_PLACED' | 'ORDER_CONFIRMED' | 'ORDER_SHIPPED' | 'ORDER_OUT_FOR_DELIVERY' | 'ORDER_DELIVERED' | 'ORDER_CANCELLED'
   | 'PAYMENT_FAILED' | 'REFUND_COMPLETED' | 'REFUND_BANK_NEEDED' | 'RETURN_UPDATE' | 'PRICE_DROP' | 'BACK_IN_STOCK'
-  | 'SELLER_APPROVED' | 'SELLER_REJECTED' | 'SELLER_NEW_ORDER' | 'PAYOUT_PAID' | 'SELLER_BANK_CHANGED' | 'TICKET_REPLY' | 'PROMOTION' | 'CART_REMINDER' | 'QUESTION_ANSWERED'
+  | 'SELLER_APPROVED' | 'SELLER_REJECTED' | 'SELLER_NEW_ORDER' | 'PAYOUT_PAID' | 'SELLER_BANK_CHANGED' | 'SELLER_CANCEL_FEE' | 'SELLER_LATE_PACKING' | 'TICKET_REPLY' | 'PROMOTION' | 'CART_REMINDER' | 'QUESTION_ANSWERED'
   | 'NEW_SIGN_IN' | 'ACCOUNT_LOCKED' | 'DELIVERY_FAILED' | 'ACCOUNT_DELETION_SCHEDULED' | 'ORDER_CHANGED' | 'RETURN_PICKUP_SCHEDULED'
   | StaffAlertType;
 
@@ -38,6 +38,8 @@ export const TEMPLATES: Record<NotificationType, { en: T; ar: T; sms?: boolean; 
   SELLER_APPROVED: { email: true, en: { title: 'Welcome to FastMoveX', body: 'Your store {{store}} is approved. You can start listing products.' }, ar: { title: 'مرحباً بك في FastMoveX', body: 'تمت الموافقة على متجرك {{store}}. يمكنك البدء بإضافة المنتجات.' } },
   SELLER_REJECTED: { email: true, en: { title: 'Application needs changes', body: 'Your seller application needs updates: {{reason}}' }, ar: { title: 'طلبك يحتاج إلى تعديل', body: 'طلب البائع الخاص بك يحتاج إلى تحديث: {{reason}}' } },
   SELLER_NEW_ORDER: { en: { title: 'New order', body: 'New order {{orderNumber}} — {{items}} item(s).' }, ar: { title: 'طلب جديد', body: 'طلب جديد {{orderNumber}} — {{items}} منتج.' } },
+  SELLER_CANCEL_FEE: { email: true, en: { title: 'Cancellation fee', body: 'You cancelled order {{orderNumber}}. A fee of {{fee}} was taken from your balance. Keep stock up to date to avoid cancellations.' }, ar: { title: 'رسوم الإلغاء', body: 'ألغيت الطلب {{orderNumber}}. خُصمت رسوم {{fee}} من رصيدك. حدّث المخزون لتجنب الإلغاء.' } },
+  SELLER_LATE_PACKING: { email: true, en: { title: 'Order waiting to be packed', body: 'Order {{orderNumber}} is not ready after {{hours}} hours. Print the label and mark it ready today. Repeated late orders can hide your products.' }, ar: { title: 'طلب بانتظار التجهيز', body: 'الطلب {{orderNumber}} غير جاهز بعد {{hours}} ساعة. اطبع الملصق وجهّزه اليوم. تكرار التأخير قد يخفي منتجاتك.' } },
   SELLER_BANK_CHANGED: { email: true, en: { title: 'Your bank details were changed', body: 'Payouts will now go to the account ending {{last4}}. Payouts already approved wait for a new check. If you did not do this, change your password and contact us now.' }, ar: { title: 'تم تغيير بياناتك البنكية', body: 'ستُحوَّل المدفوعات الآن إلى الحساب المنتهي بـ {{last4}}. المدفوعات المعتمدة تنتظر مراجعة جديدة. إن لم تقم بذلك، غيّر كلمة المرور وتواصل معنا فوراً.' } },
   PAYOUT_PAID: { email: true, en: { title: 'Payout sent', body: 'We sent {{amount}} to your bank account ending {{last4}}.' }, ar: { title: 'تم التحويل', body: 'تم تحويل {{amount}} إلى حسابك المنتهي بـ {{last4}}.' } },
   TICKET_REPLY: { email: true, en: { title: 'Support replied', body: 'New reply on ticket {{ticket}}.' }, ar: { title: 'رد من الدعم', body: 'رد جديد على التذكرة {{ticket}}.' } },
