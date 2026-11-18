@@ -196,3 +196,10 @@ node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"  
 node -e "console.log(require('crypto').randomBytes(32).toString('base64'))"      # FIELD_ENCRYPTION_KEY
 node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"   # INTERNAL_API_KEY
 ```
+
+## Error reporting (Sentry) — optional, off when empty
+| Where | Variable | Notes |
+|---|---|---|
+| API (Render) | `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE` (default 0.1) | Reports only unexpected (500) errors. No IPs, cookies, auth headers, bodies or query strings are sent. |
+| Website (Vercel) | `SENTRY_DSN` (server), `NEXT_PUBLIC_SENTRY_DSN` (browser, build time), `SENTRY_ENVIRONMENT`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | Browser events go through `/api/monitor` on the site itself (CSP-safe). No session replay. |
+Sentry organization `fmx-jv` (EU region), projects `fastmovex-api` and `fastmovex-web`.

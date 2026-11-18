@@ -1,4 +1,5 @@
 import './common/utc'; // must stay first: everything below runs in UTC
+import './instrument'; // error reporting (Sentry), before the app loads
 import { Logger } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
 import { NestFactory } from '@nestjs/core';

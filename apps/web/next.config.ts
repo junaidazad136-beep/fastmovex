@@ -1,4 +1,5 @@
 import type { NextConfig } from 'next';
+import { withSentryConfig } from '@sentry/nextjs/config';
 
 /**
  * Product images come from the media CDN (S3 / R2 / MinIO). Its origin is needed at build time so the
@@ -53,4 +54,11 @@ const nextConfig: NextConfig = {
   },
 };
 
-export default nextConfig;
+// Sentry: browser events through our own /api/monitor (not caught by proxy.ts, same origin for the CSP).
+// No source-map upload (no auth token in the build); no build telemetry.
+export default withSentryConfig(nextConfig, {
+  silent: true,
+  telemetry: false,
+  tunnelRoute: '/api/monitor',
+  sourcemaps: { disable: true },
+});

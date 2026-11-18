@@ -87,6 +87,10 @@ export const envSchema = z.object({
   /** Automatic English ⇄ Arabic for product and store text: deepl (needs DEEPL_API_KEY), fake (tests) or off */
   TRANSLATE_PROVIDER: z.enum(['deepl', 'fake', 'off']).default('deepl'),
   /** DeepL key from deepl.com → Account → API keys; a key ending in ":fx" is the free plan (500,000 characters a month) */
+  /** Error reporting: Sentry DSN (optional; off when empty) */
+  SENTRY_DSN: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
+  SENTRY_ENVIRONMENT: z.string().optional(),
+  SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).optional(),
   DEEPL_API_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(20, 'DEEPL_API_KEY looks too short').optional()),
   /** only for tests against a stand-in server; normally chosen from the key */
   DEEPL_API_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),

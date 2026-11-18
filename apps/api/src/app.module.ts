@@ -1,6 +1,7 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { APP_GUARD } from '@nestjs/core';
+import { APP_FILTER, APP_GUARD } from '@nestjs/core';
+import { SentryGlobalFilter, SentryModule } from '@sentry/nestjs/setup';
 import { TwoFactorGuard } from './common/guards/two-factor.guard';
 import { EventEmitterModule } from '@nestjs/event-emitter';
 import { ScheduleModule } from '@nestjs/schedule';
@@ -65,6 +66,7 @@ import { StorageModule } from './storage/storage.service';
 import { SeoModule } from './seo/seo';
 @Module({
   imports: [
+    SentryModule.forRoot(), // reports unexpected (500) errors when SENTRY_DSN is set
     ConfigModule.forRoot({ isGlobal: true, validate: validateEnv, cache: true }),
     ThrottlerModule.forRoot({
       throttlers: [{ ttl: 60_000, limit: 120 }], // 120 req/min per IP by default, stricter on auth routes
@@ -127,6 +129,7 @@ import { SeoModule } from './seo/seo';
   ],
   controllers: [HealthController],
   providers: [
+    { provide: APP_FILTER, useClass: SentryGlobalFilter }, // 4xx are passed on untouched; only real crashes are reported
     // Order matters: rate limit -> who are you -> are you allowed
     { provide: APP_GUARD, useClass: ThrottlerGuard },
     { provide: APP_GUARD, useClass: JwtAuthGuard },
