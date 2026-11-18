@@ -422,6 +422,7 @@ model RolePermission {
   permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
 
   @@id([roleId, permissionId])
+  @@index([permissionId])
 }
 
 model UserRole {
@@ -431,6 +432,7 @@ model UserRole {
   role   Role   @relation(fields: [roleId], references: [id], onDelete: Cascade)
 
   @@id([userId, roleId])
+  @@index([roleId])
 }
 
 enum OtpPurpose {
@@ -783,6 +785,7 @@ model ProductImage {
   sortOrder Int             @default(0)
 
   @@index([productId, sortOrder])
+  @@index([variantId])
 }
 
 model Inventory {
@@ -897,6 +900,7 @@ model RecentlyViewed {
 
   @@id([userId, productId])
   @@index([userId, viewedAt(sort: Desc)])
+  @@index([productId])
 }
 
 // ------------------------------------------------------------- CART
@@ -933,6 +937,7 @@ model CartItem {
   addedAt            DateTime       @default(now())
 
   @@unique([cartId, variantId])
+  @@index([variantId])
 }
 
 model Address {
@@ -1011,6 +1016,7 @@ model Order {
   @@index([countryCode, placedAt])
   @@index([countryCode, deliverySlotStart])
   @@index([status])
+  @@index([couponId])
 }
 
 model SellerOrder {
@@ -1079,6 +1085,7 @@ model OrderItem {
 
   @@index([orderId])
   @@index([sellerOrderId])
+  @@index([variantId])
 }
 
 model OrderStatusHistory {
@@ -1094,6 +1101,7 @@ model OrderStatusHistory {
   createdAt     DateTime     @default(now())
 
   @@index([orderId, createdAt])
+  @@index([sellerOrderId])
 }
 
 // ---------------------------------------------------------- PAYMENTS
@@ -1156,6 +1164,8 @@ model Refund {
   creditNoteAt   DateTime?
 
   @@index([orderId])
+  @@index([paymentId])
+  @@index([sellerOrderId])
 }
 
 model ReturnRequest {
@@ -1182,6 +1192,7 @@ model ReturnRequest {
 
   @@index([orderItemId])
   @@index([status])
+  @@index([userId])
 }
 
 // --------------------------------------------------- COMMISSION ENGINE
@@ -1331,6 +1342,8 @@ model CouponRedemption {
 
   @@unique([couponId, orderId])
   @@index([couponId, userId])
+  @@index([userId])
+  @@index([orderId])
 }
 
 model Campaign {
@@ -1474,6 +1487,7 @@ model Review {
   @@unique([orderItemId, target]) // one product + one seller review per purchased item
   @@index([productId, status, createdAt(sort: Desc)])
   @@index([sellerId, status])
+  @@index([userId])
 }
 
 enum QuestionStatus {
@@ -1564,6 +1578,7 @@ model DeviceToken {
   token     String   @unique
   platform  String // ios, android, web
   createdAt DateTime @default(now())
+  @@index([userId])
 }
 
 // ---------------------------------------------------------- SUPPORT
@@ -1588,6 +1603,8 @@ model SupportTicket {
 
   @@index([userId])
   @@index([status, priority])
+  @@index([orderId])
+  @@index([sellerId])
 }
 
 model TicketMessage {
