@@ -497,7 +497,7 @@ class ChangeItemsDto {
   @ApiProperty({ type: [ItemChangeDto] }) @IsArray() @ArrayMinSize(1) @ArrayMaxSize(100) @ValidateNested({ each: true }) @Type(() => ItemChangeDto) changes: ItemChangeDto[];
   @ApiProperty({ example: 'Customer called: only one box' }) @Transform(trim) @IsString() @Length(5, 300) reason: string;
 }
-class AddItemDto {
+class AddOrderItemDto {
   @ApiProperty() @IsUUID() variantId: string;
   @ApiProperty({ minimum: 1 }) @Type(() => Number) @IsInt() @Min(1) @Max(99) quantity: number;
   @ApiProperty({ example: 'Customer called: add a second charger' }) @Transform(trim) @IsString() @Length(5, 300) reason: string;
@@ -534,7 +534,7 @@ export class AdminOrderChangesController {
 
   /** Add an item before the shipment leaves (cash-on-delivery orders): stock reserved, the cash to collect goes up. */
   @RequirePermissions('orders.update') @Post(':orderNumber/items')
-  add(@Param('orderNumber') n: string, @Body() d: AddItemDto, @CurrentUser() u: AuthUser) {
+  add(@Param('orderNumber') n: string, @Body() d: AddOrderItemDto, @CurrentUser() u: AuthUser) {
     return this.changes.addItem(n, d, { id: u.id });
   }
   @RequirePermissions('orders.update') @Put(':orderNumber/address')

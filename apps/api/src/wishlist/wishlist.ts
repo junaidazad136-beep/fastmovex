@@ -22,7 +22,7 @@ const MAX_LISTS = 20;
 const MAX_ITEMS = 500;
 
 class ListDto { @ApiProperty({ example: 'Birthday ideas' }) @Transform(trim) @IsString() @Length(1, 60) name: string; }
-class AddItemDto {
+class AddWishlistItemDto {
   @ApiProperty() @IsUUID() productId: string;
   @ApiPropertyOptional({ description: 'Default list if omitted' }) @IsOptional() @IsUUID() wishlistId?: string;
 }
@@ -95,7 +95,7 @@ export class WishlistService {
     });
   }
 
-  async add(userId: string, dto: AddItemDto) {
+  async add(userId: string, dto: AddWishlistItemDto) {
     const list = dto.wishlistId ? await this.ownList(userId, dto.wishlistId) : await this.defaultList(userId);
     const product = await this.prisma.product.findFirst({ where: { id: dto.productId, status: 'ACTIVE', deletedAt: null }, select: { id: true, minPriceMinor: true } });
     if (!product) throw new NotFoundException('Product not found');
@@ -225,7 +225,7 @@ export class WishlistController {
   @Get() lists(@CurrentUser() u: AuthUser) { return this.svc.lists(u.id); }
   @Post() create(@CurrentUser() u: AuthUser, @Body() d: ListDto) { return this.svc.createList(u.id, d.name); }
   @Get('contains') contains(@CurrentUser() u: AuthUser, @Query() q: ContainsQuery) { return this.svc.contains(u.id, q.ids.split(',')); }
-  @Post('items') add(@CurrentUser() u: AuthUser, @Body() d: AddItemDto) { return this.svc.add(u.id, d); }
+  @Post('items') add(@CurrentUser() u: AuthUser, @Body() d: AddWishlistItemDto) { return this.svc.add(u.id, d); }
   @HttpCode(204) @Delete('items/:productId') remove(@CurrentUser() u: AuthUser, @Param('productId', ParseUUIDPipe) p: string, @Query('wishlistId') l?: string) { return this.svc.remove(u.id, p, l); }
   @Patch('items/:productId/alerts') alerts(@CurrentUser() u: AuthUser, @Param('productId', ParseUUIDPipe) p: string, @Body() d: AlertsDto) { return this.svc.setAlerts(u.id, p, d); }
   @HttpCode(200) @Post('items/:productId/move-to-cart')
