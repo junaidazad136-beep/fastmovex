@@ -11,6 +11,7 @@ import type { OrderDetail as Order, OrderItem, OrderStatus, SellerOrder } from '
 import { errorMessage } from '@/lib/errors';
 import { formatDate, formatDateTime } from '@/lib/format';
 import { useT } from '@/lib/i18n/client';
+import { shrinkPhoto } from '@/lib/image';
 import { useMoney } from '@/lib/state/shop';
 import { useToast } from '@/lib/state/toast';
 import { paths, pick } from '@/lib/urls';
@@ -56,17 +57,31 @@ function ReturnDialog({ order, item, onClose, onDone }: { order: Order; item: Or
   const t = useT();
   const toast = useToast();
   const [qty, setQty] = useState(1);
+  const money = useMoney();
   const [reason, setReason] = useState('');
+  const [reasonType, setReasonType] = useState<'DEFECTIVE' | 'WRONG_ITEM' | 'NOT_AS_DESCRIBED' | 'CHANGE_OF_MIND'>('DEFECTIVE');
+  const [photos, setPhotos] = useState<File[]>([]);
   const [error, setError] = useState('');
   const [busy, setBusy] = useState(false);
-  useEffect(() => { setQty(1); setReason(''); setError(''); }, [item]);
+  useEffect(() => { setQty(1); setReason(''); setReasonType('DEFECTIVE'); setPhotos([]); setError(''); }, [item]);
   if (!item) return null;
+  const needsPhotos = reasonType !== 'CHANGE_OF_MIND';
   async function submit(e: React.FormEvent) {
     e.preventDefault();
-    if (reason.trim().length < 3) { setError(t('errors.minLength', { n: 3 })); return; }
+    if (reason.trim().length < 5) { setError(t('errors.minLength', { n: 5 })); return; }
+    if (needsPhotos && photos.length === 0) { setError(t('order.returnPhotosNeeded')); return; }
     setBusy(true); setError('');
     try {
-      await api(`/orders/${encodeURIComponent(order.orderNumber)}/returns`, { method: 'POST', body: { orderItemId: item!.id, quantity: qty, reason: reason.trim() } });
+      const ret = await api<{ id: string }>(`/orders/${encodeURIComponent(order.orderNumber)}/returns`, { method: 'POST', body: { orderItemId: item!.id, quantity: qty, reason: reason.trim(), reasonType } });
+      let failed = false;
+      if (needsPhotos) {
+        for (const f of photos) { // one at a time: the server keeps them in order
+          const form = new FormData();
+          form.append('file', await shrinkPhoto(f), f.name.replace(/\.[a-z0-9]+$/i, '') + '.jpg');
+          await api(`/me/returns/${ret.id}/photos`, { method: 'POST', body: form }).catch(() => { failed = true; });
+        }
+      }
+      if (failed) toast({ tone: 'error', message: t('order.returnPhotoFailed') });
       toast({ tone: 'success', message: t('order.returnRequested') });
       onDone();
     } catch (err) { setError(errorMessage(err, t)); } finally { setBusy(false); }
@@ -81,6 +96,23 @@ function ReturnDialog({ order, item, onClose, onDone }: { order: Order; item: Or
             {Array.from({ length: item.returnableQty }, (_, i) => i + 1).map((n) => <option key={n} value={n}>{n}</option>)}
           </select>
         </label>
+        <fieldset className="space-y-2">
+          <legend className="label">{t('order.returnReasonType')}</legend>
+          {(['DEFECTIVE', 'WRONG_ITEM', 'NOT_AS_DESCRIBED', 'CHANGE_OF_MIND'] as const).map((k) => (
+            <label key={k} className="flex items-center gap-2 text-sm">
+              <input type="radio" name="return-type" checked={reasonType === k} onChange={() => setReasonType(k)} data-testid={`return-type-${k}`} />
+              {t(`order.returnType.${k}`)}
+            </label>
+          ))}
+          <p className="hint">{needsPhotos ? t('order.returnWindow48') : order.currencyCode === 'QAR' ? t('order.returnFeeNote', { fee: money(1000n, { currency: 'QAR' }) }) : ''}</p>
+        </fieldset>
+        {needsPhotos && (
+          <label className="block">
+            <span className="label">{t('order.returnPhotos')}</span>
+            <input type="file" accept="image/*" multiple className="input" data-testid="return-photos"
+              onChange={(e) => setPhotos(Array.from(e.target.files ?? []).slice(0, 5))} />
+          </label>
+        )}
         <label className="block">
           <span className="label">{t('order.returnReason')}</span>
           <textarea value={reason} onChange={(e) => setReason(e.target.value)} rows={3} maxLength={500} placeholder={t('order.returnReasonPlaceholder')} className="input" data-testid="return-reason" />

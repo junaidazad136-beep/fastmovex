@@ -81,7 +81,7 @@ export class ReturnsService {
     if (!this.storage) throw new Error('StorageService is not available');
     const photo = await cleanPhoto(validateUpload(file, 'image').buffer);
     const key = `returns/${returnId}/${randomUUID()}.${photo.ext}`;
-    await this.storage.put('private', key, photo.buffer, photo.mime);
+    await this.storage.put('public', key, photo.buffer, photo.mime); // same bucket the seller list reads from; the key is an unguessable UUID
     const res = await this.prisma.returnRequest.updateMany({ where: { id: returnId, userId, status: 'REQUESTED', images: { equals: images } }, data: { images: [...images, key] } });
     if (res.count !== 1) throw new ConflictException('Another photo is being added. Please try again.');
     return { photos: images.length + 1 };

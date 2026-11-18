@@ -14,6 +14,9 @@ interface ReturnRow {
   id: string;
   quantity: number;
   reason: string;
+  reasonType: 'DEFECTIVE' | 'WRONG_ITEM' | 'NOT_AS_DESCRIBED' | 'CHANGE_OF_MIND';
+  feeMinor: string;
+  images: string[];
   status: string;
   resolution: string | null;
   condition?: 'SELLABLE' | 'DAMAGED' | 'NOT_ACCEPTED' | null;
@@ -122,6 +125,7 @@ export function ReturnsList() {
                   </td>
                   <td className="td">{r.user ? <Link href={`/customers/${r.user.id}`} className="hover:text-brand-700">{r.user.fullName}</Link> : '—'}<p className="text-xs text-ink-500">{timeAgo(r.createdAt)}</p></td>
                   <td className="td max-w-xs text-ink-700">
+                    <p className="mb-0.5 text-xs font-semibold text-ink-500">{({ DEFECTIVE: 'Damaged / not working', WRONG_ITEM: 'Wrong item', NOT_AS_DESCRIBED: 'Not as described', CHANGE_OF_MIND: 'Change of mind' } as const)[r.reasonType]}{r.reasonType === 'CHANGE_OF_MIND' && r.feeMinor !== '0' ? ' · fee taken off refund' : ''}{r.reasonType !== 'CHANGE_OF_MIND' && (r.images?.length ?? 0) === 0 ? ' · no photos yet' : ''}</p>
                     {r.reason}{r.resolution ? <p className="mt-1 text-xs text-ink-500">Reply: {r.resolution}</p> : null}
                     {r.condition ? <p className="mt-1 text-xs"><Badge tone={r.condition === 'SELLABLE' ? 'green' : r.condition === 'DAMAGED' ? 'amber' : 'red'}>{CONDITION[r.condition]}</Badge>{r.inspectionNote ? <span className="ms-1 text-ink-500">{r.inspectionNote}</span> : null}</p> : null}
                   </td>

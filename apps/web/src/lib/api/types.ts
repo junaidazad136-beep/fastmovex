@@ -518,6 +518,9 @@ export interface ReturnRequest {
   id: string;
   quantity: number;
   reason: string;
+  reasonType: 'DEFECTIVE' | 'WRONG_ITEM' | 'NOT_AS_DESCRIBED' | 'CHANGE_OF_MIND';
+  /** change-of-mind fee in minor units (string), taken off the refund */
+  feeMinor: string;
   status: 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'RECEIVED' | 'REFUNDED';
   resolution: string | null;
   createdAt: string;

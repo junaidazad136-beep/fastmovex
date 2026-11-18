@@ -15,7 +15,7 @@ import { useSeller } from './SellerShell';
 
 type Status = 'REQUESTED' | 'APPROVED' | 'REJECTED' | 'RECEIVED' | 'REFUNDED';
 interface SellerReturn {
-  id: string; quantity: number; reason: string; images: string[]; status: Status; resolution: string | null; condition: string | null; inspectionNote: string | null;
+  id: string; quantity: number; reason: string; reasonType: 'DEFECTIVE' | 'WRONG_ITEM' | 'NOT_AS_DESCRIBED' | 'CHANGE_OF_MIND'; feeMinor: string; images: string[]; status: Status; resolution: string | null; condition: string | null; inspectionNote: string | null;
   receivedAt: string | null; createdAt: string; pickup: { status: string; date: string } | null;
   orderItem: { productTitle: string; sku: string; quantity: number; unitPriceMinor: string; imageUrl: string | null; order: { orderNumber: string; currencyCode: string } };
 }
@@ -102,6 +102,8 @@ function ReturnCard({ r, onApprove, onReject, onReceive }: { r: SellerReturn; on
         </div>
       </div>
       <p className="mt-3 rounded-xl bg-ink-50 p-3 text-sm text-ink-800"><span className="font-semibold">{t('seller.returns.reason')}: </span><span dir="auto">{r.reason}</span></p>
+      <p className="mt-1 text-xs text-ink-500" data-testid="return-type">{t('returns.typeLabel', { type: t(`order.returnType.${r.reasonType}`) })}</p>
+      {r.reasonType !== 'CHANGE_OF_MIND' && r.images.length === 0 && r.status === 'REQUESTED' && <p className="mt-1 text-xs font-medium text-warning-600">{t('returns.photosNeeded')}</p>}
       {r.images.length > 0 && (
         <div className="mt-2 flex gap-2">{r.images.map((u) => <a key={u} href={u} target="_blank" rel="noreferrer" className="relative size-16 overflow-hidden rounded-lg bg-ink-50"><Image src={u} alt="" fill sizes="64px" className="object-cover" /></a>)}</div>
       )}

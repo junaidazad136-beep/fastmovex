@@ -7,6 +7,7 @@ import { api } from '@/lib/api/client';
 import type { ReturnRequest } from '@/lib/api/types';
 import { formatDate } from '@/lib/format';
 import { useT } from '@/lib/i18n/client';
+import { useMoney } from '@/lib/state/shop';
 import { paths } from '@/lib/urls';
 import { EmptyState } from '../ui/EmptyState';
 
@@ -17,6 +18,7 @@ const TONE: Record<ReturnRequest['status'], string> = {
 export function Returns() {
   const t = useT();
   const l = t.locale;
+  const money = useMoney();
   const [items, setItems] = useState<ReturnRequest[] | null>(null);
   useEffect(() => { api<ReturnRequest[]>('/me/returns').then(setItems).catch(() => setItems([])); }, []);
   if (items === null) return <div className="skeleton h-40" />;
@@ -36,6 +38,8 @@ export function Returns() {
                 <span className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${TONE[r.status]}`}>{t(`returns.status.${r.status}`)}</span>
               </div>
               <p className="mt-2 text-ink-600">{t('returns.qty', { n: r.quantity })} · {t('returns.reason', { reason: r.reason })}</p>
+              <p className="mt-1 text-ink-600">{t('returns.typeLabel', { type: t(`order.returnType.${r.reasonType}`) })}</p>
+              {r.reasonType === 'CHANGE_OF_MIND' && BigInt(r.feeMinor) > 0n && <p className="mt-1 text-xs text-ink-500">{t('returns.fee', { fee: money(r.feeMinor, { currency: 'QAR' }) })}</p>}
               {r.resolution && <p className="mt-1 text-ink-600">{t('returns.decisionNote', { note: r.resolution })}</p>}
               {r.pickup?.status === 'ASSIGNED' && r.status === 'APPROVED' && <p className="mt-1 font-medium text-sky-700" data-testid="return-pickup">{t('returns.pickup', { date: formatDate(r.pickup.date, l) })}</p>}
               {r.pickup?.status === 'COLLECTED' && r.status === 'APPROVED' && <p className="mt-1 font-medium text-sky-700" data-testid="return-pickup">{t('returns.pickupCollected')}</p>}
