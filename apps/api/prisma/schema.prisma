@@ -701,6 +701,8 @@ model Product {
   tags             String[]      @default([]) // lowercase keywords for filtering and search, GIN-indexed
   seoTitle         String?
   seoDescription   String?
+  seoTitleAr       String? // Google title for the Arabic page (auto-translated when empty)
+  seoDescriptionAr String?
   status           ProductStatus @default(DRAFT)
   moderationNote   String? // admin reason when REJECTED
   returnPolicyDays Int?

@@ -247,7 +247,7 @@ export class AdminCatalogService {
           storeId: src.storeId, categoryId: src.categoryId, brandId: src.brandId, countryCode: src.countryCode,
           slug: uniqueSlug(`${src.title} copy`), title: `${src.title} (copy)`, titleAr: src.titleAr,
           shortDescription: src.shortDescription, shortDescriptionAr: src.shortDescriptionAr, description: src.description, descriptionAr: src.descriptionAr,
-          specs: src.specs as Prisma.InputJsonValue, tags: src.tags, seoTitle: src.seoTitle, seoDescription: src.seoDescription,
+          specs: src.specs as Prisma.InputJsonValue, tags: src.tags, seoTitle: src.seoTitle, seoDescription: src.seoDescription, seoTitleAr: src.seoTitleAr, seoDescriptionAr: src.seoDescriptionAr,
           returnPolicyDays: src.returnPolicyDays, warrantyMonths: src.warrantyMonths, sizeChartId: src.sizeChartId, status: 'DRAFT', minPriceMinor: src.minPriceMinor,
         },
         select: { id: true },

@@ -194,7 +194,9 @@ export interface ProductDetail {
   countryCode: string;
   brand: { name: string; nameAr?: string | null; slug: string; logoUrl?: string | null } | null;
   seoTitle?: string | null;
+  seoTitleAr?: string | null;
   seoDescription?: string | null;
+  seoDescriptionAr?: string | null;
   category: { slug: string; name: string; nameAr: string };
   breadcrumbs: Crumb[];
   /** isHouse: FastMoveX's own store (sold and delivered by the shop itself). */

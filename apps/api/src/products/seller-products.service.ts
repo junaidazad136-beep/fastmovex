@@ -68,7 +68,7 @@ export class SellerProductsService {
           specs: assertSpecs(dto.specs),
           tags: dto.tags ?? [],
           seoTitle: dto.seoTitle,
-          seoDescription: dto.seoDescription,
+          seoDescription: dto.seoDescription, seoTitleAr: dto.seoTitleAr, seoDescriptionAr: dto.seoDescriptionAr,
           returnPolicyDays: dto.returnPolicyDays,
           warrantyMonths: dto.warrantyMonths,
           sizeChartId: dto.sizeChartId ?? null,
@@ -144,7 +144,7 @@ export class SellerProductsService {
       data: {
         title: dto.title, titleAr: dto.titleAr, description: dto.description, descriptionAr: dto.descriptionAr,
         shortDescription: dto.shortDescription, shortDescriptionAr: dto.shortDescriptionAr,
-        tags: dto.tags, seoTitle: dto.seoTitle, seoDescription: dto.seoDescription,
+        tags: dto.tags, seoTitle: dto.seoTitle, seoDescription: dto.seoDescription, seoTitleAr: dto.seoTitleAr, seoDescriptionAr: dto.seoDescriptionAr,
         categoryId: dto.categoryId, brandId: dto.brandId,
         specs: dto.specs === undefined ? undefined : assertSpecs(dto.specs),
         returnPolicyDays: dto.returnPolicyDays, warrantyMonths: dto.warrantyMonths, tracksExpiry: dto.tracksExpiry,

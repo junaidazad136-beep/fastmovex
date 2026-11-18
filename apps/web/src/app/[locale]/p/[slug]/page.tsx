@@ -39,10 +39,11 @@ export async function generateMetadata({ params }: PageProps<'/[locale]/p/[slug]
   const [p, market] = await Promise.all([load(slug), serverApi.market()]);
   const name = pick(locale, p.title, p.titleAr);
   const country = pick(locale, market.name, market.nameAr);
-  // "Dallah Set — buy in Qatar | FastMoveX" while it fits Google's ~60 characters; the title written in the admin panel wins (English)
+  // "Dallah Set — buy in Qatar | FastMoveX" while it fits Google's ~60 characters; a Google title written for this language wins
   const long = t('meta.productTitle', { name, country });
-  const title = locale === 'en' && p.seoTitle?.trim() ? p.seoTitle.trim() : long.length <= 52 ? long : name;
-  const own = locale === 'en' ? p.seoDescription?.trim() : '';
+  const ownTitle = (locale === 'ar' ? p.seoTitleAr : p.seoTitle)?.trim();
+  const title = ownTitle || (long.length <= 52 ? long : name);
+  const own = (locale === 'ar' ? p.seoDescriptionAr : p.seoDescription)?.trim();
   const desc = own || clip(`${pick(locale, p.description ?? '', p.descriptionAr)} ${t('meta.productDescriptionSuffix', { country })}`);
   const image = p.images.find((i) => i.url)?.url;
   return {

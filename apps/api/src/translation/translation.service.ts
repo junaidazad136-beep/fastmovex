@@ -11,7 +11,7 @@ import { PrismaService } from '../prisma/prisma.service';
 import { AutoText, fromXml, hashText, Job, Lang, optionTerms, planPairs, splitLines, toXml, worthTranslating } from './text';
 import { DeepLTranslator, FakeTranslator, KeyRejectedError, QuotaExceededError, Translator } from './translator';
 
-export const PRODUCT_PAIRS: [string, string][] = [['title', 'titleAr'], ['shortDescription', 'shortDescriptionAr'], ['description', 'descriptionAr']];
+export const PRODUCT_PAIRS: [string, string][] = [['title', 'titleAr'], ['shortDescription', 'shortDescriptionAr'], ['description', 'descriptionAr'], ['seoTitle', 'seoTitleAr'], ['seoDescription', 'seoDescriptionAr']];
 export const STORE_PAIRS: [string, string][] = [['description', 'descriptionAr']];
 /** A row edited this long after its last translation is looked at again by the background sweep. */
 const SETTLE = "interval '5 seconds'";
@@ -63,7 +63,7 @@ export class TranslationService {
       where: { id },
       select: {
         slug: true, title: true, titleAr: true, shortDescription: true, shortDescriptionAr: true, description: true, descriptionAr: true,
-        autoText: true, optionsAr: true, brand: { select: { name: true } }, variants: { select: { optionValues: true } },
+        seoTitle: true, seoTitleAr: true, seoDescription: true, seoDescriptionAr: true, autoText: true, optionsAr: true, brand: { select: { name: true } }, variants: { select: { optionValues: true } },
       },
     });
     if (!p) return false;

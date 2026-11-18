@@ -38,6 +38,8 @@ export interface ProductDetail {
   tags: string[] | null;
   seoTitle: string | null;
   seoDescription: string | null;
+  seoTitleAr?: string | null;
+  seoDescriptionAr?: string | null;
   status: string;
   moderationNote: string | null;
   returnPolicyDays: number | null;
@@ -75,6 +77,8 @@ interface Fields {
   tracksExpiry: boolean;
   seoTitle: string;
   seoDescription: string;
+  seoTitleAr: string;
+  seoDescriptionAr: string;
 }
 
 function fieldsOf(p: ProductDetail | null): Fields {
@@ -95,6 +99,8 @@ function fieldsOf(p: ProductDetail | null): Fields {
     sizeChartId: p?.sizeChartId ?? '',
     seoTitle: p?.seoTitle ?? '',
     seoDescription: p?.seoDescription ?? '',
+    seoTitleAr: p?.seoTitleAr ?? '',
+    seoDescriptionAr: p?.seoDescriptionAr ?? '',
   };
 }
 
@@ -120,6 +126,8 @@ function payload(f: Fields, create: boolean) {
     sizeChartId: f.sizeChartId || null,
     seoTitle: orNull(f.seoTitle),
     seoDescription: orNull(f.seoDescription),
+    seoTitleAr: orNull(f.seoTitleAr),
+    seoDescriptionAr: orNull(f.seoDescriptionAr),
   };
   // A new product has nothing to clear: leave empty fields out rather than sending nulls.
   return create ? Object.fromEntries(Object.entries(body).filter(([, v]) => v !== null)) : body;
@@ -364,6 +372,8 @@ export function ProductEditor({ product, onReload }: { product: ProductDetail | 
             <div className="space-y-4">
               <TextField label="Page title" value={f.seoTitle} onChange={(e) => set({ seoTitle: e.target.value })} maxLength={70} hint={`${f.seoTitle.length}/70`} />
               <TextArea label="Meta description" value={f.seoDescription} onChange={(e) => set({ seoDescription: e.target.value })} maxLength={170} rows={3} hint={`${f.seoDescription.length}/170`} />
+              <TextField label="Page title (Arabic)" value={f.seoTitleAr} onChange={(e) => set({ seoTitleAr: e.target.value })} maxLength={70} dir="rtl" lang="ar" hint={`${f.seoTitleAr.length}/70 · empty = translated automatically from the English title`} />
+              <TextArea label="Meta description (Arabic)" value={f.seoDescriptionAr} onChange={(e) => set({ seoDescriptionAr: e.target.value })} maxLength={170} rows={3} dir="rtl" lang="ar" hint={`${f.seoDescriptionAr.length}/170`} />
               <div className="rounded-lg border border-ink-100 bg-ink-25 p-3">
                 <p className="truncate text-xs text-success-700">{storefrontUrl.replace(/^https?:\/\//, '')} › p › {product?.slug ?? 'new-product'}</p>
                 <p className="truncate text-base text-[#1a0dab]">{f.seoTitle || f.title || 'Product title'} | FastMoveX</p>

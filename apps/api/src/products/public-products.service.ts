@@ -72,7 +72,7 @@ export class PublicProductsService {
       where: { slug, ...VISIBLE_PRODUCT },
       select: {
         id: true, slug: true, title: true, titleAr: true, description: true, descriptionAr: true, specs: true,
-        shortDescription: true, shortDescriptionAr: true, seoTitle: true, seoDescription: true, tags: true, optionsAr: true,
+        shortDescription: true, shortDescriptionAr: true, seoTitle: true, seoDescription: true, seoTitleAr: true, seoDescriptionAr: true, tags: true, optionsAr: true,
         sizeChart: { select: SIZE_CHART_SELECT },
         returnPolicyDays: true, warrantyMonths: true, ratingAvg: true, ratingCount: true, soldCount: true, minPriceMinor: true, countryCode: true,
         category: { select: { slug: true, name: true, nameAr: true, path: true } },

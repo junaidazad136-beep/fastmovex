@@ -49,6 +49,8 @@ class ProductFieldsDto {
   @IsOptional() @Transform(normalizeTags) @IsArray() @ArrayMaxSize(20) @IsString({ each: true }) @Length(1, 40, { each: true }) tags?: string[];
   @ApiPropertyOptional({ description: 'Search engine title (defaults to the product title)' }) @IsOptional() @Transform(trim) @IsString() @MaxLength(70) seoTitle?: string;
   @ApiPropertyOptional({ description: 'Search engine description (defaults to the description)' }) @IsOptional() @Transform(trim) @IsString() @MaxLength(170) seoDescription?: string;
+  @ApiPropertyOptional({ description: 'Google title of the Arabic page (auto-translated from the English one when empty)' }) @IsOptional() @Transform(trim) @IsString() @MaxLength(70) seoTitleAr?: string;
+  @ApiPropertyOptional({ description: 'Google description of the Arabic page' }) @IsOptional() @Transform(trim) @IsString() @MaxLength(170) seoDescriptionAr?: string;
   @ApiPropertyOptional({ description: 'true = send to admin review now, false/empty = save as draft' })
   @IsOptional() @IsBoolean() submitForReview?: boolean;
 }
