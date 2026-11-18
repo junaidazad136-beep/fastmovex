@@ -82,6 +82,7 @@ export class RefundsService {
       orderBy: [{ createdAt: 'desc' }, { id: 'desc' }],
       take: 26,
       include: { order: { select: { orderNumber: true, currencyCode: true } }, payment: { select: { method: true, provider: true } } },
+      omit: { bankIbanEncrypted: true }, // the full IBAN only through the audited "show" lookup
     });
     const page = toPage(rows, 25);
     // who asked for it and who let it through, so the screen can show (and enforce) the four-eyes rule
@@ -157,9 +158,12 @@ export class RefundsService {
     await this.assertSecondPerson(refundId, admin);
     await this.assertWithinLimit(refundId, admin.id);
     const adminId = admin.id;
-    const r = await this.prisma.refund.findUnique({ where: { id: refundId }, select: { status: true } });
+    const r = await this.prisma.refund.findUnique({ where: { id: refundId }, select: { status: true, bankIbanLast4: true, payment: { select: { method: true } } } });
     if (!r) throw new NotFoundException('Refund not found');
     if (r.status !== 'PROCESSING') throw new BadRequestException('Only refunds in progress can be marked as paid');
+    if (r.payment.method === 'COD' && !r.bankIbanLast4) {
+      throw new BadRequestException({ message: 'The customer has not given a bank account for this cash refund yet. We asked them by message.', reason: 'NEEDS_BANK' });
+    }
     return this.complete(refundId, adminId, reference);
   }
 

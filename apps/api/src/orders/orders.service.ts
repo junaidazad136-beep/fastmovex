@@ -1,3 +1,4 @@
+import { cashRefundsForOrder } from '../finance/cash-refund-bank';
 import { EventEmitter2 } from '@nestjs/event-emitter';
 import { EVENTS } from '../notifications/notification.events';
 import { BadRequestException, ForbiddenException, Injectable, NotFoundException, Optional } from '@nestjs/common';
@@ -142,6 +143,7 @@ export class OrdersService {
     return {
       ...view, changeOptions: { canChange, changesLeft: Math.max(0, CUSTOMER_CHANGE_LIMIT - customerChanges) },
       documents: { invoice: order.status !== 'PENDING', ...(await documentsForOrder(this.prisma, order.id)) },
+      cashRefunds: await cashRefundsForOrder(this.prisma, order.id), // cash refunds: the customer gives a bank account
     };
   }
 
@@ -344,7 +346,7 @@ export class OrdersService {
             items: true, delivery: true,
           },
         },
-        payments: true, refunds: true, coupon: { select: { code: true, fundedBy: true } },
+        payments: true, refunds: { omit: { bankIbanEncrypted: true } }, coupon: { select: { code: true, fundedBy: true } },
         history: { orderBy: { createdAt: 'asc' } },
         changes: { orderBy: { createdAt: 'asc' } },
       },

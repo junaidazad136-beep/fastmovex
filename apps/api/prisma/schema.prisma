@@ -1162,6 +1162,11 @@ model Refund {
   /// set by the database when the refund succeeds (CN-QA-261005-000012); never changes afterwards
   creditNoteNo   String?      @unique
   creditNoteAt   DateTime?
+  /// Cash (COD) refunds are sent by bank transfer: the customer's account, encrypted; only the last 4 in clear
+  bankIbanEncrypted String?
+  bankIbanLast4     String?
+  bankAccountHolder String?
+  bankDetailsAt     DateTime?
 
   @@index([orderId])
   @@index([paymentId])

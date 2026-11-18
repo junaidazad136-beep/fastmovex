@@ -126,4 +126,50 @@ describe('Security audit fixes — real database', () => {
     expect(res.filter((r) => r.status === 201)).toHaveLength(1);
     expect(await prisma.returnRequest.count({ where: { orderItemId: item.id } })).toBe(1);
   });
+
+  it('5. a cash refund waits for the customer\'s bank account; finance sees the full IBAN only through an audited look', async () => {
+    const email = `cash.${run}@example.com`;
+    const ph = phone();
+    const cashCart = await cartFor();
+    const placed = await api().post('/api/v1/checkout/guest').set('x-cart-token', cashCart).set('Idempotency-Key', `cash-${run}`)
+      .send(guestOrder(email, ph, 'Cash Buyer')).expect(201);
+    const token = placed.body.orderAccessToken as string;
+    const order = await prisma.order.findUniqueOrThrow({ where: { orderNumber: placed.body.orderNumber }, select: { id: true, sellerOrders: { select: { id: true } } } });
+    await prisma.payment.updateMany({ where: { orderId: order.id }, data: { status: 'CAPTURED' } }); // cash collected at the door
+
+    const finance = (await api().post('/api/v1/auth/login').send({ identifier: 'finance@demo.fastmovex.test', password: DEMO_PASSWORD })).body.accessToken;
+    const finance2 = (await api().post('/api/v1/auth/login').send({ identifier: 'finance2@demo.fastmovex.test', password: DEMO_PASSWORD })).body.accessToken;
+    const created = await api().post('/api/v1/admin/refunds').set(bearer(finance))
+      .send({ orderNumber: placed.body.orderNumber, sellerOrderId: order.sellerOrders[0].id, amountMinor: '2000', reason: 'Item missing from the bag' }).expect(201);
+    const guestId = (await prisma.user.findUniqueOrThrow({ where: { email }, select: { id: true } })).id;
+    const asked = async () => prisma.notification.count({ where: { userId: guestId, type: 'REFUND_BANK_NEEDED' } });
+    for (let i = 0; i < 50 && !(await asked()); i++) await new Promise((r) => setTimeout(r, 100));
+    expect(await asked()).toBeGreaterThanOrEqual(1); // the customer was asked for a bank account (in-app and email)
+
+    const view = await api().get(`/api/v1/orders/guest/${placed.body.orderNumber}/cash-refunds`).set('x-order-token', token).expect(200);
+    expect(view.body).toEqual([expect.objectContaining({ id: created.body.id, needsBank: true, ibanLast4: null })]);
+
+    await api().post(`/api/v1/admin/refunds/${created.body.id}/approve`).set(bearer(finance2)).expect(200);
+    const early = await api().post(`/api/v1/admin/refunds/${created.body.id}/mark-paid`).set(bearer(finance2)).send({ reference: `TRF-${run}` }).expect(400);
+    expect(early.body.reason).toBe('NEEDS_BANK');
+    await api().get(`/api/v1/admin/refunds/${created.body.id}/bank`).set(bearer(finance2)).expect(404);
+
+    await api().put(`/api/v1/orders/guest/${placed.body.orderNumber}/refunds/${created.body.id}/bank`).send({ accountHolder: 'Cash Buyer', iban: 'QA58 DOHB 0000 1234 5678 90AB CDEF G' }).expect(401); // no link
+    await api().put(`/api/v1/orders/guest/${placed.body.orderNumber}/refunds/${created.body.id}/bank`).set('x-order-token', token).send({ accountHolder: 'Cash Buyer', iban: 'QA00 BAD' }).expect(400);
+    const saved = await api().put(`/api/v1/orders/guest/${placed.body.orderNumber}/refunds/${created.body.id}/bank`).set('x-order-token', token)
+      .send({ accountHolder: 'Cash Buyer', iban: 'QA58 DOHB 0000 1234 5678 90AB CDEF G' }).expect(200);
+    expect(saved.body).toMatchObject({ ibanLast4: 'DEFG' });
+
+    const list = await api().get('/api/v1/admin/refunds').set(bearer(finance2)).expect(200);
+    const row = list.body.items.find((r: { id: string }) => r.id === created.body.id);
+    expect(row).toMatchObject({ bankIbanLast4: 'DEFG', bankAccountHolder: 'Cash Buyer' });
+    expect(row.bankIbanEncrypted).toBeUndefined(); // never in lists
+    const shown = await api().get(`/api/v1/admin/refunds/${created.body.id}/bank`).set(bearer(finance2)).expect(200);
+    expect(shown.body).toMatchObject({ iban: 'QA58DOHB00001234567890ABCDEFG', accountHolder: 'Cash Buyer' });
+    expect(await prisma.auditLog.count({ where: { action: 'refund.bank_viewed', entityId: created.body.id } })).toBe(1);
+
+    await api().post(`/api/v1/admin/refunds/${created.body.id}/mark-paid`).set(bearer(finance2)).send({ reference: `TRF-${run}` }).expect(200);
+    await api().put(`/api/v1/orders/guest/${placed.body.orderNumber}/refunds/${created.body.id}/bank`).set('x-order-token', token)
+      .send({ accountHolder: 'Someone Else', iban: 'QA54 QNBA 0000 0000 0000 6931 2345 6' }).expect(400); // sent: no more changes
+  });
 });

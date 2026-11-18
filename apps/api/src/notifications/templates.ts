@@ -1,7 +1,7 @@
 /** Every notification FastMoveX sends, in English and Arabic. Variables: {{name}}. Kept in code so they are reviewed like code. */
 export type NotificationType =
   | 'ORDER_PLACED' | 'GUEST_ORDER_PLACED' | 'ORDER_CONFIRMED' | 'ORDER_SHIPPED' | 'ORDER_OUT_FOR_DELIVERY' | 'ORDER_DELIVERED' | 'ORDER_CANCELLED'
-  | 'PAYMENT_FAILED' | 'REFUND_COMPLETED' | 'RETURN_UPDATE' | 'PRICE_DROP' | 'BACK_IN_STOCK'
+  | 'PAYMENT_FAILED' | 'REFUND_COMPLETED' | 'REFUND_BANK_NEEDED' | 'RETURN_UPDATE' | 'PRICE_DROP' | 'BACK_IN_STOCK'
   | 'SELLER_APPROVED' | 'SELLER_REJECTED' | 'SELLER_NEW_ORDER' | 'PAYOUT_PAID' | 'SELLER_BANK_CHANGED' | 'TICKET_REPLY' | 'PROMOTION' | 'CART_REMINDER' | 'QUESTION_ANSWERED'
   | 'NEW_SIGN_IN' | 'ACCOUNT_LOCKED' | 'DELIVERY_FAILED' | 'ACCOUNT_DELETION_SCHEDULED' | 'ORDER_CHANGED' | 'RETURN_PICKUP_SCHEDULED'
   | StaffAlertType;
@@ -27,6 +27,7 @@ export const TEMPLATES: Record<NotificationType, { en: T; ar: T; sms?: boolean; 
   ORDER_DELIVERED: { whatsapp: { template: 'fastmovex_order_delivered', params: ['name', 'orderNumber'] }, en: { title: 'Delivered', body: 'Your order {{orderNumber}} from {{store}} was delivered. Tell us how it went!' }, ar: { title: 'تم التوصيل', body: 'تم توصيل طلبك {{orderNumber}} من {{store}}. شاركنا رأيك!' } },
   ORDER_CANCELLED: { email: true, whatsapp: { template: 'fastmovex_order_cancelled', params: ['orderNumber'] }, en: { title: 'Order cancelled', body: 'Part of your order {{orderNumber}} from {{store}} was cancelled. Any payment will be refunded.' }, ar: { title: 'تم إلغاء الطلب', body: 'تم إلغاء جزء من طلبك {{orderNumber}} من {{store}}. سيتم استرداد أي مبلغ مدفوع.' } },
   PAYMENT_FAILED: { en: { title: 'Payment failed', body: 'Payment for order {{orderNumber}} did not go through. Please try again.' }, ar: { title: 'فشل الدفع', body: 'لم يكتمل الدفع للطلب {{orderNumber}}. يرجى المحاولة مرة أخرى.' } },
+  REFUND_BANK_NEEDED: { email: true, en: { title: 'Where should we send your refund?', body: 'You paid cash for order {{orderNumber}}, so we refund {{amount}} by bank transfer. Open the order and add your bank account (IBAN). {{linkLine}}' }, ar: { title: 'إلى أين نرسل المبلغ المسترد؟', body: 'دفعت نقداً للطلب {{orderNumber}}، لذلك نعيد {{amount}} بتحويل بنكي. افتح الطلب وأضف حسابك البنكي (IBAN). {{linkLine}}' } },
   REFUND_COMPLETED: { email: true, en: { title: 'Refund sent', body: 'We refunded {{amount}} for order {{orderNumber}}.' }, ar: { title: 'تم الاسترداد', body: 'تم استرداد {{amount}} للطلب {{orderNumber}}.' } },
   RETURN_UPDATE: { en: { title: 'Return update', body: 'Your return for {{product}} was {{status}}.' }, ar: { title: 'تحديث الإرجاع', body: 'تم تحديث طلب إرجاع {{product}}: {{status}}.' } },
   // Alerts the customer switched on for a saved product (wishlist): sent without marketing consent, they asked for them.

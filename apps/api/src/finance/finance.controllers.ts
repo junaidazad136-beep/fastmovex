@@ -16,6 +16,7 @@ import { RefundsService } from './refunds.service';
 import { ReleaseService } from './release.service';
 import { ReturnsService } from './returns.service';
 import { SellerLedgerQuery } from './seller-ledger.query';
+import { AdminCashRefundController, CashRefundBankService, CustomerCashRefundController, GuestCashRefundController } from './cash-refund-bank';
 
 const trim = ({ value }: { value: unknown }) => (typeof value === 'string' ? value.trim() : value);
 
@@ -169,8 +170,9 @@ export class AdminFinanceController {
 
 @Module({
   imports: [PaymentsModule],
-  controllers: [CustomerReturnsController, SellerFinanceController, AdminFinanceController],
-  providers: [RefundsService, PayoutsService, ReturnsService, ReleaseService, FinanceSummaryService, SellerLedgerQuery],
+  controllers: [CustomerReturnsController, SellerFinanceController, AdminFinanceController, CustomerCashRefundController, GuestCashRefundController, AdminCashRefundController],
+  providers: [CashRefundBankService, RefundsService, PayoutsService, ReturnsService, ReleaseService, FinanceSummaryService, SellerLedgerQuery],
+  exports: [CashRefundBankService],
 })
 export class FinanceModule {}
 

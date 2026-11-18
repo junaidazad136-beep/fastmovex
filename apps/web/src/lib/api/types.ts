@@ -500,6 +500,8 @@ export interface OrderDetail {
   history: { fromStatus: OrderStatus | null; toStatus: OrderStatus; note: string | null; createdAt: string }[];
   /** what the customer can download: the invoice (once confirmed), credit notes for refunds paid, receipts for returned items */
   documents?: OrderDocuments;
+  /** cash (COD) refunds of this order: the customer gives a bank account for the transfer */
+  cashRefunds?: CashRefund[];
   /** changes after checkout (by our team, by the customer, at the door) */
   changes?: OrderChange[];
   /** whether the customer may still change the window / address themselves */
@@ -629,3 +631,5 @@ export interface DeliverySlots {
   timezone: string;
   days: { date: string; weekday: number; slots: DeliverySlot[] }[];
 }
+
+export interface CashRefund { id: string; amountMinor: string; status: 'PENDING' | 'PROCESSING' | 'SUCCEEDED' | 'FAILED'; needsBank: boolean; ibanLast4: string | null; accountHolder: string | null }

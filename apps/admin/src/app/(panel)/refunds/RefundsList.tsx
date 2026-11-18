@@ -23,6 +23,9 @@ interface Refund {
   payment: { method: string; provider: string };
   createdBy?: { id: string; fullName: string } | null;
   approvedBy?: { id: string; fullName: string } | null;
+  /** cash refunds: the account the customer gave (last 4 only; the full IBAN through the audited "Show" button) */
+  bankIbanLast4?: string | null;
+  bankAccountHolder?: string | null;
 }
 
 const TABS = [
@@ -48,6 +51,12 @@ export function RefundsList() {
   const { busy, run } = useAction();
   const [confirm, setConfirm] = useState<{ row: Refund; kind: 'approve' | 'reject' | 'paid' } | null>(null);
   const approver = can('refunds.approve');
+  // the full IBAN of a cash refund, opened on purpose (each look is recorded in the audit log)
+  const [iban, setIban] = useState<{ id: string; value: string } | null>(null);
+  async function showIban(r: Refund) {
+    const res = await run(`iban-${r.id}`, () => api<{ iban: string; accountHolder: string }>(`/admin/refunds/${r.id}/bank`));
+    if (res) setIban({ id: r.id, value: res.iban.replace(/(.{4})/g, '$1 ').trim() });
+  }
 
   async function act(text: string) {
     if (!confirm) return;
@@ -88,7 +97,14 @@ export function RefundsList() {
                     {r.reason ?? '—'}
                     <p className="text-xs text-ink-400">{r.createdBy ? `Asked by ${r.createdBy.fullName}` : 'Automatic'}{r.approvedBy ? ` · approved by ${r.approvedBy.fullName}` : ''}</p>
                   </td>
-                  <td className="td text-ink-600">{paymentMethodLabel(r.payment.method)}{r.providerRef ? <p className="max-w-40 truncate text-xs text-ink-400" title={r.providerRef}>{r.providerRef}</p> : null}</td>
+                  <td className="td text-ink-600">{paymentMethodLabel(r.payment.method)}{r.providerRef ? <p className="max-w-40 truncate text-xs text-ink-400" title={r.providerRef}>{r.providerRef}</p> : null}
+                    {r.payment.method === 'COD' && r.status !== 'SUCCEEDED' && r.status !== 'FAILED' ? (
+                      r.bankIbanLast4
+                        ? <p className="text-xs text-ink-500" data-testid="refund-bank">To {r.bankAccountHolder} · ••{r.bankIbanLast4}{approver ? <> · <button type="button" className="link" onClick={() => void showIban(r)}>Show IBAN</button></> : null}</p>
+                        : <p className="text-xs font-medium text-warning-600" data-testid="refund-no-bank">Waiting for the customer&apos;s bank account</p>
+                    ) : null}
+                    {iban?.id === r.id ? <p className="mt-1 select-all rounded bg-ink-50 px-1.5 py-0.5 font-mono text-xs" dir="ltr" data-testid="refund-iban">{iban.value}</p> : null}
+                  </td>
                   <td className="td"><StatusBadge status={r.status} label={r.status === 'SUCCEEDED' ? 'Paid' : undefined} /></td>
                   <td className="td text-end font-medium tabular">{formatMoney(r.amountMinor, r.order.currencyCode)}</td>
                   <td className="td text-end">
@@ -104,7 +120,8 @@ export function RefundsList() {
                               : <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => setConfirm({ row: r, kind: 'approve' })}>Approve</button>}
                           </>
                         ) : null}
-                        {r.status === 'PROCESSING' && !isOwn(r) ? <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => setConfirm({ row: r, kind: 'paid' })}>Mark as paid</button> : null}
+                        {r.status === 'PROCESSING' && !isOwn(r) && r.payment.method === 'COD' && !r.bankIbanLast4 ? <span className="self-center text-xs text-ink-500">Needs the customer&apos;s bank account</span> : null}
+                        {r.status === 'PROCESSING' && !isOwn(r) && !(r.payment.method === 'COD' && !r.bankIbanLast4) ? <button type="button" className="btn-primary btn-sm" disabled={!!busy} onClick={() => setConfirm({ row: r, kind: 'paid' })}>Mark as paid</button> : null}
                       </div>
                     ) : null}
                     {r.creditNoteNo ? (

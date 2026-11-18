@@ -24,6 +24,7 @@ import { BuyAgain } from './BuyAgain';
 import { ChangeDelivery, OrderUpdates } from './ChangeDelivery';
 import { MissedDelivery } from './MissedDelivery';
 import { OrderDocuments } from './OrderDocuments';
+import { CashRefunds } from './CashRefunds';
 import { StatusBadge } from './StatusBadge';
 
 const STEP_OF: Partial<Record<OrderStatus, number>> = {
@@ -321,6 +322,7 @@ export function OrderDetailView({ number, placed, guestToken }: { number: string
         <aside className="space-y-4">
           <ChangeDelivery order={order} guestToken={guestToken} onChanged={() => void load()} />
           <OrderUpdates order={order} />
+          {order.cashRefunds && <CashRefunds refunds={order.cashRefunds} orderNumber={order.orderNumber} currency={order.currencyCode} guestToken={guestToken} onSaved={() => void load()} />}
           {order.documents && <OrderDocuments docs={order.documents} orderNumber={order.orderNumber} currency={order.currencyCode} guestToken={guestToken} />}
           <section className="card p-4 text-sm">
             <h2 className="mb-3 font-bold">{t('order.payment')}</h2>

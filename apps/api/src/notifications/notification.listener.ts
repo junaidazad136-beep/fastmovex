@@ -57,6 +57,22 @@ export class NotificationListener {
     });
   }
 
+  /** A cash (COD) refund can only go out by bank transfer: ask the customer for their account. */
+  @OnEvent(EVENTS.REFUND_REQUESTED, { async: true })
+  onRefundRequested(e: IdEvent) {
+    return this.safe('refund.bank_needed', async () => {
+      const r = await this.prisma.refund.findUniqueOrThrow({
+        where: { id: e.id },
+        select: { amountMinor: true, bankIbanLast4: true, payment: { select: { method: true, currencyCode: true } }, order: { select: { id: true, userId: true, orderNumber: true, user: { select: { isGuest: true, locale: true } } } } },
+      });
+      if (r.payment.method !== 'COD' || r.bankIbanLast4) return;
+      const ar = r.order.user.locale === 'ar';
+      const url = r.order.user.isGuest ? this.access?.trackUrl(r.order.orderNumber, r.order.id, r.order.user.locale) : null;
+      const linkLine = url ? url : (ar ? 'تجده في حسابك ضمن "طلباتي".' : 'You will find it in your account under "My orders".');
+      await this.notifications.notify(r.order.userId, 'REFUND_BANK_NEEDED', { orderNumber: r.order.orderNumber, amount: formatMoney(r.amountMinor, r.payment.currencyCode), linkLine }, { orderNumber: r.order.orderNumber });
+    });
+  }
+
   @OnEvent(EVENTS.ORDER_CONFIRMED, { async: true })
   onConfirmed(e: OrderEvent) {
     return this.safe('order.confirmed', async () => {

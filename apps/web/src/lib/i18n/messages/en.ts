@@ -1064,6 +1064,18 @@ const en = {
     offlineTitle: 'You are offline',
     offlineText: 'Check your connection. Pages you opened recently may still be available.',
   },
+  cashRefund: {
+    title: 'Your cash refund',
+    intro: 'You paid cash, so we send the money back by bank transfer. Add the account it should go to.',
+    status: { needsBank: 'Bank account needed', waiting: 'Being sent', sent: 'Sent' },
+    to: 'To {holder}, account ending {last4}',
+    holder: 'Account holder name',
+    iban: 'IBAN',
+    ibanHint: 'Starts with QA, on your bank statement or app. We only show the last 4 characters after saving.',
+    save: 'Save bank account',
+    change: 'Use a different account',
+    saved: 'Saved. We will send your refund to this account.',
+  },
   docs: {
     title: 'Documents',
     invoice: 'Invoice',
