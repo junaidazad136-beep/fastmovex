@@ -13,11 +13,11 @@ import { formatMoney, formatTime } from '@/lib/format';
 import { shrinkPhoto } from '@/lib/image';
 import { useSession } from '@/lib/state/session';
 import { useToast } from '@/lib/state/toast';
-import { cachedRun, enqueue, flush, isOffline, outbox, type OutboxEntry, type OutboxKind, saveProfile, saveRun, statusAfter } from '@/lib/driver-offline';
+import { cachedRun, enqueue, flush, isOffline, outbox, type OutboxEntry, type OutboxKind, queuedPhoto, savePhoto, saveProfile, saveRun, statusAfter } from '@/lib/driver-offline';
 import { PickupCards, RefuseItemsDialog, type PickupJob } from './DriverExtras';
 import { ScanParcel } from './ScanParcel';
 
-type Queue = (job: Job, kind: OutboxKind, payload?: Record<string, string>) => void;
+type Queue = (job: Job, kind: OutboxKind, payload?: Record<string, string>, photo?: Blob | null) => void;
 
 /** The run with the steps still waiting in the outbox already applied (what the driver has actually done). */
 function withOutbox(run: Run, pending: OutboxEntry[]): Run {
@@ -39,6 +39,8 @@ async function sendQueued(e: OutboxEntry) {
   }
   const form = new FormData();
   for (const [k, v] of Object.entries(e.payload)) form.append(k, v);
+  const photo = await queuedPhoto(e.id); // taken without signal, kept on the phone until now
+  if (photo) form.append('photo', photo, e.kind === 'deliver' ? 'doorstep.jpg' : 'door.jpg');
   await api(`/courier/jobs/${e.jobId}/${e.kind === 'deliver' ? 'deliver' : 'fail'}`, { method: 'POST', body: form });
 }
 
@@ -189,11 +191,14 @@ export function DriverApp() {
   }, [status, isDriver, user, load]);
 
   /** No signal: the step is kept on the phone and shown as done; it is sent when the phone is back online. */
-  const queue: Queue = useCallback((job, kind, payload = {}) => {
-    enqueue(uid, { jobId: job.id, orderNumber: job.orderNumber, kind, payload });
+  const queue: Queue = useCallback((job, kind, payload = {}, photo = null) => {
+    const entry = enqueue(uid, { jobId: job.id, orderNumber: job.orderNumber, kind, payload });
     setPending(outbox(uid).length);
     setRun((r) => (r ? withOutbox(r, outbox(uid)) : r));
-    toast.success(`${job.orderNumber}: saved on this phone — sent when you are back online`);
+    toast.success(`${job.orderNumber}: saved on this phone${photo ? ' with the photo' : ''} — sent when you are back online`);
+    if (photo) {
+      void savePhoto(entry.id, photo).then((ok) => { if (!ok) toast.error(`${job.orderNumber}: the photo could not be kept on this phone — the step is still saved`); });
+    }
   }, [uid, toast]);
 
   useLiveLocation(sharing, run?.jobs.filter((j) => j.status === 'OUT_FOR_DELIVERY').map((j) => j.id) ?? [], () => setSharing(false));
@@ -437,14 +442,15 @@ function DeliverDialog({ job, queue, onClose, onDone }: { job: Job | null; queue
       const form = new FormData();
       form.append('code', code);
       if (name.trim()) form.append('recipientName', name.trim());
-      if (photo) form.append('photo', await shrinkPhoto(photo), 'doorstep.jpg');
+      const shrunk = photo ? await shrinkPhoto(photo) : null;
+      if (shrunk) form.append('photo', shrunk, 'doorstep.jpg');
       await api(`/courier/jobs/${job.id}/deliver`, { method: 'POST', body: form });
       toast.success(`${job.orderNumber} delivered`);
       onDone();
     } catch (err) {
       if (isOffline(err)) {
-        // the code is checked when the phone is back online (the photo is not kept offline)
-        queue(job, 'deliver', { code, ...(name.trim() && { recipientName: name.trim() }) });
+        // the code is checked when the phone is back online; the photo waits on the phone with the step
+        queue(job, 'deliver', { code, ...(name.trim() && { recipientName: name.trim() }) }, photo ? await shrinkPhoto(photo).catch(() => null) : null);
         onClose();
         return;
       }
@@ -540,7 +546,7 @@ function FailDialog({ job, queue, onClose, onDone }: { job: Job | null; queue: Q
     } catch (e) {
       if (isOffline(e)) {
         const here = pos !== 'loading' ? pos : null;
-        queue(job, 'fail', { reason: text, ...(reason === REFUSED && { refused: 'true' }), ...(here && { lat: String(here.lat), lng: String(here.lng) }) });
+        queue(job, 'fail', { reason: text, ...(reason === REFUSED && { refused: 'true' }), ...(here && { lat: String(here.lat), lng: String(here.lng) }) }, photo ? await shrinkPhoto(photo).catch(() => null) : null);
         onClose();
         return;
       }

@@ -5,7 +5,9 @@
  *  - the last run (today's stops, addresses, phones, cash) is kept on the phone and shown when offline;
  *  - actions taken offline (picked up, on the way, delivered with the code, could not deliver) wait in an outbox
  *    and are sent in order as soon as the phone is back online. The server still checks everything then
- *    (a wrong delivery code is refused and the job comes back as open).
+ *    (a wrong delivery code is refused and the job comes back as open);
+ *  - the doorstep photo taken offline waits with its step (in IndexedDB: photos are too big for localStorage) and is
+ *    sent with it.
  * Everything is stored per driver and wiped on sign-out.
  */
 
@@ -63,6 +65,8 @@ function setOutbox(userId: string, items: OutboxEntry[]) { write(OUTBOX, { userI
 
 export function enqueue(userId: string, e: Omit<OutboxEntry, 'id' | 'at'>): OutboxEntry {
   const entry: OutboxEntry = { ...e, id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, at: new Date().toISOString() };
+  const old = outbox(userId).filter((x) => x.jobId === e.jobId && x.kind === e.kind);
+  for (const x of old) void dropPhoto(x.id);
   const items = outbox(userId).filter((x) => !(x.jobId === e.jobId && x.kind === e.kind)); // the same step twice counts once
   setOutbox(userId, [...items, entry]);
   return entry;
@@ -101,13 +105,56 @@ export async function flush(userId: string, send: (e: OutboxEntry) => Promise<vo
       refused.push({ entry, message: message(e) });
     }
     setOutbox(userId, outbox(userId).filter((x) => x.id !== entry.id));
+    await dropPhoto(entry.id); // sent or refused: the photo is not needed on the phone any more
   }
   return { sent, refused, left: outbox(userId).length };
 }
+
+// ---------------------------------------------------------------- photos waiting with their step
+
+const DB = 'fmx_driver_photos';
+const STORE = 'photos';
+
+function openDb(): Promise<IDBDatabase | null> {
+  return new Promise((resolve) => {
+    try {
+      if (typeof indexedDB === 'undefined') return resolve(null);
+      const req = indexedDB.open(DB, 1);
+      req.onupgradeneeded = () => { if (!req.result.objectStoreNames.contains(STORE)) req.result.createObjectStore(STORE); };
+      req.onsuccess = () => resolve(req.result);
+      req.onerror = () => resolve(null);
+    } catch { resolve(null); }
+  });
+}
+async function tx<T>(mode: IDBTransactionMode, run: (s: IDBObjectStore) => IDBRequest<T> | void): Promise<T | null> {
+  const db = await openDb();
+  if (!db) return null;
+  return new Promise((resolve) => {
+    try {
+      const t = db.transaction(STORE, mode);
+      const req = run(t.objectStore(STORE));
+      t.oncomplete = () => { db.close(); resolve(req ? (req.result ?? null) : null); };
+      t.onerror = () => { db.close(); resolve(null); };
+      t.onabort = () => { db.close(); resolve(null); };
+    } catch { db.close(); resolve(null); }
+  });
+}
+
+/** Keeps the photo of a queued step on the phone. False when the browser cannot store it (the step still waits, without the photo). */
+export async function savePhoto(entryId: string, photo: Blob): Promise<boolean> {
+  const ok = await tx('readwrite', (s) => { s.put(photo, entryId); });
+  return ok !== null || (await queuedPhoto(entryId)) !== null;
+}
+export async function queuedPhoto(entryId: string): Promise<Blob | null> {
+  const b = await tx<Blob>('readonly', (s) => s.get(entryId));
+  return b instanceof Blob ? b : null;
+}
+export async function dropPhoto(entryId: string): Promise<void> { await tx('readwrite', (s) => { s.delete(entryId); }); }
 
 /** Sign-out: nothing of the driver's day stays on the phone. */
 export function clearDriverData() {
   for (const k of [RUN, OUTBOX, PROFILE]) {
     try { localStorage.removeItem(k); } catch { /* ignore */ }
   }
+  try { if (typeof indexedDB !== 'undefined') indexedDB.deleteDatabase(DB); } catch { /* ignore */ }
 }
