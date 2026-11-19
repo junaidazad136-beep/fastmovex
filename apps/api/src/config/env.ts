@@ -91,6 +91,10 @@ export const envSchema = z.object({
   SENTRY_DSN: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
   SENTRY_ENVIRONMENT: z.string().optional(),
   SENTRY_TRACES_SAMPLE_RATE: z.coerce.number().min(0).max(1).optional(),
+  /** Road routing for the customer's arrival time: ors (ORS_API_KEY) or osrm (OSRM_URL); off = straight-line estimate */
+  ROUTING_PROVIDER: z.enum(['off', 'ors', 'osrm']).default('off'),
+  ORS_API_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(20).optional()),
+  OSRM_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),
   DEEPL_API_KEY: z.preprocess((v) => (v === '' ? undefined : v), z.string().min(20, 'DEEPL_API_KEY looks too short').optional()),
   /** only for tests against a stand-in server; normally chosen from the key */
   DEEPL_API_URL: z.preprocess((v) => (v === '' ? undefined : v), z.string().url().optional()),

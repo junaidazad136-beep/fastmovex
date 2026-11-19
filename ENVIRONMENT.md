@@ -203,3 +203,11 @@ node -e "console.log(require('crypto').randomBytes(32).toString('base64url'))"  
 | API (Render) | `SENTRY_DSN`, `SENTRY_ENVIRONMENT`, `SENTRY_TRACES_SAMPLE_RATE` (default 0.1) | Reports only unexpected (500) errors. No IPs, cookies, auth headers, bodies or query strings are sent. |
 | Website (Vercel) | `SENTRY_DSN` (server), `NEXT_PUBLIC_SENTRY_DSN` (browser, build time), `SENTRY_ENVIRONMENT`, `NEXT_PUBLIC_SENTRY_ENVIRONMENT` | Browser events go through `/api/monitor` on the site itself (CSP-safe). No session replay. |
 Sentry organization `fmx-jv` (EU region), projects `fastmovex-api` and `fastmovex-web`.
+
+## Road routing for the arrival time (optional)
+| Variable | Notes |
+|---|---|
+| `ROUTING_PROVIDER` | `off` (default: straight-line estimate), `ors` or `osrm` |
+| `ORS_API_KEY` | openrouteservice.org key (free tier 2,000 routes/day). Sent as a header, never in the URL. |
+| `OSRM_URL` | Your own OSRM server (the public demo server is not for production). |
+2-second timeout, answers cached 2 minutes; any error falls back to the straight-line estimate.

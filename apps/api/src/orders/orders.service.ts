@@ -1,3 +1,4 @@
+import { RoutingService } from '../delivery/routing';
 import { RETURN_INSTEAD_DAYS, warrantyEnds } from '../finance/warranty';
 import { cashRefundsForOrder } from '../finance/cash-refund-bank';
 import { EventEmitter2 } from '@nestjs/event-emitter';
@@ -34,6 +35,7 @@ export class OrdersService {
     @Optional() private readonly events?: EventEmitter2,
     @Optional() private readonly payments?: PaymentsService,
     @Optional() private readonly warehouses?: WarehousesService,
+    @Optional() private readonly routing?: RoutingService,
   ) {}
 
   private readonly lastSync = new Map<string, number>();
@@ -172,7 +174,8 @@ export class OrdersService {
       return { id: r.id, status: r.status, assignedAt: r.assignedAt, slotStart: r.sellerOrder.order.deliverySlotStart, zone: typeof ad.zone === 'string' ? ad.zone : null };
     }));
     const idx = ordered.findIndex((r) => r.id === d.id);
-    return estimateArrival({ now, driver, pin, stopsBefore: Math.max(0, idx) });
+    const roadMinutes = (await this.routing?.drivingMinutes(driver, pin)) ?? null;
+    return estimateArrival({ now, driver, pin, stopsBefore: Math.max(0, idx), roadMinutes });
   }
 
   /** Commission, seller earnings and internal keys are business data: never shown to customers. */

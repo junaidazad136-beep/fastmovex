@@ -85,11 +85,12 @@ export const ETA = { ROAD_FACTOR: 1.4, KMH: 25, STOP_MIN: 8, STALE_MIN: 20, MIN_
  * made into road time, plus the stops still before this one. Null when there is no fresh position or no pin
  * (the website then shows the delivery window). Exported for tests.
  */
-export function estimateArrival(p: { now: Date; driver: { lat: number; lng: number; at: Date } | null; pin: { lat: number; lng: number } | null; stopsBefore: number }) {
+export function estimateArrival(p: { now: Date; driver: { lat: number; lng: number; at: Date } | null; pin: { lat: number; lng: number } | null; stopsBefore: number; roadMinutes?: number | null }) {
   if (!p.driver || !p.pin) return null;
   if (p.now.getTime() - p.driver.at.getTime() > ETA.STALE_MIN * 60_000) return null;
-  const km = (distanceMetres(p.driver, p.pin) / 1000) * ETA.ROAD_FACTOR;
-  const minutes = Math.max(ETA.MIN_MIN, Math.round((km / ETA.KMH) * 60 + Math.max(0, p.stopsBefore) * ETA.STOP_MIN));
+  // road time from a routing service when there is one; otherwise the straight line made into road time
+  const drive = p.roadMinutes ?? ((distanceMetres(p.driver, p.pin) / 1000) * ETA.ROAD_FACTOR / ETA.KMH) * 60;
+  const minutes = Math.max(ETA.MIN_MIN, Math.round(drive + Math.max(0, p.stopsBefore) * ETA.STOP_MIN));
   // rounded to 5 minutes: precise-looking numbers promise more than we know
   const at = new Date(Math.ceil((p.now.getTime() + minutes * 60_000) / 300_000) * 300_000);
   return { at, minutes, stopsBefore: Math.max(0, p.stopsBefore) };
