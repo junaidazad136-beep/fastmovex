@@ -357,10 +357,13 @@ export class SellerProductsService {
   }
 
   private async assertReadyForReview(productId: string) {
-    const [images, variants] = await Promise.all([
+    const [images, variants, product] = await Promise.all([
       this.prisma.productImage.count({ where: { productId } }),
       this.prisma.productVariant.count({ where: { productId, isActive: true } }),
+      this.prisma.product.findUnique({ where: { id: productId }, select: { titleAr: true } }),
     ]);
+    // Qatar's Consumer Protection Law (Law No. 8 of 2008, Art. 17) wants product information in Arabic (other languages may be added)
+    if (!product?.titleAr?.trim()) throw new BadRequestException('Add the product name in Arabic before submitting for review — product information must be in Arabic in Qatar');
     if (!images) throw new BadRequestException('Add at least one product image before submitting for review');
     if (!variants) throw new BadRequestException('Add at least one active variant before submitting for review');
   }

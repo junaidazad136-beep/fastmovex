@@ -33,6 +33,7 @@ const METHODS = ['CARD', 'APPLE_PAY', 'GOOGLE_PAY', 'COD', 'PAYLATER'];
 const LEGAL: { key: string; label: string; hint?: string; type?: string }[] = [
   { key: 'companyName', label: 'Company legal name', hint: 'Printed on invoices, e.g. FastMoveX Trading W.L.L.' },
   { key: 'commercialRegNo', label: 'Commercial registration (CR) no.' },
+  { key: 'ecommerceLicenseNo', label: 'E-commerce licence no.', hint: 'From the Ministry of Commerce and Industry (Decision No. 25 of 2026). Shown in the footer and on the policy pages with the CR number' },
   { key: 'taxNumber', label: 'Tax number', hint: 'Leave empty while no VAT applies in Qatar' },
   { key: 'address', label: 'Company address' },
   { key: 'supportEmail', label: 'Customer support email', type: 'email' },

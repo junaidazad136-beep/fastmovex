@@ -893,6 +893,15 @@ const en = {
     feeLine: 'Standard delivery: {fee} per store, free for orders over {threshold}.',
     feeLineNoFree: 'Standard delivery: {fee} per store.',
   },
+  company: {
+    title: 'Who we are',
+    name: 'Company',
+    cr: 'Commercial registration (CR) no.',
+    license: 'E-commerce licence no.',
+    address: 'Address',
+    email: 'Customer service',
+    phone: 'Phone',
+  },
   policies: {
     title: 'Policies',
     intro: 'Everything you should know about shopping and selling on FastMoveX, in English and Arabic.',

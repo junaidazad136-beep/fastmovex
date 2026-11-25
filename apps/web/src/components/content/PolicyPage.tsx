@@ -7,6 +7,8 @@ import type { Locale } from '@/lib/i18n/config';
 import { policy, type PolicyKind } from '@/lib/policies';
 import { alternatesFor } from '@/lib/seo';
 import { paths } from '@/lib/urls';
+import { serverApi } from '@/lib/api/server';
+import { CompanyDetails } from './CompanyDetails';
 import { PolicyBody } from './PolicyBody';
 
 /** Where each policy lives (without the locale). */
@@ -30,8 +32,9 @@ export function policyLinks(t: T) {
 }
 
 /** A full policy page: title, date, an index of its sections, the sections, then the other policies and a way to ask. */
-export function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: Locale }) {
+export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: Locale }) {
   const t = getT(locale);
+  const market = await serverApi.market().catch(() => null);
   const p = policy(kind, locale);
   const other: Locale = locale === 'ar' ? 'en' : 'ar';
   const index = (
@@ -51,6 +54,7 @@ export function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: Locale 
           </Link>
         </div>
       </header>
+      {market && kind !== 'seller' ? <CompanyDetails market={market} t={t} /> : null}
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-12">
         <div className="min-w-0 max-w-3xl">

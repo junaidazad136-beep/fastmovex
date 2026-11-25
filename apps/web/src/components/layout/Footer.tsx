@@ -3,6 +3,7 @@ import Link from 'next/link';
 import type { CategoryNode, Market, PageSummary, PaymentMethod } from '@/lib/api/types';
 import type { T } from '@/lib/i18n';
 import { paths, pick } from '@/lib/urls';
+import { CompanyDetails } from '../content/CompanyDetails';
 import { Logo } from '../ui/Logo';
 
 export function Footer({ t, market, categories, pages = [] }: { t: T; market: Market; categories: CategoryNode[]; pages?: PageSummary[] }) {
@@ -103,7 +104,10 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
       </div>
       <div className="border-t border-ink-100">
         <div className="container-page flex flex-col gap-2 py-5 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
-          <p>{t('footer.rights', { year })}</p>
+          <div className="space-y-1">
+            <p>{t('footer.rights', { year })}</p>
+            <CompanyDetails market={market} t={t} compact />
+          </div>
           <ul className="flex flex-wrap gap-x-4 gap-y-2">
             <li><Link href={paths.terms(l)} className="hover:text-brand-600">{t('footer.terms')}</Link></li>
             <li><Link href={paths.privacy(l)} className="hover:text-brand-600">{t('footer.privacy')}</Link></li>

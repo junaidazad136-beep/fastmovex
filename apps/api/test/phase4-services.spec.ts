@@ -166,7 +166,17 @@ describe('Seller products: isolation & stock', () => {
       productImage: { count: jest.fn().mockResolvedValue(0) },
       productVariant: { count: jest.fn().mockResolvedValue(1) },
     };
+    (prisma.product as Record<string, jest.Mock>).findUnique = jest.fn().mockResolvedValue({ titleAr: 'كوب' });
     await expect(make(prisma).update(sellerA, 'p', { submitForReview: true }, 'u')).rejects.toThrow('at least one product image');
+  });
+
+  it('cannot submit for review without an Arabic product name (Qatar: product information in Arabic)', async () => {
+    const prisma = {
+      product: { findFirst: jest.fn().mockResolvedValue({ id: 'p', status: 'DRAFT', countryCode: 'QA' }), findUnique: jest.fn().mockResolvedValue({ titleAr: '  ' }) },
+      productImage: { count: jest.fn().mockResolvedValue(1) },
+      productVariant: { count: jest.fn().mockResolvedValue(1) },
+    };
+    await expect(make(prisma).update(sellerA, 'p', { submitForReview: true }, 'u')).rejects.toThrow('in Arabic');
   });
 });
 

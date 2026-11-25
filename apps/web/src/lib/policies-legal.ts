@@ -5,7 +5,7 @@ import type { Policy } from './policies';
  * (cancellation rules, delivery codes, data export and deletion). Have them reviewed by a lawyer in Qatar.
  * Text may use **bold** and [links](/path) — rendered by `inline()` from RichText.
  */
-const UPDATED = '2026-10-13';
+const UPDATED = '2026-11-25';
 
 export const termsEn: Policy = {
   title: 'Terms of use',
@@ -63,7 +63,7 @@ export const termsEn: Policy = {
         'We deliver across Qatar. Items from different stores may arrive in separate shipments; the delivery fee is shown before you pay.',
         'Our driver calls you before arriving. Give the driver the **4-digit delivery code** from your order — this proves the parcel reached you. Never share the code before you have the parcel.',
         'If we cannot reach you, we try again. If delivery still fails, the order is cancelled and anything you paid is refunded.',
-        'Check your parcel when it arrives. Tell us within **48 hours** if anything is wrong, missing or damaged.',
+        'Check your parcel when it arrives and tell us as soon as you can — ideally within **48 hours** — if anything is wrong, missing or damaged. A later report is still looked at, and your legal rights do not depend on this time.',
       ],
     },
     {
@@ -116,6 +116,14 @@ export const termsEn: Policy = {
         'These terms are governed by the laws of the State of Qatar, and the courts of Qatar decide any dispute.',
         'We may update these terms; the new date is shown at the top of this page. The terms in force when you placed an order apply to that order.',
         'Questions? Write to us from [Contact us](/contact) or open a ticket in [Help](/help).',
+      ],
+    },
+    {
+      id: 'complaints',
+      h: '13. Complaints',
+      list: [
+        'If something went wrong, write to us first from [Contact us](/contact) or from your order, and we will look into it and answer you.',
+        'You can also complain to the Ministry of Commerce and Industry of Qatar, which protects consumers (moci.gov.qa → Consumer services). Complaining to us first is not required.',
       ],
     },
   ],
@@ -177,7 +185,7 @@ export const termsAr: Policy = {
         'نوصل في جميع أنحاء قطر. قد تصل منتجات المتاجر المختلفة في شحنات منفصلة، وتظهر رسوم التوصيل قبل الدفع.',
         'يتصل بك السائق قبل الوصول. أعطِ السائق **رمز التسليم المكوّن من 4 أرقام** الموجود في طلبك — فهو يثبت أن الطرد وصلك. لا تشارك الرمز قبل استلام الطرد.',
         'إذا لم نتمكن من الوصول إليك نحاول مرة أخرى. وإذا تعذّر التوصيل يُلغى الطلب ويُسترد ما دفعته.',
-        'افحص طردك عند وصوله، وأبلغنا خلال **48 ساعة** إذا كان فيه خطأ أو نقص أو تلف.',
+        'افحص طردك عند وصوله وأبلغنا بأسرع وقت — ويفضّل خلال **48 ساعة** — إذا كان فيه خطأ أو نقص أو تلف. نراجع أي بلاغ يصل لاحقاً أيضاً، ولا تتوقف حقوقك القانونية على هذه المدة.',
       ],
     },
     {
@@ -230,6 +238,14 @@ export const termsAr: Policy = {
         'تخضع هذه الشروط لقوانين دولة قطر، وتختص محاكم قطر بالفصل في أي نزاع.',
         'قد نحدّث هذه الشروط، ويظهر التاريخ الجديد أعلى هذه الصفحة. تنطبق على كل طلب الشروطُ السارية وقت تقديمه.',
         'لديك سؤال؟ راسلنا من [تواصل معنا](/contact) أو افتح تذكرة في [المساعدة](/help).',
+      ],
+    },
+    {
+      id: 'complaints',
+      h: '13. الشكاوى',
+      list: [
+        'إذا حدثت مشكلة، راسلنا أولاً من [تواصل معنا](/contact) أو من طلبك، وسنبحث الأمر ونرد عليك.',
+        'يمكنك أيضاً تقديم شكوى إلى وزارة التجارة والصناعة في دولة قطر المعنية بحماية المستهلك (moci.gov.qa ← خدمات المستهلك). ولا يشترط أن تراسلنا قبل ذلك.',
       ],
     },
   ],
@@ -290,7 +306,7 @@ export const privacyEn: Policy = {
       list: [
         'Your data is stored with secure cloud providers, some of whose servers are outside Qatar (including in the European Union), with the safeguards the law requires.',
         'Connections are encrypted (HTTPS), passwords are stored encrypted, and staff see only what their job needs.',
-        'If a data breach could harm you, we will tell you and the authorities as the law requires.',
+        'If a data breach could harm you, we will tell you and the authority as soon as we can — and within 72 hours of learning of it, as the law requires.',
       ],
     },
     {
@@ -309,8 +325,9 @@ export const privacyEn: Policy = {
         '**See and download your data:** My account → Your data and privacy → Download my data.',
         '**Correct it:** edit your name, phone and addresses in My account at any time.',
         '**Delete your account:** My account → Your data and privacy → Delete my account. You have 14 days to change your mind; then your personal details are erased.',
+        '**Withdraw your consent:** you can take back any consent you gave (marketing, WhatsApp updates) at any time. Offers and news are only sent if you tick the box yourself — it is never ticked for you — and every message says who it is from and how to stop it.',
         '**Stop marketing:** turn off “Offers and news” in My account, or use the unsubscribe link in any email.',
-        '**Object or complain:** write to us from [Contact us](/contact). You may also complain to the competent data-protection authority in Qatar.',
+        '**Object, ask us to stop, or complain:** write to us from [Contact us](/contact) — you can object to processing you think is unnecessary or unfair, or ask us to erase data we no longer need. You may also complain to the National Cyber Security Agency (NCSA), which supervises Qatar’s Personal Data Privacy Protection Law.',
       ],
     },
     {
@@ -389,7 +406,7 @@ export const privacyAr: Policy = {
       list: [
         'تُحفظ بياناتك لدى مزودي خدمات سحابية آمنين، وبعض خوادمهم خارج قطر (ومنها في الاتحاد الأوروبي)، مع الضمانات التي يفرضها القانون.',
         'الاتصالات مشفّرة (HTTPS)، وكلمات المرور محفوظة مشفّرة، ولا يطّلع الموظفون إلا على ما يحتاجه عملهم.',
-        'إذا وقع اختراق قد يضرّك، نبلغك ونبلغ الجهات المختصة كما يفرض القانون.',
+        'إذا وقع اختراق قد يضرّك، نبلغك ونبلغ الجهة المختصة بأسرع وقت، وخلال 72 ساعة من علمنا به كما يفرض القانون.',
       ],
     },
     {
@@ -408,8 +425,9 @@ export const privacyAr: Policy = {
         '**عرض بياناتك وتنزيلها:** حسابي ← بياناتك وخصوصيتك ← تنزيل بياناتي.',
         '**تصحيحها:** عدّل اسمك وهاتفك وعناوينك من حسابي في أي وقت.',
         '**حذف حسابك:** حسابي ← بياناتك وخصوصيتك ← حذف حسابي. لديك 14 يوماً للتراجع، ثم تُمحى بياناتك الشخصية.',
+        '**سحب موافقتك:** يمكنك سحب أي موافقة أعطيتها (التسويق، تحديثات واتساب) في أي وقت. لا نرسل العروض والأخبار إلا إذا وضعت العلامة بنفسك — ولا نضعها نيابة عنك — وتذكر كل رسالة مَن أرسلها وكيف توقفها.',
         '**إيقاف التسويق:** أوقف «العروض والأخبار» من حسابي، أو استخدم رابط إلغاء الاشتراك في أي بريد.',
-        '**الاعتراض أو الشكوى:** راسلنا من [تواصل معنا](/contact)، ويمكنك أيضاً تقديم شكوى إلى الجهة المختصة بحماية البيانات في قطر.',
+        '**الاعتراض أو الشكوى:** راسلنا من [تواصل معنا](/contact) — يمكنك الاعتراض على معالجة ترى أنها غير ضرورية أو غير عادلة، أو طلب حذف بيانات لم نعد بحاجة إليها. ويمكنك أيضاً تقديم شكوى إلى الوكالة الوطنية للأمن السيبراني التي تشرف على قانون حماية خصوصية البيانات الشخصية في قطر.',
       ],
     },
     {

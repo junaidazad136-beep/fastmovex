@@ -16,7 +16,7 @@ export interface PolicySection {
 }
 export interface Policy { title: string; intro: string; updated: string; sections: PolicySection[] }
 
-export const POLICY_UPDATED = '2026-10-13';
+export const POLICY_UPDATED = '2026-11-25';
 
 const returnsEn: Policy = {
   title: 'Returns, refunds and warranty',
@@ -56,7 +56,7 @@ const returnsEn: Policy = {
       id: 'wrong-damaged',
       h: 'Wrong, damaged or missing items',
       p: [
-        'Tell us within 48 hours of delivery, with a photo. We collect it free of charge and send the right item or give you a full refund.',
+        'Tell us as soon as you can — ideally within 48 hours of delivery — with a photo. We collect it free of charge and send the right item or give you a full refund. A later report is still looked at.',
         'Please do not use an item that arrived damaged — keep it with its box until we collect it.',
       ],
     },
@@ -107,7 +107,7 @@ const returnsEn: Policy = {
     {
       id: 'help',
       h: 'Need help?',
-      p: ['Write to us from [Contact us](/contact), or open a support ticket from your order. Your rights under Qatar’s Consumer Protection Law (No. 8 of 2008) are not affected by this policy.'],
+      p: ['Write to us from [Contact us](/contact), or open a support ticket from your order. Your rights under Qatar’s Consumer Protection Law (No. 8 of 2008) are not affected by this policy. If we cannot solve it, you can also complain to the Ministry of Commerce and Industry (moci.gov.qa → Consumer services).'],
     },
   ],
 };
@@ -150,7 +150,7 @@ const returnsAr: Policy = {
       id: 'wrong-damaged',
       h: 'منتج خطأ أو تالف أو ناقص',
       p: [
-        'أبلغنا خلال 48 ساعة من التوصيل مع صورة. نستلمه مجاناً ونرسل المنتج الصحيح أو نعيد لك المبلغ كاملاً.',
+        'أبلغنا بأسرع وقت — ويفضّل خلال 48 ساعة من التوصيل — مع صورة. نستلمه مجاناً ونرسل المنتج الصحيح أو نعيد لك المبلغ كاملاً. نراجع أي بلاغ يصل لاحقاً أيضاً.',
         'يرجى عدم استخدام المنتج الذي وصل تالفاً — احتفظ به مع علبته حتى نستلمه.',
       ],
     },
@@ -201,7 +201,7 @@ const returnsAr: Policy = {
     {
       id: 'help',
       h: 'تحتاج مساعدة؟',
-      p: ['راسلنا من [تواصل معنا](/contact)، أو افتح تذكرة دعم من طلبك. لا تمس هذه السياسة حقوقك بموجب قانون حماية المستهلك القطري رقم (8) لسنة 2008.'],
+      p: ['راسلنا من [تواصل معنا](/contact)، أو افتح تذكرة دعم من طلبك. لا تمس هذه السياسة حقوقك بموجب قانون حماية المستهلك القطري رقم (8) لسنة 2008. وإن لم نتمكن من حل المشكلة، يمكنك أيضاً تقديم شكوى إلى وزارة التجارة والصناعة (moci.gov.qa ← خدمات المستهلك).'],
     },
   ],
 };
@@ -215,7 +215,7 @@ const sellerEn: Policy = {
       id: 'who',
       h: '1. Who can sell',
       list: [
-        'A business registered in Qatar with a valid Commercial Registration (CR).',
+        'A business registered in Qatar with a valid Commercial Registration (CR), and any licence your activity needs — including the Ministry of Commerce and Industry’s e-commerce licence where it applies to you.',
         'A bank account in Qatar in the business’s or owner’s name, for payouts.',
         'A phone number we and our drivers can reach during working hours.',
         'We check every application, usually within 1–2 working days, and may ask for more documents.',
@@ -239,6 +239,7 @@ const sellerEn: Policy = {
       h: '3. Listing your products',
       list: [
         'Real, clear photos of the product itself; the correct price, specifications and stock.',
+        'The product name in **Arabic** is required (Qatar’s Consumer Protection Law asks for product information in Arabic); an English name and description can be added next to it.',
         'Every product is checked by FastMoveX before it goes live.',
         'Electronics must show their warranty (at least 12 months, or the brand’s warranty).',
         'Keep stock up to date: an order you cannot send counts as a cancellation.',
@@ -341,7 +342,7 @@ const sellerAr: Policy = {
       id: 'who',
       h: '1. من يمكنه البيع',
       list: [
-        'نشاط تجاري مسجّل في قطر بسجل تجاري ساري المفعول.',
+        'نشاط تجاري مسجّل في قطر بسجل تجاري ساري المفعول، وأي ترخيص يتطلبه نشاطك — ومنه ترخيص التجارة الإلكترونية من وزارة التجارة والصناعة متى انطبق عليك.',
         'حساب بنكي في قطر باسم النشاط أو المالك لتحويل الأرباح.',
         'رقم هاتف يمكننا ويمكن للسائقين الوصول إليه خلال ساعات العمل.',
         'نراجع كل طلب عادةً خلال يوم إلى يومي عمل، وقد نطلب مستندات إضافية.',
@@ -365,6 +366,7 @@ const sellerAr: Policy = {
       h: '3. عرض منتجاتك',
       list: [
         'صور حقيقية وواضحة للمنتج نفسه، وسعر ومواصفات ومخزون صحيحة.',
+        'اسم المنتج بـ**العربية** مطلوب (يشترط قانون حماية المستهلك القطري أن تكون معلومات المنتج بالعربية)، ويمكن إضافة اسم ووصف بالإنجليزية بجانبه.',
         'تراجع فاست موف إكس كل منتج قبل عرضه.',
         'يجب أن تُظهر الإلكترونيات مدة الضمان (12 شهراً على الأقل، أو ضمان الوكيل).',
         'حدّث المخزون باستمرار: الطلب الذي لا تستطيع إرساله يُحسب إلغاءً.',
