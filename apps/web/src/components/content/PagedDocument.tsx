@@ -31,9 +31,10 @@ const BODY = 'text-[14px] leading-[1.75] text-ink-800 sm:text-[15px]';
  * follow the screen width (a phone gets narrower sheets with the same A4 shape). Without JavaScript, and when printing,
  * the whole text is one continuous sheet and the browser cuts the A4 pages itself.
  */
-export function PagedDocument({ blocks, labels }: { blocks: DocBlock[]; labels: Labels }) {
+export function PagedDocument({ blocks, labels, startActions, endActions }: { blocks: DocBlock[]; labels: Labels; startActions?: ReactNode; endActions?: ReactNode }) {
   const host = useRef<HTMLDivElement>(null);
   const meter = useRef<HTMLDivElement>(null);
+  const [cur, setCur] = useState(1);
   const [geo, setGeo] = useState<{ w: number; h: number; pad: number; pages: number[][] } | null>(null);
 
   const layout = useCallback(() => {
@@ -69,6 +70,17 @@ export function PagedDocument({ blocks, labels }: { blocks: DocBlock[]; labels: 
     if (id) document.getElementById(id)?.scrollIntoView();
   }, [geo?.pages.length]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // which sheet is on screen (the bar shows "3 / 9")
+  useEffect(() => {
+    if (!geo) return;
+    const sheets = Array.from(document.querySelectorAll('[data-testid^="policy-page-sheet-"]'));
+    const io = new IntersectionObserver((es) => {
+      es.forEach((e) => { if (e.isIntersecting) setCur(Number((e.target as HTMLElement).dataset.n)); });
+    }, { rootMargin: '-45% 0px -45% 0px' });
+    sheets.forEach((s) => io.observe(s));
+    return () => io.disconnect();
+  }, [geo?.pages.length]); // eslint-disable-line react-hooks/exhaustive-deps
+
   const total = geo?.pages.length ?? 1;
   const spaced = (b: DocBlock, ids: boolean) => (
     <div key={b.key} id={ids ? b.anchor : undefined} className={`scroll-mt-28 ${b.className ?? ''}`} style={{ paddingBottom: b.space }}>{b.node}</div>
@@ -76,12 +88,12 @@ export function PagedDocument({ blocks, labels }: { blocks: DocBlock[]; labels: 
 
   return (
     <div ref={host} className="w-full" data-testid="policy-viewer">
-      <div className="mx-auto" style={{ maxWidth: A4_W }}>
-        {/* viewer bar */}
-        <div className="flex items-center justify-between gap-3 rounded-t-lg bg-ink-800 px-4 py-2.5 text-xs text-white print:hidden">
-          <span className="min-w-0 truncate font-semibold">{labels.title}</span>
-          <span className="shrink-0 tabular text-white/80" data-testid="policy-pagecount">{geo ? labels.pages.replace('{total}', String(total)) : ''}</span>
-        </div>
+      {/* viewer bar: on a phone it stays at the top while the pages scroll under it */}
+      <div className="sticky top-0 z-30 mx-auto flex items-center gap-1.5 bg-ink-800 px-2 py-2 text-xs text-white lg:static lg:rounded-t-lg lg:px-3 print:hidden" style={{ maxWidth: A4_W }} data-testid="policy-bar">
+        {startActions}
+        <span className="min-w-0 flex-1 truncate px-1 text-sm font-semibold lg:text-xs">{labels.title}</span>
+        <span dir="ltr" className="shrink-0 tabular text-white/80" data-testid="policy-pagecount" title={geo ? labels.pages.replace('{total}', String(total)) : ''}>{geo ? `${cur} / ${total}` : ''}</span>
+        {endActions}
       </div>
 
       {/* measuring copy (invisible): same text, same width as a page's text area */}
@@ -91,12 +103,13 @@ export function PagedDocument({ blocks, labels }: { blocks: DocBlock[]; labels: 
 
       {/* the pages */}
       {geo ? (
-        <div className="space-y-5 bg-ink-300/40 py-5 print:hidden" role="group" aria-label={labels.frame} data-testid="policy-pages">
+        <div className="space-y-2.5 bg-ink-300/40 py-2.5 sm:space-y-5 sm:py-5 print:hidden" role="group" aria-label={labels.frame} data-testid="policy-pages">
           {geo.pages.map((idx, n) => (
             <section
               key={n}
               aria-label={labels.pageOf.replace('{n}', String(n + 1)).replace('{total}', String(total))}
               data-testid={`policy-page-sheet-${n + 1}`}
+              data-n={n + 1}
               className="relative mx-auto overflow-hidden bg-white shadow-[0_1px_3px_rgba(40,30,20,.18),0_10px_30px_rgba(40,30,20,.12)]"
               style={{ width: geo.w, height: geo.h, padding: `${geo.pad}px ${geo.pad}px 0` }}
             >

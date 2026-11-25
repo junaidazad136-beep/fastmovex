@@ -1,4 +1,4 @@
-import { ChevronDown, FileText, Languages, ShieldCheck, RotateCcw, Store, Truck } from 'lucide-react';
+import { ArrowLeft, ChevronDown, FileText, Languages, ShieldCheck, RotateCcw, Store, Truck } from 'lucide-react';
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { formatDate } from '@/lib/format';
@@ -68,9 +68,9 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
 
   return (
     <div className="bg-ink-100/70 print:bg-white" data-testid={`policy-page-${kind}`}>
-      <div className="container-page py-6 sm:py-10 print:p-0">
+      <div className="container-page py-6 max-lg:p-0 sm:py-10 print:p-0">
         {/* toolbar (not printed): back, other language, print or save as PDF */}
-        <div className="mx-auto mb-4 flex max-w-[1040px] flex-wrap items-center justify-between gap-3 print:hidden">
+        <div className="mx-auto mb-4 flex max-w-[1040px] flex-wrap items-center justify-between gap-3 max-lg:hidden print:hidden">
           <Link href={paths.policies(locale)} className="link text-sm font-medium">← {t('policies.backToPolicies')}</Link>
           <div className="flex flex-wrap items-center gap-2">
             <Link href={`/${other}${POLICY_PATH[kind]}`} hrefLang={other} lang={other} className="btn-secondary !px-3.5 !py-2 text-sm" data-testid="policy-other-lang">
@@ -80,7 +80,7 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
           </div>
         </div>
 
-        <div className="mx-auto grid max-w-[1040px] gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8 print:block">
+        <div className="mx-auto grid max-w-[1040px] gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8 max-lg:gap-0 print:block">
           <aside className="max-lg:hidden print:hidden">
             <nav aria-label={t('policies.onThisPage')} className="sticky top-36">
               <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-ink-500">{t('policies.onThisPage')}</p>
@@ -89,7 +89,7 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
           </aside>
 
           <div className="min-w-0">
-            <details className="group mb-4 rounded-xl border border-ink-200 bg-white lg:hidden print:hidden">
+            <details className="group mb-4 hidden rounded-xl border border-ink-200 bg-white print:hidden">
               <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-ink-900">
                 {t('policies.onThisPage')}<ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden />
               </summary>
@@ -97,7 +97,17 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
             </details>
 
             {/* the document viewer: white A4 sheets one under the other, each with its page number */}
-            <PagedDocument blocks={blocks} labels={{ title: p.title, pageOf: t('policies.pageOf'), pages: t('policies.pages'), frame: t('policies.document') }} />
+            <PagedDocument
+              blocks={blocks}
+              labels={{ title: p.title, pageOf: t('policies.pageOf'), pages: t('policies.pages'), frame: t('policies.document') }}
+              startActions={<Link href={paths.policies(locale)} aria-label={t('policies.backToPolicies')} className="flex size-9 shrink-0 items-center justify-center rounded-lg text-white hover:bg-white/10 lg:hidden" data-testid="policy-back"><ArrowLeft className="size-5 rtl:rotate-180" aria-hidden /></Link>}
+              endActions={
+                <span className="flex shrink-0 items-center lg:hidden">
+                  <Link href={`/${other}${POLICY_PATH[kind]}`} hrefLang={other} lang={other} aria-label={t('policies.otherLang')} title={t('policies.otherLang')} className="flex size-9 items-center justify-center rounded-lg text-white hover:bg-white/10"><Languages className="size-[18px]" aria-hidden /></Link>
+                  <PrintButton label={t('policies.print')} icon />
+                </span>
+              }
+            />
           </div>
         </div>
       </div>
