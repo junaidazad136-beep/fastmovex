@@ -910,6 +910,8 @@ const en = {
     print: 'Print / save as PDF',
     document: 'Document',
     backToPolicies: 'All policies',
+    pageOf: 'Page {n} of {total}',
+    pages: '{total} pages',
     pageEnd: 'End of document',
     other: 'Other policies',
     otherLang: 'اقرأ بالعربية',

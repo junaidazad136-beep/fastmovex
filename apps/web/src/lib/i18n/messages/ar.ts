@@ -913,6 +913,8 @@ const ar: Localized<Messages> = {
     print: 'طباعة / حفظ PDF',
     document: 'المستند',
     backToPolicies: 'كل السياسات',
+    pageOf: 'صفحة {n} من {total}',
+    pages: '{total} صفحات',
     pageEnd: 'نهاية المستند',
     other: 'سياسات أخرى',
     otherLang: 'Read in English',

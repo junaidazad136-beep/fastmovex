@@ -1,4 +1,5 @@
 import { Info } from 'lucide-react';
+import type { DocBlock } from './PagedDocument';
 import type { Locale } from '@/lib/i18n/config';
 import type { PolicySection } from '@/lib/policies';
 import { inline } from './RichText';
@@ -70,4 +71,32 @@ function PolicyTable({ head, rows, locale, paper }: { head: string[]; rows: stri
       </ul>
     </>
   );
+}
+
+
+/**
+ * The same sections cut into blocks for the page viewer: a heading travels with the first paragraph under it, and every
+ * paragraph, list item, step, table and note is a block of its own, so a sheet never ends in the middle of one.
+ */
+export function policyBlocks(sections: PolicySection[], locale: Locale): DocBlock[] {
+  const out: DocBlock[] = [];
+  for (const s of sections) {
+    const items: { node: React.ReactNode; space: number; className?: string }[] = [];
+    s.steps?.forEach((x, i) => items.push({ space: 8, node: <div className="flex gap-3"><span className="tabular w-6 shrink-0 font-bold text-ink-900">{i + 1}.</span><p>{inline(x, locale)}</p></div> }));
+    s.p?.forEach((x) => items.push({ space: 12, node: <p>{inline(x, locale)}</p> }));
+    s.list?.forEach((x) => items.push({ space: 6, node: <ul className="list-disc ps-6 marker:text-ink-500"><li>{inline(x, locale)}</li></ul> }));
+    if (s.table) {
+      // desktop: one table; phone: one card per row (so a long list can run over onto the next sheet)
+      items.push({ space: 14, className: 'max-sm:hidden', node: <PolicyTable head={s.table.head} rows={s.table.rows} locale={locale} paper /> });
+      s.table.rows.forEach((r) => items.push({ space: 10, className: 'sm:hidden', node: <PolicyTable head={s.table!.head} rows={[r]} locale={locale} paper /> }));
+    }
+    if (s.note) items.push({ space: 12, node: <p className="flex gap-2.5 border border-ink-300 bg-ink-50 p-3.5 text-sm font-medium text-ink-900"><Info className="mt-0.5 size-4 shrink-0" aria-hidden /><span>{inline(s.note, locale)}</span></p> });
+    if (items.length > 0) items[items.length - 1].space = 22;
+    const head = <h2 className="mb-3 border-b border-ink-200 pb-1.5 text-[17px] font-bold tracking-tight text-ink-900 sm:text-xl">{s.h}</h2>;
+    // the heading travels with the first item (unless that one only shows at one screen size)
+    const first = items[0] && !items[0].className ? items.shift() : undefined;
+    out.push({ key: s.id, anchor: s.id, space: first ? first.space : 12, node: <>{head}{first?.node}</> });
+    items.forEach((it, i) => out.push({ key: `${s.id}-${i}`, space: it.space, className: it.className, node: it.node }));
+  }
+  return out;
 }

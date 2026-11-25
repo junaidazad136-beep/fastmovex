@@ -8,9 +8,10 @@ import { policy, type PolicyKind } from '@/lib/policies';
 import { alternatesFor } from '@/lib/seo';
 import { paths } from '@/lib/urls';
 import { serverApi } from '@/lib/api/server';
-import { CompanyDetails } from './CompanyDetails';
+import { CompanyDetails, companyRows } from './CompanyDetails';
 import { Logo } from '../ui/Logo';
-import { PolicyBody } from './PolicyBody';
+import { PagedDocument, type DocBlock } from './PagedDocument';
+import { policyBlocks } from './PolicyBody';
 import { PrintButton } from './PrintButton';
 
 /** Where each policy lives (without the locale). */
@@ -44,6 +45,27 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
       {p.sections.map((s) => <li key={s.id}><a href={`#${s.id}`} className="block rounded-lg px-2 py-1 text-ink-600 hover:bg-ink-50 hover:text-brand-700">{s.h}</a></li>)}
     </ol>
   );
+  const lead: DocBlock[] = [
+    {
+      key: 'letterhead', space: 18,
+      node: (
+        <div className="flex items-start justify-between gap-4 border-b-2 border-ink-900 pb-4">
+          <Logo label="FastMoveX" />
+          <div className="text-end text-xs leading-5 text-ink-500">
+            <p className="font-semibold uppercase tracking-wide text-ink-800">{t('policies.document')}</p>
+            <p>{t('policies.updated', { date: formatDate(p.updated, locale) })}</p>
+          </div>
+        </div>
+      ),
+    },
+    { key: 'title', space: 10, node: <h1 className="text-2xl font-bold tracking-tight text-ink-900 sm:text-[28px]">{p.title}</h1> },
+    { key: 'intro', space: 18, node: <p className="text-ink-600">{p.intro}</p> },
+    ...(market && kind !== 'seller' && companyRows(market, t).length > 0
+      ? [{ key: 'company', space: 22, node: <CompanyDetails market={market} t={t} plain /> }]
+      : []),
+  ];
+  const blocks = [...lead, ...policyBlocks(p.sections, locale)];
+
   return (
     <div className="bg-ink-100/70 print:bg-white" data-testid={`policy-page-${kind}`}>
       <div className="container-page py-6 sm:py-10 print:p-0">
@@ -74,21 +96,8 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
               <div className="border-t border-ink-100 px-2 py-2">{index}</div>
             </details>
 
-            {/* the document: a white A4 sheet on a grey desk, like a PDF viewer */}
-            <article className="mx-auto w-full max-w-[794px] bg-white px-5 py-8 shadow-[0_1px_3px_rgba(40,30,20,.12),0_8px_30px_rgba(40,30,20,.08)] sm:min-h-[1123px] sm:px-[72px] sm:py-[64px] print:max-w-none print:p-0 print:shadow-none" data-testid="policy-paper">
-              <div className="flex items-start justify-between gap-4 border-b-2 border-ink-900 pb-4">
-                <Logo label="FastMoveX" />
-                <div className="text-end text-xs leading-5 text-ink-500">
-                  <p className="font-semibold uppercase tracking-wide text-ink-800">{t('policies.document')}</p>
-                  <p>{t('policies.updated', { date: formatDate(p.updated, locale) })}</p>
-                </div>
-              </div>
-              <h1 className="mt-7 text-2xl font-bold tracking-tight text-ink-900 sm:text-[28px]">{p.title}</h1>
-              <p className="mt-3 text-[14px] leading-7 text-ink-600 sm:text-[15px]">{p.intro}</p>
-              {market && kind !== 'seller' ? <div className="mt-5"><CompanyDetails market={market} t={t} plain /></div> : null}
-              <div className="mt-8"><PolicyBody sections={p.sections} locale={locale} paper /></div>
-              <p className="mt-12 border-t border-ink-200 pt-3 text-center text-xs text-ink-500">— {t('policies.pageEnd')} · FastMoveX · {formatDate(p.updated, locale)} —</p>
-            </article>
+            {/* the document viewer: white A4 sheets one under the other, each with its page number */}
+            <PagedDocument blocks={blocks} labels={{ title: p.title, pageOf: t('policies.pageOf'), pages: t('policies.pages'), frame: t('policies.document') }} />
           </div>
         </div>
       </div>

@@ -29,9 +29,9 @@ export function CompanyDetails({ market, t, compact, plain }: { market: Pick<Mar
   return (
     <section className={plain ? 'border-y border-ink-200 py-3' : 'mt-6 max-w-3xl rounded-xl border border-ink-100 bg-white p-4'} aria-label={t('company.title')} data-testid="company-details">
       <h2 className="text-sm font-bold text-ink-900">{t('company.title')}</h2>
-      <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
+      <dl className="mt-2 space-y-0.5 text-[13px] sm:grid sm:grid-cols-[auto_1fr] sm:gap-x-6 sm:gap-y-1 sm:space-y-0 sm:text-sm">
         {rows.map((r) => (
-          <div key={r.key} className="contents">
+          <div key={r.key} className="max-sm:flex max-sm:flex-wrap max-sm:gap-x-2 sm:contents">
             <dt className="text-ink-500">{r.label}</dt>
             <dd className="text-ink-900"><bdi>{r.value}</bdi></dd>
           </div>
