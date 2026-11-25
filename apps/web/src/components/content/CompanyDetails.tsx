@@ -14,7 +14,7 @@ export function companyRows(market: Pick<Market, 'legal'>, t: T): { key: string;
   ].filter((r) => r.value);
 }
 
-export function CompanyDetails({ market, t, compact }: { market: Pick<Market, 'legal'>; t: T; compact?: boolean }) {
+export function CompanyDetails({ market, t, compact, plain }: { market: Pick<Market, 'legal'>; t: T; compact?: boolean; plain?: boolean }) {
   const rows = companyRows(market, t);
   if (rows.length === 0) return null;
   if (compact) {
@@ -27,13 +27,13 @@ export function CompanyDetails({ market, t, compact }: { market: Pick<Market, 'l
     );
   }
   return (
-    <section className="mt-6 max-w-3xl rounded-xl border border-ink-100 bg-white p-4" aria-label={t('company.title')} data-testid="company-details">
+    <section className={plain ? 'border-y border-ink-200 py-3' : 'mt-6 max-w-3xl rounded-xl border border-ink-100 bg-white p-4'} aria-label={t('company.title')} data-testid="company-details">
       <h2 className="text-sm font-bold text-ink-900">{t('company.title')}</h2>
       <dl className="mt-2 grid gap-x-6 gap-y-1 text-sm sm:grid-cols-[auto_1fr]">
         {rows.map((r) => (
           <div key={r.key} className="contents">
             <dt className="text-ink-500">{r.label}</dt>
-            <dd className="text-ink-900" dir={['cr', 'license', 'phone', 'email'].includes(r.key) ? 'ltr' : 'auto'}>{r.value}</dd>
+            <dd className="text-ink-900"><bdi>{r.value}</bdi></dd>
           </div>
         ))}
       </dl>

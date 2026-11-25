@@ -255,3 +255,11 @@ html[lang='ar'] .tracking-wide {
   -webkit-mask-position: right center;
   mask-position: right center;
 }
+
+
+/* policy documents: print as clean A4 pages (the site's header, footer and floating buttons stay out) */
+@media print {
+  @page { size: A4; margin: 18mm 16mm; }
+  body { background: #fff !important; }
+  header, footer, .fixed { display: none !important; }
+}

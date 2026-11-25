@@ -9,7 +9,9 @@ import { alternatesFor } from '@/lib/seo';
 import { paths } from '@/lib/urls';
 import { serverApi } from '@/lib/api/server';
 import { CompanyDetails } from './CompanyDetails';
+import { Logo } from '../ui/Logo';
 import { PolicyBody } from './PolicyBody';
+import { PrintButton } from './PrintButton';
 
 /** Where each policy lives (without the locale). */
 export const POLICY_PATH: Record<PolicyKind, string> = { returns: '/help/returns', terms: '/terms', privacy: '/privacy', seller: '/seller-policy' };
@@ -43,38 +45,56 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
     </ol>
   );
   return (
-    <div className="container-page py-8 sm:py-10" data-testid={`policy-page-${kind}`}>
-      <header className="max-w-3xl">
-        <h1 className="text-xl sm:text-3xl font-bold tracking-tight text-ink-900">{p.title}</h1>
-        <p className="mt-2 text-sm leading-6 text-ink-600 sm:mt-3 sm:text-[15px] sm:leading-7">{p.intro}</p>
-        <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
-          <span className="text-ink-500">{t('policies.updated', { date: formatDate(p.updated, locale) })}</span>
-          <Link href={`/${other}${POLICY_PATH[kind]}`} hrefLang={other} lang={other} className="link inline-flex items-center gap-1.5 font-medium" data-testid="policy-other-lang">
-            <Languages className="size-4" aria-hidden />{t('policies.otherLang')}
-          </Link>
+    <div className="bg-ink-100/70 print:bg-white" data-testid={`policy-page-${kind}`}>
+      <div className="container-page py-6 sm:py-10 print:p-0">
+        {/* toolbar (not printed): back, other language, print or save as PDF */}
+        <div className="mx-auto mb-4 flex max-w-[1040px] flex-wrap items-center justify-between gap-3 print:hidden">
+          <Link href={paths.policies(locale)} className="link text-sm font-medium">← {t('policies.backToPolicies')}</Link>
+          <div className="flex flex-wrap items-center gap-2">
+            <Link href={`/${other}${POLICY_PATH[kind]}`} hrefLang={other} lang={other} className="btn-secondary !px-3.5 !py-2 text-sm" data-testid="policy-other-lang">
+              <Languages className="size-4" aria-hidden />{t('policies.otherLang')}
+            </Link>
+            <PrintButton label={t('policies.print')} />
+          </div>
         </div>
-      </header>
-      {market && kind !== 'seller' ? <CompanyDetails market={market} t={t} /> : null}
 
-      <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_240px] lg:gap-12">
-        <div className="min-w-0 max-w-3xl">
-          <details className="group mb-8 rounded-xl border border-ink-100 bg-white lg:hidden">
-            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-ink-900">
-              {t('policies.onThisPage')}<ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden />
-            </summary>
-            <div className="border-t border-ink-100 px-2 py-2">{index}</div>
-          </details>
-          <PolicyBody sections={p.sections} locale={locale} />
+        <div className="mx-auto grid max-w-[1040px] gap-6 lg:grid-cols-[200px_minmax(0,1fr)] lg:gap-8 print:block">
+          <aside className="max-lg:hidden print:hidden">
+            <nav aria-label={t('policies.onThisPage')} className="sticky top-36">
+              <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-ink-500">{t('policies.onThisPage')}</p>
+              {index}
+            </nav>
+          </aside>
+
+          <div className="min-w-0">
+            <details className="group mb-4 rounded-xl border border-ink-200 bg-white lg:hidden print:hidden">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-3 text-sm font-semibold text-ink-900">
+                {t('policies.onThisPage')}<ChevronDown className="size-4 transition group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="border-t border-ink-100 px-2 py-2">{index}</div>
+            </details>
+
+            {/* the document: a white A4 sheet on a grey desk, like a PDF viewer */}
+            <article className="mx-auto w-full max-w-[794px] bg-white px-5 py-8 shadow-[0_1px_3px_rgba(40,30,20,.12),0_8px_30px_rgba(40,30,20,.08)] sm:min-h-[1123px] sm:px-[72px] sm:py-[64px] print:max-w-none print:p-0 print:shadow-none" data-testid="policy-paper">
+              <div className="flex items-start justify-between gap-4 border-b-2 border-ink-900 pb-4">
+                <Logo label="FastMoveX" />
+                <div className="text-end text-xs leading-5 text-ink-500">
+                  <p className="font-semibold uppercase tracking-wide text-ink-800">{t('policies.document')}</p>
+                  <p>{t('policies.updated', { date: formatDate(p.updated, locale) })}</p>
+                </div>
+              </div>
+              <h1 className="mt-7 text-2xl font-bold tracking-tight text-ink-900 sm:text-[28px]">{p.title}</h1>
+              <p className="mt-3 text-[14px] leading-7 text-ink-600 sm:text-[15px]">{p.intro}</p>
+              {market && kind !== 'seller' ? <div className="mt-5"><CompanyDetails market={market} t={t} plain /></div> : null}
+              <div className="mt-8"><PolicyBody sections={p.sections} locale={locale} paper /></div>
+              <p className="mt-12 border-t border-ink-200 pt-3 text-center text-xs text-ink-500">— {t('policies.pageEnd')} · FastMoveX · {formatDate(p.updated, locale)} —</p>
+            </article>
+          </div>
         </div>
-        <aside className="max-lg:hidden">
-          <nav aria-label={t('policies.onThisPage')} className="sticky top-36">
-            <p className="mb-2 px-2 text-xs font-bold uppercase tracking-wide text-ink-500">{t('policies.onThisPage')}</p>
-            {index}
-          </nav>
-        </aside>
       </div>
 
-      <section className="mt-14 border-t border-ink-100 pt-8">
+      <div className="container-page pb-10 print:hidden">
+      <section className="mt-4 border-t border-ink-200 pt-8">
         <h2 className="text-lg font-bold text-ink-900">{t('policies.other')}</h2>
         <ul className="mt-4 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
           {policyLinks(t).filter((x) => x.key !== kind).map(({ key, href, Icon }) => (
@@ -91,6 +111,7 @@ export async function PolicyPage({ kind, locale }: { kind: PolicyKind; locale: L
           <Link href={paths.contact(locale)} className="btn-secondary">{t('footer.contact')}</Link>
         </div>
       </section>
+      </div>
     </div>
   );
 }
