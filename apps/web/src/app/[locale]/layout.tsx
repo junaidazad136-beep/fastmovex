@@ -12,6 +12,7 @@ import { ClientChrome } from '@/components/layout/ClientChrome';
 import { Footer } from '@/components/layout/Footer';
 import { Header } from '@/components/layout/Header';
 import { MobileTabBar } from '@/components/layout/MobileTabBar';
+import { HideOnCheckout } from '@/components/layout/HideOnCheckout';
 import { Providers } from '@/components/layout/Providers';
 import { serverApi } from '@/lib/api/server';
 import { env } from '@/lib/env';
@@ -71,7 +72,7 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
         <Providers locale={locale} messages={getMessages(locale)} market={market} apiUrl={env.publicApiUrl} siteUrl={env.siteUrl}>
           <Header t={t} market={market} categories={categories} />
           <main id="main" className="min-h-[60vh]">{children}</main>
-          <Footer t={t} market={market} categories={categories} pages={pages} />
+          <HideOnCheckout><Footer t={t} market={market} categories={categories} pages={pages} /></HideOnCheckout>
           <MobileTabBar />
           <ClientChrome />
         </Providers>

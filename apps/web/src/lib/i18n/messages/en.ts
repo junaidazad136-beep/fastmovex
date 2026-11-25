@@ -693,6 +693,8 @@ const en = {
   account: {
     title: 'My account',
     overview: 'Overview',
+    settings: 'Sign-in, privacy & settings',
+    settingsHint: 'Password, linked sign-ins, messages, your data and closing the account',
     profile: 'Profile',
     email: 'Email',
     phone: 'Mobile',

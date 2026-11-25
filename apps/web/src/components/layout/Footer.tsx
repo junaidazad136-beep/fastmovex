@@ -1,3 +1,4 @@
+import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import type { CategoryNode, Market, PageSummary, PaymentMethod } from '@/lib/api/types';
 import type { T } from '@/lib/i18n';
@@ -11,54 +12,93 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
   const footerPages = pages.filter((p) => p.showInFooter);
   const legalSlugs = ['privacy', 'terms']; // written in code (lib/policies), linked below
   const companyPages = footerPages.filter((p) => !legalSlugs.includes(p.slug));
+  const shopList = (
+    <ul className="space-y-2 text-sm text-ink-600">
+      <li><Link href={paths.offers(l)} className="font-semibold text-brand-700 hover:text-brand-600">{t('footer.offers')}</Link></li>
+      {categories.slice(0, 6).map((c) => (
+        <li key={c.slug}><Link href={paths.category(l, c.slug)} className="hover:text-brand-600">{pick(l, c.name, c.nameAr)}</Link></li>
+      ))}
+    </ul>
+  );
+  const companyList = (
+    <ul className="space-y-2 text-sm text-ink-600">
+      {companyPages.map((p) => <li key={p.slug}><Link href={paths.page(l, p.slug)} className="hover:text-brand-600">{pick(l, p.title, p.titleAr)}</Link></li>)}
+    </ul>
+  );
+  const careList = (
+    <ul className="space-y-2 text-sm text-ink-600">
+      <li><Link href={paths.help(l)} className="hover:text-brand-600">{t('help.title')}</Link></li>
+      <li><Link href={paths.contact(l)} className="hover:text-brand-600">{t('footer.contact')}</Link></li>
+      <li><Link href={paths.track(l)} className="hover:text-brand-600">{t('footer.track')}</Link></li>
+      <li><Link href={paths.returnsPolicy(l)} className="hover:text-brand-600">{t('help.returnsPolicy')}</Link></li>
+      <li><Link href={paths.deliveryInfo(l)} className="hover:text-brand-600">{t('help.deliveryInfo')}</Link></li>
+      <li><Link href={paths.policies(l)} className="hover:text-brand-600" data-testid="footer-policies">{t('footer.policies')}</Link></li>
+    </ul>
+  );
+  const payList = (
+    <ul className="flex flex-wrap gap-2">
+      {methods.map((m) => (
+        <li key={m} className="rounded-lg border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-600">{m === 'CARD' && market.cardProvider === 'dibsy' ? t('footer.cardsWallets') : t(`checkout.method.${m}`)}</li>
+      ))}
+    </ul>
+  );
+  const accountList = (
+    <ul className="space-y-2 text-sm text-ink-600">
+      <li><Link href={paths.account(l)} className="hover:text-brand-600">{t('nav.myAccount')}</Link></li>
+      <li><Link href={paths.wishlist(l)} className="hover:text-brand-600">{t('nav.wishlist')}</Link></li>
+      <li><Link href={paths.seller(l)} className="font-semibold text-brand-700 hover:text-brand-600" data-testid="footer-sell">{t('seller.sellWithUs')}</Link></li>
+    </ul>
+  );
+  const groups = [
+    { title: t('footer.shop'), body: shopList },
+    ...(companyPages.length ? [{ title: t('footer.company'), body: companyList }] : []),
+    { title: t('footer.customerCare'), body: careList },
+    { title: t('footer.myAccount'), body: accountList },
+    { title: t('footer.paymentMethods'), body: payList },
+  ];
   return (
     <footer className="mt-16 border-t border-ink-100 bg-white pb-24 md:pb-0">
-      <div className="container-page grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-4">
+      {/* Phones: the about line, then each list folds open (the footer was two screens long); larger screens: four columns. */}
+      <div className="container-page py-8 sm:hidden">
+        <Logo label={t('meta.siteName')} />
+        <p className="mt-3 text-sm leading-6 text-ink-500">{t('footer.about')}</p>
+        <div className="mt-5 divide-y divide-ink-100 border-y border-ink-100">
+          {groups.map((g) => (
+            <details key={g.title} className="group" data-testid="footer-fold">
+              <summary className="flex cursor-pointer list-none items-center justify-between py-3.5 text-sm font-bold text-ink-900 [&::-webkit-details-marker]:hidden">
+                {g.title}
+                <ChevronDown className="size-4 text-ink-400 transition group-open:rotate-180" aria-hidden />
+              </summary>
+              <div className="pb-4">{g.body}</div>
+            </details>
+          ))}
+        </div>
+        <Link href={paths.seller(l)} className="mt-5 block rounded-xl bg-brand-50 px-4 py-3 text-sm font-semibold text-brand-700" data-testid="footer-sell-mobile">{t('seller.sellWithUs')} →</Link>
+      </div>
+      <div className="container-page hidden gap-10 py-12 sm:grid sm:grid-cols-2 lg:grid-cols-4">
         <div>
           <Logo label={t('meta.siteName')} />
           <p className="mt-4 max-w-xs text-sm leading-6 text-ink-500">{t('footer.about')}</p>
         </div>
         <div>
           <h2 className="text-sm font-bold text-ink-900">{t('footer.shop')}</h2>
-          <ul className="mt-3 space-y-2 text-sm text-ink-600">
-            <li><Link href={paths.offers(l)} className="font-medium text-deal-600 hover:text-brand-600">{t('footer.offers')}</Link></li>
-            {categories.slice(0, 6).map((c) => (
-              <li key={c.slug}><Link href={paths.category(l, c.slug)} className="hover:text-brand-600">{pick(l, c.name, c.nameAr)}</Link></li>
-            ))}
-          </ul>
+          <div className="mt-3">{shopList}</div>
           {companyPages.length > 0 && (
             <>
               <h2 className="mt-6 text-sm font-bold text-ink-900">{t('footer.company')}</h2>
-              <ul className="mt-3 space-y-2 text-sm text-ink-600">
-                {companyPages.map((p) => <li key={p.slug}><Link href={paths.page(l, p.slug)} className="hover:text-brand-600">{pick(l, p.title, p.titleAr)}</Link></li>)}
-              </ul>
+              <div className="mt-3">{companyList}</div>
             </>
           )}
         </div>
         <div>
           <h2 className="text-sm font-bold text-ink-900">{t('footer.customerCare')}</h2>
-          <ul className="mt-3 space-y-2 text-sm text-ink-600">
-            <li><Link href={paths.help(l)} className="hover:text-brand-600">{t('help.title')}</Link></li>
-            <li><Link href={paths.contact(l)} className="hover:text-brand-600">{t('footer.contact')}</Link></li>
-            <li><Link href={paths.track(l)} className="hover:text-brand-600">{t('footer.track')}</Link></li>
-            <li><Link href={paths.returnsPolicy(l)} className="hover:text-brand-600">{t('help.returnsPolicy')}</Link></li>
-            <li><Link href={paths.deliveryInfo(l)} className="hover:text-brand-600">{t('help.deliveryInfo')}</Link></li>
-            <li><Link href={paths.policies(l)} className="hover:text-brand-600" data-testid="footer-policies">{t('footer.policies')}</Link></li>
-          </ul>
+          <div className="mt-3">{careList}</div>
         </div>
         <div>
           <h2 className="text-sm font-bold text-ink-900">{t('footer.paymentMethods')}</h2>
-          <ul className="mt-3 flex flex-wrap gap-2">
-            {methods.map((m) => (
-              <li key={m} className="rounded-lg border border-ink-200 px-2.5 py-1 text-xs font-medium text-ink-600">{m === 'CARD' && market.cardProvider === 'dibsy' ? t('footer.cardsWallets') : t(`checkout.method.${m}`)}</li>
-            ))}
-          </ul>
+          <div className="mt-3">{payList}</div>
           <h2 className="mt-6 text-sm font-bold text-ink-900">{t('footer.myAccount')}</h2>
-          <ul className="mt-3 space-y-2 text-sm text-ink-600">
-            <li><Link href={paths.account(l)} className="hover:text-brand-600">{t('nav.myAccount')}</Link></li>
-            <li><Link href={paths.wishlist(l)} className="hover:text-brand-600">{t('nav.wishlist')}</Link></li>
-            <li><Link href={paths.seller(l)} className="font-semibold text-brand-700 hover:text-brand-600" data-testid="footer-sell">{t('seller.sellWithUs')}</Link></li>
-          </ul>
+          <div className="mt-3">{accountList}</div>
         </div>
       </div>
       <div className="border-t border-ink-100">

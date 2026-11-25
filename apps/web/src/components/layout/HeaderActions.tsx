@@ -67,7 +67,7 @@ export function HeaderActions() {
           <Badge n={unread} />
         </Link>
       )}
-      <Link href={paths.wishlist(l)} className="relative rounded-xl p-2 hover:bg-ink-100 sm:p-2.5" aria-label={`${t('nav.wishlist')}${wishlist.count ? ` (${wishlist.count})` : ''}`} data-testid="header-wishlist">
+      <Link href={paths.wishlist(l)} className="relative rounded-xl p-2 hover:bg-ink-100 max-[359px]:hidden sm:p-2.5" aria-label={`${t('nav.wishlist')}${wishlist.count ? ` (${wishlist.count})` : ''}`} data-testid="header-wishlist">
         <Heart className="size-6 text-ink-900 sm:size-[22px]" strokeWidth={1.9} aria-hidden />
         {wishlist.count > 0 ? <span className="absolute end-1.5 top-1.5 size-2.5 rounded-full bg-brand-600 ring-2 ring-white sm:end-2 sm:top-2" aria-hidden /> : null}
       </Link>

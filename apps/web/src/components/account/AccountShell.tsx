@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Heart, LayoutDashboard, LifeBuoy, LogOut, MapPin, Package, RotateCcw, Star } from 'lucide-react';
+import { Bell, Heart, LayoutDashboard, LifeBuoy, LogOut, MapPin, Package, RotateCcw, ShieldCheck, Star } from 'lucide-react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type { ReactNode } from 'react';
@@ -24,7 +24,10 @@ export function AccountShell({ children }: { children: ReactNode }) {
     { href: paths.reviews(l), label: t('account.reviews'), Icon: Star },
     { href: paths.notifications(l), label: t('account.notifications'), Icon: Bell },
     { href: paths.tickets(l), label: t('account.support'), Icon: LifeBuoy },
+    { href: paths.accountSettings(l), label: t('account.settings'), Icon: ShieldCheck },
   ];
+  // on a phone the account home is itself the menu, so the strip of tabs is left out there
+  const home = pathname === paths.account(l);
   const isActive = (href: string, exact?: boolean) => (exact ? pathname === href : pathname.startsWith(href));
 
   async function signOut() {
@@ -37,7 +40,7 @@ export function AccountShell({ children }: { children: ReactNode }) {
     <div className="container-page py-6">
       {/* minmax(0,1fr) on phones too: otherwise the scrolling tab strip widens the whole page sideways */}
       <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[240px_minmax(0,1fr)]">
-        <nav aria-label={t('account.title')} className="min-w-0 lg:sticky lg:top-36 lg:self-start">
+        <nav aria-label={t('account.title')} className={`min-w-0 lg:sticky lg:top-36 lg:self-start ${home ? 'max-lg:hidden' : ''}`}>
           {user && <p className="mb-3 hidden truncate px-3 text-sm text-ink-500 lg:block">{t('nav.hello', { name: user.fullName.split(' ')[0] })}</p>}
           <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:flex-col lg:gap-0.5 lg:px-0">
             {items.map(({ href, label, Icon, exact }) => (

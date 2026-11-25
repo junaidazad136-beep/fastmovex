@@ -138,7 +138,7 @@ export interface SearchResult {
     brands: { slug: string; name: string; count: number }[];
     price: { minMinor: Minor | null; maxMinor: Minor | null };
   };
-  query: { q?: string; sort: SearchSort; matchMode?: 'all' | 'any' };
+  query: { q?: string; sort: SearchSort; matchMode?: 'all' | 'any'; exactTotal?: number };
   /** auto: these are results for `corrected` (nothing matched what was typed); otherwise a "Did you mean" suggestion */
   spelling?: { original: string; corrected: string; auto: boolean };
   /** only when nothing was found */

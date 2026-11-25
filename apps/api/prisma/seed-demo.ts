@@ -620,6 +620,17 @@ async function main() {
       await prisma.banner.create({ data: { countryCode: COUNTRY, placement: 'HOME_MID', imageKey: key, linkUrl: '/search?sort=newest', sortOrder: 0, isActive: true } });
     }
   }
+  // the middle strip once was a plain colour with no words: give the demo one its text and a picture (only the demo banner, never one made in the admin panel)
+  const mid = await prisma.banner.findFirst({ where: { countryCode: COUNTRY, placement: 'HOME_MID', imageKey: { startsWith: 'banners/demo-home_mid-' }, headline: null } });
+  if (mid) {
+    const key = 'banners/demo-home_mid-1.png';
+    if (await storage.put('public', key, await svgToPng(heroDevicesArt(), 800), 'image/png')) {
+      await prisma.banner.update({ where: { id: mid.id }, data: {
+        imageKey: key, kicker: 'Just in', kickerAr: 'وصل الآن', headline: 'New arrivals\n*every week*', headlineAr: 'منتجات جديدة\n*كل أسبوع*',
+        subline: 'Fresh picks from Qatar sellers', sublineAr: 'اختيارات جديدة من بائعين في قطر', ctaLabel: 'See what is new', ctaLabelAr: 'شاهد الجديد',
+      } });
+    }
+  }
 
   // FAQ
   if (!(await prisma.faqEntry.count())) {

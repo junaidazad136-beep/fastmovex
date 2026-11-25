@@ -9,7 +9,7 @@ import { Countdown } from '../ui/Countdown';
 import { Rail } from '../ui/Rail';
 import { Stars } from '../ui/Stars';
 import { CategoryIcon } from './CategoryIcon';
-import { HeroCarousel, type HeroSlide } from './HeroCarousel';
+import { HeroCarousel, type HeroSlide, SlideBody } from './HeroCarousel';
 
 function BannerLink({ banner, t, className, children }: { banner: Banner; t: T; className: string; children: React.ReactNode }) {
   const link = bannerHref(t.locale, banner.linkUrl);
@@ -94,13 +94,13 @@ export function ValueProps({ t }: { t: T }) {
   ];
   return (
     <section className="container-page mt-4 sm:mt-6" aria-label={t('home.whyUs')}>
-      <ul className="no-scrollbar flex divide-x divide-ink-100 overflow-x-auto rounded-2xl border border-ink-100 bg-white py-2.5 rtl:divide-x-reverse lg:grid lg:grid-cols-4 lg:py-3.5">
+      <ul className="grid grid-cols-2 gap-y-2.5 rounded-2xl border border-ink-100 bg-white py-2.5 lg:grid-cols-4 lg:divide-x lg:divide-ink-100 lg:py-3.5 lg:rtl:divide-x-reverse">
         {items.map(({ Icon, title, text }) => (
-          <li key={title} className="flex shrink-0 items-center gap-2 px-3 lg:gap-2.5 lg:px-5">
+          <li key={title} className="flex min-w-0 items-center gap-2 px-3 lg:gap-2.5 lg:px-5">
             <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 lg:size-11 lg:rounded-xl"><Icon className="size-[18px] lg:size-[22px]" aria-hidden /></span>
             <span className="leading-tight">
-              <span className="block whitespace-nowrap text-[12px] font-semibold text-ink-900 lg:text-sm">{title}</span>
-              <span className="block whitespace-nowrap text-[11px] text-ink-500 lg:text-xs">{text}</span>
+              <span className="block truncate text-[12px] font-semibold text-ink-900 lg:text-sm">{title}</span>
+              <span className="block truncate text-[11px] text-ink-500 lg:text-xs">{text}</span>
             </span>
           </li>
         ))}
@@ -155,7 +155,7 @@ export function ProductRail({ id, title, items, t, minorUnits, endsAt, href, dea
       <Rail label={title} prevLabel={t('common.previous')} nextLabel={t('common.next')}>
         {items.map((p, i) => (
           <li key={p.id} className="rail-item">
-            <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes="(min-width: 1280px) 200px, (min-width: 768px) 22vw, 25vw" />
+            <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes="(min-width: 1280px) 200px, (min-width: 768px) 22vw, 38vw" />
           </li>
         ))}
       </Rail>
@@ -194,12 +194,23 @@ export function StoreRail({ title, items, t }: { title: string; items: StoreCard
 export function PromoBanner({ items, t }: { items: Banner[]; t: T }) {
   const b = items.find((x) => x.imageUrl);
   if (!b) return null;
+  const l = t.locale;
+  const headline = pickOpt(l, b.headline, b.headlineAr);
   return (
     <section className="container-page mt-10">
       <BannerLink banner={b} t={t} className="block overflow-hidden rounded-2xl bg-ink-100">
-        <div className="relative aspect-[16/5] sm:aspect-[16/4]">
-          <Image src={b.imageUrl!} alt={t('home.promo')} fill sizes="(min-width: 1320px) 1280px, 100vw" className="object-cover" quality={80} />
-        </div>
+        {headline ? (
+          // with text: drawn like the home slider (purple, headline, button) so it never shows as an empty coloured box
+          <SlideBody eager={false} s={{
+            id: b.id, imageUrl: b.imageUrl!, link: bannerHref(l, b.linkUrl), headline,
+            kicker: pickOpt(l, b.kicker, b.kickerAr), subline: pickOpt(l, b.subline, b.sublineAr),
+            cta: pickOpt(l, b.ctaLabel, b.ctaLabelAr) ?? t('home.shopNow'),
+          }} />
+        ) : (
+          <div className="relative aspect-[16/5] sm:aspect-[16/4]">
+            <Image src={b.imageUrl!} alt={t('home.promo')} fill sizes="(min-width: 1320px) 1280px, 100vw" className="object-cover" quality={80} />
+          </div>
+        )}
       </BannerLink>
     </section>
   );

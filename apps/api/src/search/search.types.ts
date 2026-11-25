@@ -27,6 +27,8 @@ export interface SearchHits {
   ids: string[];
   total: number;
   matchMode?: MatchMode;
+  /** how many matched every word, when the results were widened to any word (so the page can say "no exact match" only when it is true) */
+  exactTotal?: number;
 }
 
 export interface Facets {

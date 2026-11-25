@@ -17,7 +17,7 @@ export interface SearchResult {
   page: number;
   pageCount: number;
   facets?: Facets;
-  query: { q?: string; sort: string; category?: string; matchMode?: string };
+  query: { q?: string; sort: string; category?: string; matchMode?: string; exactTotal?: number };
   /**
    * Spelling. auto: nothing matched what was typed, so these are results for `corrected` ("Showing results for …").
    * Otherwise a suggestion that finds more ("Did you mean …?").
@@ -104,7 +104,7 @@ export class SearchService {
         page,
         pageCount: Math.ceil(Math.min(hits.total, MAX_RESULT_WINDOW) / params.limit),
         facets,
-        query: { q: used.q, sort: params.sort, category: dto.category, matchMode: hits.matchMode },
+        query: { q: used.q, sort: params.sort, category: dto.category, matchMode: hits.matchMode, ...(hits.exactTotal !== undefined && { exactTotal: hits.exactTotal }) },
         ...(spelling && { spelling }),
         ...(noResults && { noResults }),
       };

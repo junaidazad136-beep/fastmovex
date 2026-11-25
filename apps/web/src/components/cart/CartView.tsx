@@ -193,10 +193,10 @@ export function CartView() {
   const blocked = lines.some((i) => i.issues.some((x) => x !== 'PRICE_CHANGED'));
 
   return (
-    <div className="container-page py-6">
+    <div className="container-page py-6 pb-28 lg:pb-6">
       <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('cart.title')} <span className="text-sm font-normal text-ink-500 sm:text-base">({t.plural('common.items', cart.totals.itemCount)})</span></h1>
       {cart.groups.length > 1 && <p className="mt-2 text-sm text-ink-500">{t('cart.separateDelivery')}</p>}
-      <div className="mt-6 grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div className="mt-6 grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-4">
           {(priceChanged || blocked) && (
             <div className="flex flex-col gap-3 rounded-2xl border border-warning-600/20 bg-warning-50 p-4 text-sm text-warning-600 sm:flex-row sm:items-center sm:justify-between" role="alert">
@@ -256,6 +256,22 @@ export function CartView() {
             <Link href={paths.login(l, paths.checkout(l))} className="btn-primary btn-lg w-full" data-testid="go-checkout">{t('cart.signInToCheckout')}</Link>
           )}
         </aside>
+      </div>
+      {/* Phones: total and checkout stay in reach above the tab bar (the summary card is at the end of the list) */}
+      <div className="fixed inset-x-0 bottom-[calc(57px+env(safe-area-inset-bottom))] z-30 border-t border-ink-100 bg-white/95 px-4 py-2.5 shadow-[0_-6px_20px_rgba(20,16,31,0.06)] backdrop-blur md:bottom-0 md:pb-[calc(env(safe-area-inset-bottom)+0.625rem)] lg:hidden" data-testid="cart-bar">
+        <div className="flex items-center gap-3">
+          <div className="min-w-0">
+            <p className="text-xs text-ink-500">{t('cart.total')}</p>
+            <p className={`tabular text-lg font-bold leading-tight text-ink-900 transition-opacity ${syncing ? 'opacity-50' : ''}`}>{money(cart.totals.totalMinor)}</p>
+          </div>
+          {status === 'user' || market.guestCheckout ? (
+            cart.canCheckout
+              ? <Link href={paths.checkout(l)} className={`btn-primary btn-lg ms-auto flex-1 ${wait}`} aria-disabled={syncing || undefined} data-testid="cart-bar-checkout">{t('cart.checkout')}</Link>
+              : <button type="button" disabled className="btn-primary btn-lg ms-auto flex-1">{t('cart.checkout')}</button>
+          ) : (
+            <Link href={paths.login(l, paths.checkout(l))} className="btn-primary btn-lg ms-auto flex-1" data-testid="cart-bar-checkout">{t('cart.signInToCheckout')}</Link>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -11,6 +11,7 @@ import { AppModule } from '../../src/app.module';
 import { configureApp } from '../../src/app.setup';
 import { LatePackingService, packHoursFor } from '../../src/sellers/late-packing';
 import { NotificationsService } from '../../src/notifications/notifications.service';
+import { CacheService } from '../../src/cache/cache.service';
 import { PrismaService } from '../../src/prisma/prisma.service';
 import { setCodRules } from './cod-helper';
 
@@ -100,6 +101,7 @@ describe('Seller rules — real database', () => {
     const admin = (await api().post('/api/v1/auth/login').send({ identifier: 'admin@demo.fastmovex.test', password: DEMO_PASSWORD })).body.accessToken;
     const before = await prisma.country.findUniqueOrThrow({ where: { code: 'QA' }, select: { deliveryConfig: true } });
     await prisma.country.update({ where: { code: 'QA' }, data: { deliveryConfig: { flatFeeMinor: '1000', freeOverMinor: '100000000' } } });
+    await app.get(CacheService).del('countries:active'); // the API keeps the country (and its delivery prices) for 5 minutes
     try {
       const so = await sellerOrder(); // one item, pays QAR 10 delivery
       const fresh = await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id }, select: { deliveryFeeMinor: true, subtotalMinor: true, discountMinor: true } });
@@ -108,6 +110,7 @@ describe('Seller rules — real database', () => {
 
       // free delivery starts just above what is in the shipment now
       await prisma.country.update({ where: { code: 'QA' }, data: { deliveryConfig: { flatFeeMinor: '1000', freeOverMinor: (fresh.subtotalMinor - fresh.discountMinor + 1n).toString() } } });
+      await app.get(CacheService).del('countries:active');
       const added = await api().post(`/api/v1/admin/orders/${so.orderNumber}/items`).set(bearer(admin)).send({ variantId: s.variant, quantity: 1, reason: 'Customer called for one more' }).expect(201);
       const after = await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id }, select: { deliveryFeeMinor: true, subtotalMinor: true } });
       expect(after.deliveryFeeMinor).toBe(0n);
@@ -122,6 +125,7 @@ describe('Seller rules — real database', () => {
       expect((await prisma.sellerOrder.findUniqueOrThrow({ where: { id: so.id }, select: { deliveryFeeMinor: true } })).deliveryFeeMinor).toBe(0n);
     } finally {
       await prisma.country.update({ where: { code: 'QA' }, data: { deliveryConfig: before.deliveryConfig ?? {} } });
+      await app.get(CacheService).del('countries:active');
     }
   });
 });

@@ -696,6 +696,8 @@ const ar: Localized<Messages> = {
   account: {
     title: 'حسابي',
     overview: 'نظرة عامة',
+    settings: 'الدخول والخصوصية والإعدادات',
+    settingsHint: 'كلمة المرور، طرق الدخول المرتبطة، الرسائل، بياناتك وإغلاق الحساب',
     profile: 'الملف الشخصي',
     email: 'البريد الإلكتروني',
     phone: 'الجوال',

@@ -17,6 +17,7 @@ export const paths = {
   login: (l: Locale, next?: string) => `/${l}/login${next ? `?next=${encodeURIComponent(next)}` : ''}`,
   register: (l: Locale, next?: string) => `/${l}/register${next ? `?next=${encodeURIComponent(next)}` : ''}`,
   account: (l: Locale) => `/${l}/account`,
+  accountSettings: (l: Locale) => `/${l}/account/settings`,
   seller: (l: Locale) => `/${l}/seller`,
   sellerOrders: (l: Locale) => `/${l}/seller/orders`,
   sellerOrder: (l: Locale, id: string) => `/${l}/seller/orders/${id}`,

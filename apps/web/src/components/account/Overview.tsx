@@ -1,7 +1,7 @@
 'use client';
 
 import { Privacy } from './Privacy';
-import { BadgeCheck, CircleAlert, ChevronRight } from 'lucide-react';
+import { BadgeCheck, Bell, CircleAlert, ChevronRight, Heart, LifeBuoy, LogOut, MapPin, Package, RotateCcw, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
@@ -99,43 +99,50 @@ export function Overview() {
   const t = useT();
   const l = t.locale;
   const money = useMoney();
-  const toast = useToast();
-  const { user, reload, logout } = useSession();
+  const { user, logout } = useSession();
   const [orders, setOrders] = useState<OrderListItem[] | null>(null);
   const [toReview, setToReview] = useState<Reviewable[]>([]);
-  const [optIn, setOptIn] = useState(!!user?.marketingOptIn);
 
   useEffect(() => {
     api<Paged<OrderListItem>>('/orders').then((p) => setOrders(p.items.slice(0, 3))).catch(() => setOrders([]));
     api<Reviewable[]>('/me/reviewable').then((r) => setToReview(r.slice(0, 4))).catch(() => {});
   }, []);
-  useEffect(() => { setOptIn(!!user?.marketingOptIn); }, [user?.marketingOptIn]);
-  const { market } = useShop();
-  const [wa, setWa] = useState(!!user?.whatsappOptIn);
-  useEffect(() => { setWa(!!user?.whatsappOptIn); }, [user?.whatsappOptIn]);
   if (!user) return null;
-
-  async function toggleWhatsApp(v: boolean) {
-    setWa(v);
-    try {
-      await api('/me/notification-settings', { method: 'PATCH', body: { whatsappOptIn: v } });
-      await reload();
-      toast({ tone: 'success', message: v ? t('whatsapp.on') : t('whatsapp.off') });
-    } catch (e) { setWa(!v); toast({ tone: 'error', message: errorMessage(e, t) }); }
-  }
-
-  async function toggleMarketing(v: boolean) {
-    setOptIn(v);
-    try {
-      await api('/me/notification-settings', { method: 'PATCH', body: { marketingOptIn: v } });
-      await reload();
-      toast({ tone: 'success', message: t('account.marketingSaved') });
-    } catch (e) { setOptIn(!v); toast({ tone: 'error', message: errorMessage(e, t) }); }
-  }
 
   return (
     <div className="space-y-6">
       <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('account.title')}</h1>
+      {/* the account home is a menu (like the big shops): each part on its own page */}
+      <nav aria-label={t('account.title')}>
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3" data-testid="account-menu">
+          {[
+            { href: paths.orders(l), label: t('account.orders'), Icon: Package },
+            { href: paths.returns(l), label: t('account.returns'), Icon: RotateCcw },
+            { href: paths.addresses(l), label: t('account.addresses'), Icon: MapPin },
+            { href: paths.wishlist(l), label: t('account.wishlist'), Icon: Heart },
+            { href: paths.notifications(l), label: t('account.notifications'), Icon: Bell },
+            { href: paths.tickets(l), label: t('account.support'), Icon: LifeBuoy },
+          ].map(({ href, label, Icon }) => (
+            <li key={href}>
+              <Link href={href} className="card flex h-full items-center gap-3 p-4 text-sm font-semibold text-ink-900 hover:border-brand-200 hover:bg-brand-50/40">
+                <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700"><Icon className="size-[18px]" aria-hidden /></span>
+                <span className="min-w-0 leading-tight">{label}</span>
+              </Link>
+            </li>
+          ))}
+          <li className="col-span-2 sm:col-span-3">
+            <Link href={paths.accountSettings(l)} className="card flex items-center gap-3 p-4 hover:border-brand-200 hover:bg-brand-50/40" data-testid="settings-link">
+              <span className="flex size-9 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-700"><ShieldCheck className="size-[18px]" aria-hidden /></span>
+              <span className="min-w-0 flex-1">
+                <span className="block text-sm font-semibold text-ink-900">{t('account.settings')}</span>
+                <span className="block text-xs text-ink-500">{t('account.settingsHint')}</span>
+              </span>
+              <ChevronRight className="size-4 text-ink-300 rtl:rotate-180" aria-hidden />
+            </Link>
+          </li>
+        </ul>
+      </nav>
+
       <section className="card p-5" aria-labelledby="acc-profile">
         <h2 id="acc-profile" className="mb-3 font-bold">{t('account.profile')}</h2>
         <dl className="grid gap-3 text-sm sm:grid-cols-3">
@@ -192,6 +199,49 @@ export function Overview() {
         </section>
       )}
 
+      {/* phones: the menu strip with "Sign out" is not shown on the account home */}
+      <button type="button" onClick={async () => { await logout(); window.location.assign(paths.home(l)); }} className="btn-secondary w-full lg:hidden" data-testid="sign-out-home">
+        <LogOut className="size-4 rtl:rotate-180" aria-hidden />{t('nav.signOut')}
+      </button>
+    </div>
+  );
+}
+
+/** Sign-in, messages and privacy (with closing the account) — on their own page, so the account home stays a short menu. */
+export function AccountSettings() {
+  const t = useT();
+  const l = t.locale;
+  const toast = useToast();
+  const { user, reload, logout } = useSession();
+  const [optIn, setOptIn] = useState(!!user?.marketingOptIn);
+
+  useEffect(() => { setOptIn(!!user?.marketingOptIn); }, [user?.marketingOptIn]);
+  const { market } = useShop();
+  const [wa, setWa] = useState(!!user?.whatsappOptIn);
+  useEffect(() => { setWa(!!user?.whatsappOptIn); }, [user?.whatsappOptIn]);
+  if (!user) return null;
+
+  async function toggleWhatsApp(v: boolean) {
+    setWa(v);
+    try {
+      await api('/me/notification-settings', { method: 'PATCH', body: { whatsappOptIn: v } });
+      await reload();
+      toast({ tone: 'success', message: v ? t('whatsapp.on') : t('whatsapp.off') });
+    } catch (e) { setWa(!v); toast({ tone: 'error', message: errorMessage(e, t) }); }
+  }
+
+  async function toggleMarketing(v: boolean) {
+    setOptIn(v);
+    try {
+      await api('/me/notification-settings', { method: 'PATCH', body: { marketingOptIn: v } });
+      await reload();
+      toast({ tone: 'success', message: t('account.marketingSaved') });
+    } catch (e) { setOptIn(!v); toast({ tone: 'error', message: errorMessage(e, t) }); }
+  }
+
+  return (
+    <div className="space-y-6">
+      <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('account.settings')}</h1>
       <section className="card space-y-5 p-5" aria-labelledby="acc-sec">
         <h2 id="acc-sec" className="font-bold">{t('account.security')}</h2>
         {user.hasPassword === false

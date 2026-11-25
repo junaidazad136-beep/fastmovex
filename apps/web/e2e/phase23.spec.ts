@@ -46,7 +46,7 @@ test('Continue with Google creates the account; the account page lists the sign-
   await expect(page.getByTestId('social-sign-in')).toBeVisible();
   await page.getByTestId('fake-google').click();
   await expect(page).not.toHaveURL(/\/login/);
-  await page.goto('/en/account');
+  await page.goto('/en/account/settings');
   await expect(page.getByTestId('no-password')).toBeVisible();
   await expect(page.getByTestId('sign-ins')).toContainText('Google');
   await expect(page.getByTestId('sign-ins')).toContainText(email);

@@ -175,7 +175,7 @@ export function BannersPage() {
               <TextField label="Show from (Qatar time)" type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} hint="Empty = now" />
               <TextField label="Show until (Qatar time)" type="datetime-local" value={form.endsAt} onChange={(e) => setForm({ ...form, endsAt: e.target.value })} hint="Empty = no end" />
             </div>
-            {form.placement === 'HOME_HERO' ? (
+            {form.placement === 'HOME_HERO' || form.placement === 'HOME_MID' ? (
               <fieldset className="space-y-3 rounded-xl border border-ink-100 p-4">
                 <legend className="px-1 text-sm font-semibold text-ink-800">Text on the banner (optional)</legend>
                 <p className="text-xs text-ink-500">With a headline, the website draws the text on a purple background and puts your picture on the side — use a product photo with a transparent or dark background (PNG). Without a headline the picture is shown alone.</p>

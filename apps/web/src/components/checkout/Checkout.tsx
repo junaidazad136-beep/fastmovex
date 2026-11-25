@@ -13,6 +13,7 @@ import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
 import { initialMethod, paylaterFits, PAYLATER_MAX_MINOR, PAYLATER_MIN_MINOR, rememberMethod, useCheckoutCart } from '@/lib/state/checkout-cart';
 import { useMoney, useShop } from '@/lib/state/shop';
+import { PayBar } from './PayBar';
 import { paths, pick } from '@/lib/urls';
 import { AddressForm, formatAddress } from '../account/AddressForm';
 import { Totals } from '../cart/CartView';
@@ -135,12 +136,12 @@ export function Checkout() {
   const selected = addresses.find((a) => a.id === addressId);
 
   return (
-    <div>
+    <div className="pb-28 lg:pb-0">
       <div className="mb-6 flex items-center justify-between">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success-600"><Lock className="size-3.5" aria-hidden />{t('checkout.secure')}</span>
       </div>
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-5">
           <section className="card p-5" aria-labelledby="co-address">
             <h2 id="co-address" className="mb-4 flex items-center gap-2 font-bold"><MapPin className="size-5 text-brand-600" aria-hidden />{t('checkout.address')}</h2>
@@ -242,6 +243,7 @@ export function Checkout() {
           <p className="text-xs leading-5 text-ink-500">{t('checkout.agree')} <PolicyLinks returns /></p>
         </aside>
       </div>
+      <PayBar total={money(cart.totals.totalMinor)} busy={busy} disabled={!addressId || !method || !cart.canCheckout} error={error} onClick={place} />
 
       <Dialog open={adding} onClose={() => setAdding(false)} title={t('address.add')} closeLabel={t('common.close')} wide>
         <AddressForm

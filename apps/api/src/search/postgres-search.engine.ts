@@ -148,7 +148,7 @@ export class PostgresSearchEngine extends SearchEngine {
     // (total is 0 when this page is past the end — then check the real count before widening.)
     const total = precise.ids.length || p.offset === 0 ? precise.total : await this.count({ ...p, matchMode: 'all' });
     if (total >= ANY_WORD_FALLBACK_BELOW) return { ...precise, total };
-    return run('any');
+    return { ...(await run('any')), exactTotal: total };
   }
 
   private async count(p: SearchParams): Promise<number> {

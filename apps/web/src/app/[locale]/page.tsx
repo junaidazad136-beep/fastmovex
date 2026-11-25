@@ -32,6 +32,16 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const titleOf = (s: HomeSection, fallback: string) =>
     s.title ? pick(locale, s.title, s.titleAr) : (known as readonly string[]).includes(s.key) ? t(`home.${s.key as (typeof known)[number]}`) : fallback;
 
+  // A product shows in one rail only (Trending and Best sellers often pick the same items); a rail left with too few new ones is dropped.
+  const seen = new Set<string>();
+  const dedupe = (s: HomeSection): HomeSection | null => {
+    if (s.type !== 'products' && s.type !== 'deals') return s;
+    const items = (s.items as { id: string }[]).filter((p) => !seen.has(p.id));
+    if (items.length < 4 && items.length < s.items.length) return null;
+    items.forEach((p) => seen.add(p.id));
+    return { ...s, items } as HomeSection;
+  };
+
   const render = (s: HomeSection) => {
     const href = viewAllHref(locale, s.viewAll);
     switch (s.type) {
@@ -92,7 +102,7 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       />
       <h1 className="sr-only">{t('meta.defaultTitle')}</h1>
       <PopularSearches queries={popular.queries} t={t} />
-      {sections.map(render)}
+      {sections.map(dedupe).map((s) => (s ? render(s) : null))}
       <RecentlyViewed />
     </>
   );

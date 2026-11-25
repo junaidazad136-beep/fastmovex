@@ -65,7 +65,7 @@ export function Listing({
           </ul>
         )}
         {query.q && result.page === 1 && <SearchLogger q={query.q} total={result.total} corrected={!!result.spelling?.auto} />}
-        {result.query.matchMode === 'any' && result.total > 0 && !result.spelling?.auto && (
+        {result.query.matchMode === 'any' && !result.query.exactTotal && result.total > 0 && !result.spelling?.auto && (
           <p className="mb-4 rounded-xl bg-sand-50 px-4 py-3 text-sm text-sand-700">{t('search.broadMatch')}</p>
         )}
         {result.items.length ? (

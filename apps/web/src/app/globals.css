@@ -153,9 +153,9 @@
 @utility pcard-fav {
   @apply relative z-10 flex size-8 items-center justify-center rounded-full bg-white/80 text-ink-700 transition hover:text-brand-600;
 }
-/* rails: four cards across a phone (like the app), more on wider screens */
+/* rails: about two and a half cards across a phone (titles stay readable, the cut card shows there is more), more on wider screens */
 @utility rail-item {
-  @apply w-[calc((100%-24px)/4)] min-w-[84px] shrink-0 snap-start sm:w-[30%] md:w-[23%] lg:w-[18.5%] xl:w-[15.8%];
+  @apply w-[38%] min-w-[120px] shrink-0 snap-start sm:w-[30%] md:w-[23%] lg:w-[18.5%] xl:w-[15.8%];
 }
 @utility container-page {
   @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8;

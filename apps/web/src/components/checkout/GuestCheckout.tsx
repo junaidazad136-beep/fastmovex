@@ -23,6 +23,7 @@ import { Spinner } from '../ui/Spinner';
 import { PENDING_ORDER_KEY, PENDING_TOKEN_KEY } from './Checkout';
 import { COD_REASONS, codAvailability, codErrorMessage, GuestPhoneCheck } from './cod';
 import { useMoney } from '@/lib/state/shop';
+import { PayBar } from './PayBar';
 import { PolicyLinks } from '../content/PolicyLinks';
 import { haptic } from '@/lib/haptics';
 import { startNav } from '@/components/layout/NavProgress';
@@ -211,7 +212,7 @@ export function GuestCheckout() {
   const opt = <span className="ms-1 text-xs font-normal text-ink-400">({t('common.optional')})</span>;
 
   return (
-    <form onSubmit={place} noValidate data-testid="guest-checkout">
+    <form onSubmit={place} noValidate data-testid="guest-checkout" className="pb-28 lg:pb-0">
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('checkout.title')}</h1>
         <span className="inline-flex items-center gap-1.5 text-xs font-medium text-success-600"><Lock className="size-3.5" aria-hidden />{t('checkout.secure')}</span>
@@ -222,7 +223,7 @@ export function GuestCheckout() {
         <Link href={paths.login(l, paths.checkout(l))} className="btn-secondary px-3 py-1.5" data-testid="guest-sign-in">{t('auth.signIn')}</Link>
       </div>
 
-      <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
+      <div className="grid grid-cols-[minmax(0,1fr)] gap-6 lg:grid-cols-[minmax(0,1fr)_380px] lg:items-start">
         <div className="space-y-5">
           <section className="card p-5" aria-labelledby="gc-details-h">
             <h2 id="gc-details-h" className="flex items-center gap-2 font-bold"><UserRound className="size-5 text-brand-600" aria-hidden />{t('guest.details')}</h2>
@@ -345,6 +346,7 @@ export function GuestCheckout() {
           <p className="text-xs leading-5 text-ink-500">{t('guest.saveLater')}</p>
         </aside>
       </div>
+      <PayBar total={money(cart.totals.totalMinor)} busy={busy} disabled={!method || !cart.canCheckout} error={error} />
     </form>
   );
 }

@@ -49,7 +49,7 @@ test('the order page offers the invoice, and a credit note once a refund is paid
 test('download my data, then delete the account — and keep it after all', async ({ page }) => {
   const c = await freshCustomer();
   await signIn(page, c.email, c.password);
-  await page.goto('/en/account');
+  await page.goto('/en/account/settings');
   const privacy = page.getByTestId('privacy');
   const download = page.waitForEvent('download');
   await privacy.getByTestId('export-data').click();
@@ -80,7 +80,7 @@ test('Arabic: an open order blocks deletion with a clear reason', async ({ page 
   const c = await freshCustomer();
   await placeCod(c.token);
   await signIn(page, c.email, c.password, 'ar');
-  await page.goto('/ar/account');
+  await page.goto('/ar/account/settings');
   await page.getByTestId('delete-account').click();
   await expect(page.getByTestId('delete-blockers')).toContainText('لديك طلب واحد ما زال في الطريق.');
   await expect(page.getByTestId('delete-confirm')).toBeDisabled();
