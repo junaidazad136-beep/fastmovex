@@ -92,8 +92,6 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     placed = true;
     return ['tabs' as const];
   });
-  // the shortcut grid sits right after the trust strip
-  const qi = rows.findIndex((r) => r !== 'tabs' && r?.type === 'value_props');
 
   return (
     <>
@@ -131,11 +129,9 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       />
       <h1 className="sr-only">{t('meta.defaultTitle')}</h1>
       <PopularSearches queries={popular.queries} t={t} />
+      <QuickLinks t={t} />
       {rows.map((s, i) => (
-        <Fragment key={i}>
-          {s === 'tabs' ? tabbed : s ? render(s) : null}
-          {i === qi ? <QuickLinks t={t} /> : null}
-        </Fragment>
+        <Fragment key={i}>{s === 'tabs' ? tabbed : s ? render(s) : null}</Fragment>
       ))}
       <RecentlyViewed />
     </>
