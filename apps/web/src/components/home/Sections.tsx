@@ -76,12 +76,12 @@ export function ValueProps({ t }: { t: T }) {
     { Icon: ShieldCheck, title: t('home.valueSellers'), text: t('home.valueSellersText') },
   ];
   return (
-    <section className="container-page mt-4 max-sm:px-0 sm:mt-6" aria-label={t('home.whyUs')}>
+    <section className="container-page mt-3 max-sm:px-2 sm:mt-6" aria-label={t('home.whyUs')}>
       {/* one row of three, each name on ONE line with the icon beside it. On phones the strip runs edge to edge so all three fit (icons drop away only on the very narrowest screens). */}
-      <ul className="grid grid-cols-3 divide-x divide-ink-100 border-y border-ink-100 bg-white py-2.5 rtl:divide-x-reverse sm:rounded-2xl sm:border lg:py-3.5">
+      <ul className="grid grid-cols-3 divide-x divide-ink-100 rounded-full border border-ink-100 bg-white py-2 rtl:divide-x-reverse sm:rounded-2xl sm:py-2.5 lg:py-3.5">
         {items.map(({ Icon, title, text }) => (
-          <li key={title} className="flex min-w-0 items-center justify-center gap-1 px-1.5 sm:justify-start sm:gap-2.5 sm:px-4 lg:px-5">
-            <span className="flex size-[22px] shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-600 max-[374px]:hidden sm:size-8 sm:rounded-lg lg:size-11 lg:rounded-xl"><Icon className="size-3 sm:size-[18px] lg:size-[22px]" aria-hidden /></span>
+          <li key={title} className="flex min-w-0 items-center justify-center gap-1 px-1 sm:justify-start sm:gap-2.5 sm:px-4 lg:px-5">
+            <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 max-[379px]:hidden sm:size-8 sm:rounded-lg lg:size-11 lg:rounded-xl"><Icon className="size-[11px] sm:size-[18px] lg:size-[22px]" aria-hidden /></span>
             <span className="min-w-0 leading-tight">
               <span className="block whitespace-nowrap text-[10.5px] font-semibold tracking-tight text-ink-900 sm:text-[12px] sm:tracking-normal lg:text-sm">{title}</span>
               <span className="block whitespace-nowrap text-[9.5px] text-ink-500 sm:text-[11px] lg:text-xs">{text}</span>

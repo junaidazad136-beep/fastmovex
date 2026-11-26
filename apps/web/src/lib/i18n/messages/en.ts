@@ -273,7 +273,6 @@ const en = {
   },
   home: {
     quick: 'Shortcuts',
-    sell: 'Sell',
     tabHot: 'Hot',
     tabNew: 'New',
     tabDeals: 'Deals',

@@ -86,13 +86,13 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   ] as (RailTab | null)[]).filter((x): x is RailTab => !!x);
   const useTabs = tabs.length >= 2;
   const tabbed = useTabs ? <TabbedRail key="tabs" tabs={tabs} seeAll={t('common.seeAll')} /> : null;
-  let placed = false;
-  const rows: (HomeSection | 'tabs' | null)[] = deduped.flatMap((s): (HomeSection | 'tabs' | null)[] => {
-    if (!useTabs || !s || !TAB_KEYS.includes(s.key)) return [s];
-    if (placed) return [];
-    placed = true;
-    return ['tabs' as const];
-  });
+  // products come right after the trust strip (first screen on a phone), then categories and the rest
+  const rest = deduped.filter((s) => !(useTabs && s && TAB_KEYS.includes(s.key)));
+  const rows: (HomeSection | 'tabs' | null)[] = [...rest];
+  if (useTabs) {
+    const at = rest.findIndex((s) => s?.type === 'value_props');
+    rows.splice(at >= 0 ? at + 1 : 0, 0, 'tabs');
+  }
 
   return (
     <>

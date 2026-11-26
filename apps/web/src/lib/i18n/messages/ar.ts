@@ -273,7 +273,6 @@ const ar: Localized<Messages> = {
   },
   home: {
     quick: 'اختصارات',
-    sell: 'بيع معنا',
     tabHot: 'الأكثر رواجاً',
     tabNew: 'جديد',
     tabDeals: 'عروض',
