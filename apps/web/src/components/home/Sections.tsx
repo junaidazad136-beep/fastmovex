@@ -76,15 +76,15 @@ export function ValueProps({ t }: { t: T }) {
     { Icon: ShieldCheck, title: t('home.valueSellers'), text: t('home.valueSellersText') },
   ];
   return (
-    <section className="container-page mt-4 sm:mt-6" aria-label={t('home.whyUs')}>
-      {/* one row of three, icon beside the words like before (no sideways scrolling, nothing cut off) */}
-      <ul className="grid grid-cols-3 divide-x divide-ink-100 rounded-2xl border border-ink-100 bg-white py-2.5 rtl:divide-x-reverse lg:py-3.5">
+    <section className="container-page mt-4 max-sm:px-0 sm:mt-6" aria-label={t('home.whyUs')}>
+      {/* one row of three, each name on ONE line with the icon beside it. On phones the strip runs edge to edge so all three fit (icons drop away only on the very narrowest screens). */}
+      <ul className="grid grid-cols-3 divide-x divide-ink-100 border-y border-ink-100 bg-white py-2.5 rtl:divide-x-reverse sm:rounded-2xl sm:border lg:py-3.5">
         {items.map(({ Icon, title, text }) => (
-          <li key={title} className="flex min-w-0 items-center gap-1.5 px-2 sm:gap-2.5 sm:px-4 lg:px-5">
-            <span className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-brand-50 text-brand-600 sm:size-8 lg:size-11 lg:rounded-xl"><Icon className="size-4 sm:size-[18px] lg:size-[22px]" aria-hidden /></span>
+          <li key={title} className="flex min-w-0 items-center justify-center gap-1 px-1.5 sm:justify-start sm:gap-2.5 sm:px-4 lg:px-5">
+            <span className="flex size-[22px] shrink-0 items-center justify-center rounded-md bg-brand-50 text-brand-600 max-[374px]:hidden sm:size-8 sm:rounded-lg lg:size-11 lg:rounded-xl"><Icon className="size-3 sm:size-[18px] lg:size-[22px]" aria-hidden /></span>
             <span className="min-w-0 leading-tight">
-              <span className="block text-[11px] font-semibold text-ink-900 sm:text-[12px] lg:text-sm">{title}</span>
-              <span className="block text-[10px] text-ink-500 sm:text-[11px] lg:text-xs">{text}</span>
+              <span className="block whitespace-nowrap text-[10.5px] font-semibold tracking-tight text-ink-900 sm:text-[12px] sm:tracking-normal lg:text-sm">{title}</span>
+              <span className="block whitespace-nowrap text-[9.5px] text-ink-500 sm:text-[11px] lg:text-xs">{text}</span>
             </span>
           </li>
         ))}
