@@ -8,7 +8,6 @@ import { Logo } from '../ui/Logo';
 import { HeaderActions } from './HeaderActions';
 import { LocaleSwitch } from './LocaleSwitch';
 import { LocationButton } from './LocationButton';
-import { PhoneAvatar } from './PhoneAvatar';
 import { ThemeToggle } from './ThemeToggle';
 import { SearchBox } from './SearchBox';
 import { SearchSlot } from './SearchSlot';
@@ -42,7 +41,6 @@ export function Header({ t, market, categories }: { t: T; market: Market; catego
         </div>
       </div>
       <div className="container-page flex h-[68px] items-center gap-2 sm:h-[72px] sm:gap-5">
-        <PhoneAvatar />
         <Link href={paths.home(l)} className="shrink-0" aria-label={`${t('meta.siteName')} — ${t('common.home')}`}>
           <Logo label={t('meta.siteName')} tagline={t('meta.tagline')} />
         </Link>
