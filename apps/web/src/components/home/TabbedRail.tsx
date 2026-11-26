@@ -11,8 +11,8 @@ export function TabbedRail({ tabs, seeAll }: { tabs: RailTab[]; seeAll: string }
   const cur = tabs.find((x) => x.key === key) ?? tabs[0];
   if (!cur) return null;
   return (
-    <section className="container-page mt-7" aria-label={tabs.map((x) => x.label).join(' / ')}>
-      <div className="mb-3 flex items-center justify-between gap-3">
+    <section className="container-page mt-5 sm:mt-7" aria-label={tabs.map((x) => x.label).join(' / ')}>
+      <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
         <div role="tablist" className="no-scrollbar flex min-w-0 items-center gap-5 overflow-x-auto">
           {tabs.map((x) => {
             const on = x.key === cur.key;

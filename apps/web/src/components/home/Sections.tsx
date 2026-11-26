@@ -26,7 +26,7 @@ function pickOpt(l: string, en?: string | null, ar?: string | null): string | nu
 /** Section title row: icon + title on one side, "View all →" on the other. */
 export function SectionHead({ id, title, icon, href, linkLabel, extra }: { id: string; title: string; icon?: React.ReactNode; href?: string; linkLabel: string; extra?: React.ReactNode }) {
   return (
-    <div className="mb-3 flex items-center justify-between gap-3">
+    <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
       <div className="flex min-w-0 items-center gap-2.5">
         <h2 id={id} className="inline-flex items-center gap-1.5 text-[17px] font-bold tracking-tight text-ink-900 sm:gap-2 sm:text-xl">
           {icon}
@@ -96,7 +96,7 @@ export function ValueProps({ t }: { t: T }) {
 /** Category tiles with a photo (the category's best seller) — a swipeable row, like the app. */
 export function CategoryTiles({ items, t, title }: { items: { slug: string; name: string; nameAr: string; iconUrl: string | null; imageUrl?: string | null }[]; t: T; title: string }) {
   return (
-    <section className="container-page mt-7" aria-labelledby="home-cats">
+    <section className="container-page mt-5 sm:mt-7" aria-labelledby="home-cats">
       <SectionHead id="home-cats" title={title} href={`/${t.locale}/categories`} linkLabel={t('home.viewAll')} />
       <ul className="no-scrollbar -mx-4 flex snap-x gap-2.5 overflow-x-auto scroll-px-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
         {items.slice(0, 24).map((c) => (
@@ -124,12 +124,13 @@ export function cardBadge(_key: string, _p: Card, _i: number, _t: T): string | n
 }
 
 /** The swipeable row of product cards (used by the plain sections and by the tabbed row). */
-export function RailProducts({ id, label, items, t, minorUnits }: { id: string; label: string; items: Card[]; t: T; minorUnits: number }) {
+/** `compact`: on phones three cards fit across (smaller photo and text) so the row shows on the first screen. */
+export function RailProducts({ id, label, items, t, minorUnits, compact = false }: { id: string; label: string; items: Card[]; t: T; minorUnits: number; compact?: boolean }) {
   return (
     <Rail label={label} prevLabel={t('common.previous')} nextLabel={t('common.next')}>
       {items.map((p, i) => (
-        <li key={p.id} className="rail-item">
-          <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes="(min-width: 1280px) 200px, (min-width: 768px) 22vw, 38vw" />
+        <li key={p.id} className={compact ? 'rail-item max-sm:!w-[31%] max-sm:!min-w-[100px]' : 'rail-item'}>
+          <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes={`(min-width: 1280px) 200px, (min-width: 768px) 22vw, ${compact ? '31vw' : '38vw'}`} />
         </li>
       ))}
     </Rail>

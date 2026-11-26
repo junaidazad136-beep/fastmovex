@@ -13,12 +13,12 @@ export function QuickLinks({ t }: { t: T }) {
     { href: paths.contact(l), label: t('nav.contact'), Icon: Headset },
   ];
   return (
-    <nav aria-label={t('home.quick')} className="container-page mt-3 md:hidden">
+    <nav aria-label={t('home.quick')} className="container-page mt-2 md:hidden">
       <ul className="grid grid-cols-4">
         {items.map(({ href, label, Icon }) => (
           <li key={href}>
-            <Link href={href} className="flex flex-col items-center gap-1 text-center">
-              <span className="grid size-[46px] place-items-center rounded-2xl bg-brand-50 text-brand-700"><Icon className="size-[21px]" strokeWidth={1.8} aria-hidden /></span>
+            <Link href={href} className="flex flex-col items-center gap-0.5 text-center">
+              <span className="grid size-[42px] place-items-center rounded-2xl bg-brand-50 text-brand-700"><Icon className="size-[19px]" strokeWidth={1.8} aria-hidden /></span>
               <span className="block w-full truncate px-0.5 text-[11.5px] font-medium leading-4 text-ink-800">{label}</span>
             </Link>
           </li>

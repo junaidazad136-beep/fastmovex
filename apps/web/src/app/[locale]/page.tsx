@@ -80,17 +80,17 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const fresh = tabSource.find((s) => s.key === 'new_arrivals');
   const deals = tabSource.find((s) => s.key === 'flash_deals');
   const tabs = ([
-    hot.length ? { key: 'hot', label: t('home.tabHot'), node: <RailProducts id="hot" label={t('home.tabHot')} items={hot} t={t} minorUnits={mu} />, href: viewAllHref(locale, tabSource.find((s) => s.key === 'trending')?.viewAll) } : null,
-    fresh?.items.length ? { key: 'new', label: t('home.tabNew'), node: <RailProducts id="new" label={t('home.tabNew')} items={fresh.items} t={t} minorUnits={mu} />, href: viewAllHref(locale, fresh.viewAll) } : null,
-    deals?.items.length ? { key: 'deals', label: t('home.tabDeals'), node: <RailProducts id="deals" label={t('home.tabDeals')} items={deals.items} t={t} minorUnits={mu} />, href: viewAllHref(locale, deals.viewAll), extra: deals.type === 'deals' && deals.endsAt ? <><span className="sr-only">{t('home.endsIn')}</span><Countdown endsAt={deals.endsAt} pill /></> : undefined } : null,
+    hot.length ? { key: 'hot', label: t('home.tabHot'), node: <RailProducts id="hot" label={t('home.tabHot')} items={hot} t={t} minorUnits={mu} compact />, href: viewAllHref(locale, tabSource.find((s) => s.key === 'trending')?.viewAll) } : null,
+    fresh?.items.length ? { key: 'new', label: t('home.tabNew'), node: <RailProducts id="new" label={t('home.tabNew')} items={fresh.items} t={t} minorUnits={mu} compact />, href: viewAllHref(locale, fresh.viewAll) } : null,
+    deals?.items.length ? { key: 'deals', label: t('home.tabDeals'), node: <RailProducts id="deals" label={t('home.tabDeals')} items={deals.items} t={t} minorUnits={mu} compact />, href: viewAllHref(locale, deals.viewAll), extra: deals.type === 'deals' && deals.endsAt ? <><span className="sr-only">{t('home.endsIn')}</span><Countdown endsAt={deals.endsAt} pill /></> : undefined } : null,
   ] as (RailTab | null)[]).filter((x): x is RailTab => !!x);
   const useTabs = tabs.length >= 2;
   const tabbed = useTabs ? <TabbedRail key="tabs" tabs={tabs} seeAll={t('common.seeAll')} /> : null;
-  // products come right after the trust strip (first screen on a phone), then categories and the rest
+  // Hot / New / Deals sit right after the categories
   const rest = deduped.filter((s) => !(useTabs && s && TAB_KEYS.includes(s.key)));
   const rows: (HomeSection | 'tabs' | null)[] = [...rest];
   if (useTabs) {
-    const at = rest.findIndex((s) => s?.type === 'value_props');
+    const at = rest.findIndex((s) => s?.type === 'categories');
     rows.splice(at >= 0 ? at + 1 : 0, 0, 'tabs');
   }
 
