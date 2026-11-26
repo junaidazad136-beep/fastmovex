@@ -1,5 +1,5 @@
 import type { Metadata } from 'next';
-import { CategoryTiles, HeroBanners, PopularSearches, ProductRail, PromoBanner, StoreRail, ValueProps } from '@/components/home/Sections';
+import { CategoryTiles, PopularSearches, ProductRail, PromoBanner, StoreRail, ValueProps } from '@/components/home/Sections';
 import { RecentlyViewed } from '@/components/home/RecentlyViewed';
 import { QuickLinks } from '@/components/home/QuickLinks';
 import { TabbedRail, type RailTab } from '@/components/home/TabbedRail';
@@ -51,7 +51,8 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
     const href = viewAllHref(locale, s.viewAll);
     switch (s.type) {
       case 'banners':
-        return s.key === 'hero' ? <HeroBanners key={s.key} items={s.items} t={t} /> : <PromoBanner key={s.key} items={s.items} t={t} />;
+        // the big home slider (HOME_HERO) was removed on purpose; only the mid-page promo banner is drawn
+        return s.key === 'hero' ? null : <PromoBanner key={s.key} items={s.items} t={t} />;
       case 'value_props':
         return <ValueProps key={s.key} t={t} />;
       case 'categories':

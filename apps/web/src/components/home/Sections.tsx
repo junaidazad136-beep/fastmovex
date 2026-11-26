@@ -9,29 +9,13 @@ import { Countdown } from '../ui/Countdown';
 import { Rail } from '../ui/Rail';
 import { Stars } from '../ui/Stars';
 import { CategoryIcon } from './CategoryIcon';
-import { HeroCarousel, type HeroSlide, SlideBody } from './HeroCarousel';
+import { SlideBody } from './PromoSlide';
 
 function BannerLink({ banner, t, className, children }: { banner: Banner; t: T; className: string; children: React.ReactNode }) {
   const link = bannerHref(t.locale, banner.linkUrl);
   if (!link) return <div className={className}>{children}</div>;
   if (link.external) return <a href={link.href} className={className} rel="noopener noreferrer">{children}</a>;
   return <Link href={link.href} className={className}>{children}</Link>;
-}
-
-/** Home slider. Banners with text are drawn by the website (purple, headline, button); plain pictures stay as they are. */
-export function HeroBanners({ items, t }: { items: Banner[]; t: T }) {
-  const l = t.locale;
-  const slides: HeroSlide[] = items.filter((b) => b.imageUrl).map((b) => ({
-    id: b.id,
-    imageUrl: b.imageUrl!,
-    link: bannerHref(l, b.linkUrl),
-    kicker: pickOpt(l, b.kicker, b.kickerAr),
-    headline: pickOpt(l, b.headline, b.headlineAr),
-    subline: pickOpt(l, b.subline, b.sublineAr),
-    cta: pickOpt(l, b.ctaLabel, b.ctaLabelAr) ?? (b.headline ? t('home.shopNow') : null),
-  }));
-  if (!slides.length) return null;
-  return <HeroCarousel slides={slides} />;
 }
 
 /** English text, or the Arabic one on the Arabic site when it was written. */
