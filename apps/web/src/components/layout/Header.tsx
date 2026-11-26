@@ -9,6 +9,7 @@ import { HeaderActions } from './HeaderActions';
 import { LocaleSwitch } from './LocaleSwitch';
 import { LocationButton } from './LocationButton';
 import { SearchBox } from './SearchBox';
+import { SearchSlot } from './SearchSlot';
 
 /** 🇶🇦 from "QA" (regional indicator letters). */
 function flagOf(code: string): string {
@@ -41,17 +42,17 @@ export function Header({ t, market, categories }: { t: T; market: Market; catego
         <Link href={paths.home(l)} className="shrink-0" aria-label={`${t('meta.siteName')} — ${t('common.home')}`}>
           <Logo label={t('meta.siteName')} tagline={t('meta.tagline')} />
         </Link>
-        <div className="hidden flex-1 md:block">
+        <SearchSlot where="desktop">
           <Suspense fallback={<div className="h-12 rounded-2xl bg-ink-50" />}><SearchBox /></Suspense>
-        </div>
+        </SearchSlot>
         <div className="ms-auto flex items-center gap-0.5 md:ms-0 sm:gap-1">
           <LocationButton country={pick(l, market.name, market.nameAr)} flag={flagOf(market.code)} />
           <HeaderActions />
         </div>
       </div>
-      <div className="container-page pb-3 md:hidden">
+      <SearchSlot where="mobile">
         <Suspense fallback={<div className="h-12 rounded-2xl bg-ink-50" />}><SearchBox /></Suspense>
-      </div>
+      </SearchSlot>
       <nav aria-label={t('nav.categories')} className="hidden border-t border-ink-100 md:block">
         <ul className="container-page no-scrollbar flex h-11 items-center gap-1 overflow-x-auto text-[13.5px]">
           <li>
