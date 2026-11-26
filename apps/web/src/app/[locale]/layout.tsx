@@ -6,6 +6,7 @@ import '@fontsource/ibm-plex-sans-arabic/700.css';
 import '../globals.css';
 
 import type { Metadata, Viewport } from 'next';
+import { cookies } from 'next/headers';
 import { notFound } from 'next/navigation';
 import { connection } from 'next/server';
 import { ClientChrome } from '@/components/layout/ClientChrome';
@@ -64,11 +65,12 @@ export default async function LocaleLayout({ children, params }: LayoutProps<'/[
   // catalogue data itself is cached by the data cache in lib/api/server.ts.
   await connection();
   const t = getT(locale);
+  const dark = (await cookies()).get('fmx_theme')?.value === 'dark';
   // Pages feed the footer; the shop must still render if that one call fails.
   const [market, categories, pages] = await Promise.all([serverApi.market(), serverApi.categories(), serverApi.pages().catch(() => [])]);
 
   return (
-    <html lang={locale} dir={dirOf(locale)} data-scroll-behavior="smooth">
+    <html lang={locale} dir={dirOf(locale)} data-scroll-behavior="smooth" data-theme={dark ? 'dark' : 'light'}>
       <body className="min-h-dvh">
         <Providers locale={locale} messages={getMessages(locale)} market={market} apiUrl={env.publicApiUrl} siteUrl={env.siteUrl}>
           <HideOnPolicy><Header t={t} market={market} categories={categories} /></HideOnPolicy>

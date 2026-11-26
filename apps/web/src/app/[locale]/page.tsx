@@ -1,6 +1,10 @@
 import type { Metadata } from 'next';
 import { CategoryTiles, HeroBanners, PopularSearches, ProductRail, PromoBanner, StoreRail, ValueProps } from '@/components/home/Sections';
 import { RecentlyViewed } from '@/components/home/RecentlyViewed';
+import { QuickLinks } from '@/components/home/QuickLinks';
+import { TabbedRail, type RailTab } from '@/components/home/TabbedRail';
+import { RailProducts } from '@/components/home/Sections';
+import { Countdown } from '@/components/ui/Countdown';
 import { JsonLd } from '@/components/ui/JsonLd';
 import { serverApi } from '@/lib/api/server';
 import type { HomeSection } from '@/lib/api/types';
@@ -10,6 +14,7 @@ import { isLocale } from '@/lib/i18n/config';
 import { alternatesFor } from '@/lib/seo';
 import { paths, pick, viewAllHref } from '@/lib/urls';
 import { notFound } from 'next/navigation';
+import { Fragment } from 'react';
 
 export async function generateMetadata({ params }: PageProps<'/[locale]'>): Promise<Metadata> {
   const { locale } = await params;
@@ -66,6 +71,30 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
   const hasValueProps = feed.sections.some((s) => s.type === 'value_props');
   const sections = hasValueProps ? feed.sections : [...feed.sections.slice(0, 1), { key: 'value_props', type: 'value_props', items: [] } as HomeSection, ...feed.sections.slice(1)];
 
+  // Trending / best sellers, new arrivals and flash deals share one row with tabs (Hot · New · Deals): less scrolling, same products.
+  const deduped = sections.map(dedupe);
+  const TAB_KEYS = ['trending', 'best_sellers', 'new_arrivals', 'flash_deals'];
+  const tabSource = deduped.filter((s): s is Extract<HomeSection, { type: 'products' | 'deals' }> => !!s && TAB_KEYS.includes(s.key) && (s.type === 'products' || s.type === 'deals'));
+  const hot = [...tabSource.filter((s) => s.key === 'trending' || s.key === 'best_sellers').flatMap((s) => s.items)];
+  const fresh = tabSource.find((s) => s.key === 'new_arrivals');
+  const deals = tabSource.find((s) => s.key === 'flash_deals');
+  const tabs = ([
+    hot.length ? { key: 'hot', label: t('home.tabHot'), node: <RailProducts id="hot" label={t('home.tabHot')} items={hot} t={t} minorUnits={mu} />, href: viewAllHref(locale, tabSource.find((s) => s.key === 'trending')?.viewAll) } : null,
+    fresh?.items.length ? { key: 'new', label: t('home.tabNew'), node: <RailProducts id="new" label={t('home.tabNew')} items={fresh.items} t={t} minorUnits={mu} />, href: viewAllHref(locale, fresh.viewAll) } : null,
+    deals?.items.length ? { key: 'deals', label: t('home.tabDeals'), node: <RailProducts id="deals" label={t('home.tabDeals')} items={deals.items} t={t} minorUnits={mu} />, href: viewAllHref(locale, deals.viewAll), extra: deals.type === 'deals' && deals.endsAt ? <><span className="sr-only">{t('home.endsIn')}</span><Countdown endsAt={deals.endsAt} pill /></> : undefined } : null,
+  ] as (RailTab | null)[]).filter((x): x is RailTab => !!x);
+  const useTabs = tabs.length >= 2;
+  const tabbed = useTabs ? <TabbedRail key="tabs" tabs={tabs} seeAll={t('common.seeAll')} /> : null;
+  let placed = false;
+  const rows: (HomeSection | 'tabs' | null)[] = deduped.flatMap((s): (HomeSection | 'tabs' | null)[] => {
+    if (!useTabs || !s || !TAB_KEYS.includes(s.key)) return [s];
+    if (placed) return [];
+    placed = true;
+    return ['tabs' as const];
+  });
+  // the shortcut grid sits right after the trust strip
+  const qi = rows.findIndex((r) => r !== 'tabs' && r?.type === 'value_props');
+
   return (
     <>
       <JsonLd
@@ -102,7 +131,12 @@ export default async function HomePage({ params }: PageProps<'/[locale]'>) {
       />
       <h1 className="sr-only">{t('meta.defaultTitle')}</h1>
       <PopularSearches queries={popular.queries} t={t} />
-      {sections.map(dedupe).map((s) => (s ? render(s) : null))}
+      {rows.map((s, i) => (
+        <Fragment key={i}>
+          {s === 'tabs' ? tabbed : s ? render(s) : null}
+          {i === qi ? <QuickLinks t={t} /> : null}
+        </Fragment>
+      ))}
       <RecentlyViewed />
     </>
   );

@@ -107,6 +107,23 @@ export function SearchBox({ autoFocus = false }: { autoFocus?: boolean }) {
     return () => document.removeEventListener('mousedown', onDoc);
   }, []);
 
+  // Placeholder rotates through what shoppers search for ("Search “Nova”"), like a super-app; stops once the box is used.
+  const [hint, setHint] = useState(0);
+  const hints = popular ?? [];
+  useEffect(() => {
+    if (popular === null) {
+      setPopular([]);
+      api<{ queries: string[] }>('/search/popular', { auth: 'none' }).then((d) => setPopular(d.queries)).catch(() => { /* optional */ });
+    }
+  }, [popular]);
+  useEffect(() => {
+    if (hints.length < 2 || open || q) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const id = window.setInterval(() => setHint((i) => (i + 1) % Math.min(hints.length, 8)), 3200);
+    return () => window.clearInterval(id);
+  }, [hints.length, open, q]);
+  const hintText = hints.length ? t('search.tryHint', { q: hints[hint % Math.min(hints.length, 8)] }) : t('search.placeholder');
+
   function onFocus() {
     setOpen(true);
     setRecent(readRecent());
@@ -187,7 +204,7 @@ export function SearchBox({ autoFocus = false }: { autoFocus?: boolean }) {
         onChange={(e) => { setQ(e.target.value); setOpen(true); }}
         onFocus={onFocus}
         onKeyDown={onKeyDown}
-        placeholder={listening ? t('search.listening') : t('search.placeholder')}
+        placeholder={listening ? t('search.listening') : open || q ? t('search.placeholder') : hintText}
         autoComplete="off"
         autoFocus={autoFocus}
         enterKeyHint="search"

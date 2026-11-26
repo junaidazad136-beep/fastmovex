@@ -1,3 +1,4 @@
+import { ThemeToggle } from './ThemeToggle';
 import { ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import type { CategoryNode, Market, PageSummary, PaymentMethod } from '@/lib/api/types';
@@ -103,6 +104,7 @@ export function Footer({ t, market, categories, pages = [] }: { t: T; market: Ma
         </div>
       </div>
       <div className="border-t border-ink-100">
+        <div className="container-page pt-5 md:hidden"><ThemeToggle variant="row" /></div>
         <div className="container-page flex flex-col gap-2 py-5 text-xs text-ink-500 sm:flex-row sm:items-center sm:justify-between">
           <div className="space-y-1">
             <p>{t('footer.rights', { year })}</p>

@@ -20,6 +20,8 @@ const ar: Localized<Messages> = {
     brandDescription: 'تسوّق {name} على فاست موف إكس في {country}: منتجات أصلية وأسعار عادلة وتوصيل سريع والدفع عند الاستلام وإرجاع سهل.',
   },
   common: {
+    lightMode: 'الوضع الفاتح',
+    darkMode: 'الوضع الداكن',
     loading: 'جارٍ التحميل…',
     retry: 'حاول مرة أخرى',
     save: 'حفظ',
@@ -85,6 +87,7 @@ const ar: Localized<Messages> = {
   },
   search: {
     placeholder: 'ابحث عن منتجات وماركات ومتاجر…',
+    tryHint: 'ابحث عن «{q}»',
     voice: 'البحث بالصوت',
     listening: 'نستمع إليك… قل ما تبحث عنه',
     voiceFailed: 'لم نسمعك. تحقق من إذن الميكروفون وحاول مرة أخرى.',
@@ -269,6 +272,11 @@ const ar: Localized<Messages> = {
     moreInCategory: 'المزيد في {category}',
   },
   home: {
+    quick: 'اختصارات',
+    sell: 'بيع معنا',
+    tabHot: 'الأكثر رواجاً',
+    tabNew: 'جديد',
+    tabDeals: 'عروض',
     shopByCategory: 'تسوّق حسب القسم',
     flash_deals: 'عروض سريعة',
     trending: 'الرائج الآن',

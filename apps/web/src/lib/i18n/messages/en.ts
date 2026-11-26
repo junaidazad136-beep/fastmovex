@@ -20,6 +20,8 @@ const en = {
     brandDescription: 'Shop {name} on FastMoveX in {country}: genuine products, fair prices, fast delivery, cash on delivery and easy returns.',
   },
   common: {
+    lightMode: 'Light mode',
+    darkMode: 'Dark mode',
     loading: 'Loading…',
     retry: 'Try again',
     save: 'Save',
@@ -85,6 +87,7 @@ const en = {
   },
   search: {
     placeholder: 'Search products, brands & stores…',
+    tryHint: 'Search “{q}”',
     voice: 'Search by voice',
     listening: 'Listening… say what you are looking for',
     voiceFailed: 'Could not hear you. Check the microphone permission and try again.',
@@ -269,6 +272,11 @@ const en = {
     moreInCategory: 'More in {category}',
   },
   home: {
+    quick: 'Shortcuts',
+    sell: 'Sell',
+    tabHot: 'Hot',
+    tabNew: 'New',
+    tabDeals: 'Deals',
     shopByCategory: 'Shop by category',
     flash_deals: 'Flash Deals',
     trending: 'Trending Now',

@@ -137,7 +137,7 @@
 /* Product card pieces: short class names keep big product grids small in the HTML. */
 /* The card is a size container: four-across rails on phones get smaller type than two-across grids. */
 @utility pcard {
-  @apply @container relative flex h-full flex-col overflow-hidden rounded-xl border border-ink-100 bg-white transition-[box-shadow,scale] duration-150 hover:shadow-[var(--shadow-card)];
+  @apply @container relative flex h-full flex-col overflow-hidden rounded-xl border border-ink-100 bg-ink-0 transition-[box-shadow,scale] duration-150 hover:shadow-[var(--shadow-card)];
   /* the whole card sinks when its link is pressed (the link covers the card) */
   &:has(a[href]:active) {
     scale: 0.97;
@@ -151,7 +151,7 @@
   @apply line-clamp-2 min-h-[2rem] text-[12px] leading-4 font-medium text-ink-900 @min-[150px]:min-h-[2.5rem] @min-[150px]:text-[13.5px] @min-[150px]:leading-5;
 }
 @utility pcard-fav {
-  @apply relative z-10 flex size-8 items-center justify-center rounded-full bg-white/80 text-ink-700 transition hover:text-brand-600;
+  @apply relative z-10 flex size-8 items-center justify-center rounded-full bg-ink-0/80 text-ink-700 transition hover:text-brand-600;
 }
 /* rails: about two and a half cards across a phone (titles stay readable, the cut card shows there is more), more on wider screens */
 @utility rail-item {
@@ -161,7 +161,7 @@
   @apply mx-auto w-full max-w-[1320px] px-4 sm:px-6 lg:px-8;
 }
 @utility card {
-  @apply rounded-[var(--radius-card)] border border-ink-100 bg-white shadow-[var(--shadow-card)];
+  @apply rounded-[var(--radius-card)] border border-ink-100 bg-ink-0 shadow-[var(--shadow-card)];
 }
 @utility btn {
   @apply inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-sm font-semibold transition-[color,background-color,border-color,scale] duration-150 select-none disabled:cursor-not-allowed disabled:opacity-55;
@@ -170,19 +170,19 @@
   @apply btn bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800;
 }
 @utility btn-secondary {
-  @apply btn border border-ink-200 bg-white text-ink-800 hover:border-ink-300 hover:bg-ink-50;
+  @apply btn border border-ink-200 bg-ink-0 text-ink-800 hover:border-ink-300 hover:bg-ink-50;
 }
 @utility btn-ghost {
   @apply btn text-ink-700 hover:bg-ink-100;
 }
 @utility btn-danger {
-  @apply btn border border-danger-600/30 bg-white text-danger-600 hover:bg-danger-50;
+  @apply btn border border-danger-600/30 bg-ink-0 text-danger-600 hover:bg-danger-50;
 }
 @utility btn-lg {
   @apply px-6 py-3.5 text-base;
 }
 @utility input {
-  @apply block w-full rounded-xl border border-ink-200 bg-white px-3.5 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-600/15 disabled:bg-ink-50 aria-invalid:border-danger-600;
+  @apply block w-full rounded-xl border border-ink-200 bg-ink-0 px-3.5 py-2.5 text-[15px] text-ink-900 placeholder:text-ink-400 transition-colors focus:border-brand-500 focus:outline-none focus:ring-3 focus:ring-brand-600/15 disabled:bg-ink-50 aria-invalid:border-danger-600;
 }
 @utility label {
   @apply mb-1.5 block text-sm font-medium text-ink-700;
@@ -194,7 +194,7 @@
   @apply mt-1.5 text-xs font-medium text-danger-600;
 }
 @utility chip {
-  @apply inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-white px-3 py-1.5 text-sm text-ink-700 transition-colors hover:border-ink-300;
+  @apply inline-flex items-center gap-1.5 rounded-full border border-ink-200 bg-ink-0 px-3 py-1.5 text-sm text-ink-700 transition-colors hover:border-ink-300;
 }
 @utility chip-active {
   @apply border-brand-600 bg-brand-50 text-brand-700;
@@ -263,3 +263,60 @@ html[lang='ar'] .tracking-wide {
   body { background: #fff !important; }
   header, footer, .fixed { display: none !important; }
 }
+
+/*
+ * Dark theme (html[data-theme='dark'], set from the fmx_theme cookie on the server so the first paint is already dark).
+ * Only the colour tokens change: warm greys flip, brand purples get lighter text colours; white stays white for text on
+ * purple buttons, and the few white surfaces are listed below.
+ */
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --color-ink-0: #1a1820;
+  --color-ink-25: #0f0e13;
+  --color-ink-50: #1e1c25;
+  --color-ink-100: #2b2833;
+  --color-ink-200: #3a3744;
+  --color-ink-300: #565262;
+  --color-ink-400: #a29cae;
+  --color-ink-500: #b0aabb;
+  --color-ink-600: #c3bece;
+  --color-ink-700: #d6d2de;
+  --color-ink-800: #e8e5ee;
+  --color-ink-900: #f6f4fa;
+  --color-brand-50: #241437;
+  --color-brand-100: #321b52;
+  --color-brand-200: #4a2a7a;
+  --color-brand-300: #7b4cc2;
+  --color-brand-600: #8f3cf7;
+  --color-brand-700: #b583ff;
+  --color-brand-800: #c9a5ff;
+  --color-brand-900: #e1ccff;
+  --color-sand-50: #2a2216;
+  --color-sand-100: #3a2f1d;
+  --color-success-50: #12281c;
+  --color-success-600: #4fc58a;
+  --color-success-700: #7fdcae;
+  --color-warning-50: #2c2210;
+  --color-warning-600: #f0a24a;
+  --color-danger-50: #2f1517;
+  --color-danger-600: #ff7b80;
+  --color-deal-500: #ff6a5e;
+  --color-deal-600: #ff8379;
+  --shadow-card: 0 1px 2px rgb(0 0 0 / 0.3), 0 4px 16px -6px rgb(0 0 0 / 0.5);
+}
+html[data-theme='dark'] .bg-white,
+html[data-theme='dark'] .max-lg\:bg-white { background-color: #1a1820; }
+html[data-theme='dark'] .bg-white\/95,
+html[data-theme='dark'] .bg-white\/90,
+html[data-theme='dark'] .supports-\[backdrop-filter\]\:bg-white\/90,
+html[data-theme='dark'] .bg-white\/80 { background-color: rgb(26 24 32 / 0.92); }
+html[data-theme='dark'] .ring-white { --tw-ring-color: #1a1820; }
+html[data-theme='dark'] .bg-ink-900,
+html[data-theme='dark'] .bg-ink-800 { background-color: #0a090d; }
+html[data-theme='dark'] .bg-brand-700 { background-color: #5f19c0; }
+html[data-theme='dark'] .bg-brand-800 { background-color: #4c169a; }
+@media print {
+  html[data-theme='dark'] { color-scheme: light; }
+}
+html[data-theme='dark'] .logo-on-light { display: none; }
+html[data-theme='dark'] .logo-on-dark { display: block; }

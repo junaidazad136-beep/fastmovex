@@ -30,15 +30,15 @@ function Tagline({ text, tone }: { text: string; tone: 'light' | 'dark' }) {
 export function Logo({ label, tone = 'light', tagline, className = '' }: { label: string; tone?: 'light' | 'dark'; tagline?: string; className?: string }) {
   return (
     <span className={`inline-flex w-[132px] flex-col [container-type:inline-size] sm:w-[140px] ${className}`}>
-      <Image
-        src={tone === 'dark' ? '/brand/fastmovex-logo-dark.svg' : '/brand/fastmovex-logo-light.svg'}
-        alt={label}
-        width={1065}
-        height={275}
-        unoptimized
-        loading="eager"
-        className="block h-auto w-full"
-      />
+      {tone === 'dark' ? (
+        <Image src="/brand/fastmovex-logo-dark.svg" alt={label} width={1065} height={275} unoptimized loading="eager" className="block h-auto w-full" />
+      ) : (
+        <>
+          {/* dark letters on light pages; in the dark theme the white-letter version takes over */}
+          <Image src="/brand/fastmovex-logo-light.svg" alt={label} width={1065} height={275} unoptimized loading="eager" className="logo-on-light block h-auto w-full" />
+          <Image src="/brand/fastmovex-logo-dark.svg" alt="" aria-hidden width={1065} height={275} unoptimized loading="eager" className="logo-on-dark hidden h-auto w-full" />
+        </>
+      )}
       {tagline ? <Tagline text={tagline} tone={tone} /> : null}
     </span>
   );

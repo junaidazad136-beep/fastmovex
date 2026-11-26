@@ -1,5 +1,6 @@
 'use client';
 
+import { ThemeToggle } from '../layout/ThemeToggle';
 import { Privacy } from './Privacy';
 import { BadgeCheck, Bell, CircleAlert, ChevronRight, Heart, LifeBuoy, LogOut, MapPin, Package, RotateCcw, ShieldCheck } from 'lucide-react';
 import Image from 'next/image';
@@ -242,6 +243,7 @@ export function AccountSettings() {
   return (
     <div className="space-y-6">
       <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{t('account.settings')}</h1>
+      <ThemeToggle variant="row" />
       <section className="card space-y-5 p-5" aria-labelledby="acc-sec">
         <h2 id="acc-sec" className="font-bold">{t('account.security')}</h2>
         {user.hasPassword === false

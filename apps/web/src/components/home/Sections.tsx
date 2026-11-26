@@ -139,6 +139,19 @@ export function cardBadge(_key: string, _p: Card, _i: number, _t: T): string | n
   return null;
 }
 
+/** The swipeable row of product cards (used by the plain sections and by the tabbed row). */
+export function RailProducts({ id, label, items, t, minorUnits }: { id: string; label: string; items: Card[]; t: T; minorUnits: number }) {
+  return (
+    <Rail label={label} prevLabel={t('common.previous')} nextLabel={t('common.next')}>
+      {items.map((p, i) => (
+        <li key={p.id} className="rail-item">
+          <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes="(min-width: 1280px) 200px, (min-width: 768px) 22vw, 38vw" />
+        </li>
+      ))}
+    </Rail>
+  );
+}
+
 export function ProductRail({ id, title, items, t, minorUnits, endsAt, href, deal = false }: { id: string; title: string; items: Card[]; t: T; minorUnits: number; endsAt?: string | null; href?: string; deal?: boolean }) {
   if (!items.length) return null;
   const icon = deal ? <Zap className="size-5 text-brand-600 sm:size-[22px]" strokeWidth={2.2} aria-hidden /> : id === 'trending' ? <Flame className="size-5 text-brand-600 sm:size-[22px]" strokeWidth={2.2} aria-hidden /> : null;
@@ -152,13 +165,7 @@ export function ProductRail({ id, title, items, t, minorUnits, endsAt, href, dea
         linkLabel={t('common.seeAll')}
         extra={endsAt ? <><span className="sr-only">{t('home.endsIn')}</span><Countdown endsAt={endsAt} pill /></> : null}
       />
-      <Rail label={title} prevLabel={t('common.previous')} nextLabel={t('common.next')}>
-        {items.map((p, i) => (
-          <li key={p.id} className="rail-item">
-            <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes="(min-width: 1280px) 200px, (min-width: 768px) 22vw, 38vw" />
-          </li>
-        ))}
-      </Rail>
+      <RailProducts id={id} label={title} items={items} t={t} minorUnits={minorUnits} />
     </section>
   );
 }
