@@ -24,7 +24,7 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
   const { now, was, percent } = effectivePrice(p);
   return (
     <article className="pcard group" data-testid="product-card">
-      <div className="relative aspect-[4/3] bg-white @min-[150px]:aspect-square">
+      <div className="relative aspect-square bg-white">
         {p.imageUrl ? (
           <Image
             src={p.imageUrl}

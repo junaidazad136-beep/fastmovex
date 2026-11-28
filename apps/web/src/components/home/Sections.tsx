@@ -97,7 +97,7 @@ export function ValueProps({ t }: { t: T }) {
 /** Category tiles with a photo (the category's best seller) — a swipeable row, like the app. */
 export function CategoryTiles({ items, t, title }: { items: { slug: string; name: string; nameAr: string; iconUrl: string | null; imageUrl?: string | null }[]; t: T; title: string }) {
   return (
-    <section className="container-page mt-4 sm:mt-7" aria-labelledby="home-cats">
+    <section className="container-page mt-3 sm:mt-7" aria-labelledby="home-cats">
       <SectionHead id="home-cats" title={title} href={`/${t.locale}/categories`} linkLabel={t('home.viewAll')} phoneHidden />
       <ScrollTrack>
       <ul className="no-scrollbar -mx-4 flex snap-x gap-2.5 overflow-x-auto scroll-px-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
@@ -132,8 +132,8 @@ export function RailProducts({ id, label, items, t, minorUnits, compact = false 
   return (
     <Rail label={label} prevLabel={t('common.previous')} nextLabel={t('common.next')}>
       {items.map((p, i) => (
-        <li key={p.id} className={compact ? 'rail-item max-sm:!w-[31%] max-sm:!min-w-[100px]' : 'rail-item'}>
-          <ProductCard p={p} t={t} minorUnits={minorUnits} compact={compact} badge={cardBadge(id, p, i, t)} sizes={`(min-width: 1280px) 200px, (min-width: 768px) 22vw, ${compact ? '31vw' : '38vw'}`} />
+        <li key={p.id} className={compact ? 'rail-item max-sm:!w-[32%] max-sm:!min-w-[104px]' : 'rail-item'}>
+          <ProductCard p={p} t={t} minorUnits={minorUnits} compact={compact} badge={cardBadge(id, p, i, t)} sizes={`(min-width: 1280px) 200px, (min-width: 768px) 22vw, ${compact ? '32vw' : '38vw'}`} />
         </li>
       ))}
     </Rail>

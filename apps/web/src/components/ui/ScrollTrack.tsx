@@ -25,7 +25,7 @@ export function ScrollTrack({ children, className = '' }: { children: ReactNode;
     <div ref={box} className={className}>
       {children}
       {pos.size < 0.98 ? (
-        <div aria-hidden className="relative mx-auto mt-2.5 h-1 w-11 overflow-hidden rounded-full bg-ink-100 md:hidden" data-testid="scroll-track">
+        <div aria-hidden className="relative mx-auto mt-2 h-1 w-11 overflow-hidden rounded-full bg-ink-100 md:hidden" data-testid="scroll-track">
           <div className="absolute inset-y-0 rounded-full bg-brand-600" style={{ width: `${Math.max(pos.size, 0.12) * 100}%`, insetInlineStart: `${Math.min(pos.start, 1 - Math.max(pos.size, 0.12)) * 100}%` }} />
         </div>
       ) : null}
