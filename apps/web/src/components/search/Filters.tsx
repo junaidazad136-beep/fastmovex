@@ -28,7 +28,7 @@ function href(basePath: string, q: Partial<ListingQuery>, fixed: (keyof ListingQ
   return s ? `${basePath}?${s}` : basePath;
 }
 
-function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }: Props & { onNavigate: (url: string) => void }) {
+function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate, sheet = false }: Props & { onNavigate: (url: string) => void; sheet?: boolean }) {
   const t = useT();
   const { market } = useShop();
   const [min, setMin] = useState(query.min ?? '');
@@ -58,16 +58,18 @@ function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }
 
   const showCategories = !fixed.includes('category') && facets.categories.length > 0;
   return (
-    <div className="space-y-6 text-sm">
+    <div className={`text-sm ${sheet ? 'space-y-5' : 'space-y-6'}`}>
       {showCategories && (
         <fieldset>
-          <legend className="mb-2 font-bold text-ink-900">{t('search.filterCategory')}</legend>
-          <ul className="space-y-1">
+          <legend className={`mb-2 font-bold text-ink-900 ${sheet ? 'text-[15px]' : ''}`}>{t('search.filterCategory')}</legend>
+          <ul className={sheet ? 'flex flex-wrap gap-2' : 'space-y-1'}>
             {facets.categories.slice(0, 12).map((c) => (
               <li key={c.slug}>
                 <Link
                   href={categoryBase ? `${categoryBase}${c.slug}` : href(basePath, { ...query, category: c.slug, page: 1 }, fixed)}
-                  className={`flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-ink-100 ${query.category === c.slug ? 'bg-brand-50 font-semibold text-brand-700' : 'text-ink-700'}`}
+                  className={sheet
+                    ? `inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 ${query.category === c.slug ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700' : 'border-ink-200 bg-white text-ink-800'}`
+                    : `flex items-center justify-between rounded-lg px-2 py-1.5 hover:bg-ink-100 ${query.category === c.slug ? 'bg-brand-50 font-semibold text-brand-700' : 'text-ink-700'}`}
                 >
                   <span>{pick(t.locale, c.name, c.nameAr)}</span>
                   <span className="tabular text-xs text-ink-400">{c.count}</span>
@@ -80,20 +82,20 @@ function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }
 
       {facets.brands.length > 0 && (
         <fieldset>
-          <legend className="mb-2 font-bold text-ink-900">{t('search.filterBrand')}</legend>
-          <ul className="space-y-1">
+          <legend className={`mb-2 font-bold text-ink-900 ${sheet ? 'text-[15px]' : ''}`}>{t('search.filterBrand')}</legend>
+          <ul className={sheet ? 'flex flex-wrap gap-2' : 'space-y-1'}>
             {facets.brands.slice(0, 15).map((b) => {
               const checked = local.brands.includes(b.slug);
               return (
                 <li key={b.slug}>
-                  <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-ink-100">
+                  <label className={sheet ? `inline-flex cursor-pointer items-center gap-1.5 rounded-full border px-3 py-1.5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-400 ${checked ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700' : 'border-ink-200 bg-white text-ink-800'}` : 'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-ink-100'}>
                     <input
                       type="checkbox"
                       checked={checked}
                       onChange={() => go({ brands: checked ? local.brands.filter((x) => x !== b.slug) : [...local.brands, b.slug] })}
-                      className="size-4 rounded border-ink-300 accent-brand-600"
+                      className={sheet ? 'sr-only' : 'size-4 rounded border-ink-300 accent-brand-600'}
                     />
-                    <span className="flex-1 text-ink-700">{b.name}</span>
+                    <span className={sheet ? '' : 'flex-1 text-ink-700'}>{b.name}</span>
                     <span className="tabular text-xs text-ink-400">{b.count}</span>
                   </label>
                 </li>
@@ -105,7 +107,7 @@ function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }
 
       <form onSubmit={applyPrice}>
         <fieldset>
-          <legend className="mb-2 font-bold text-ink-900">{t('search.filterPrice', { currency: market.currency.code })}</legend>
+          <legend className={`mb-2 font-bold text-ink-900 ${sheet ? 'text-[15px]' : ''}`}>{t('search.filterPrice', { currency: market.currency.code })}</legend>
           <div className="flex items-center gap-2">
             <input
               inputMode="decimal" value={min} onChange={(e) => setMin(e.target.value)} placeholder={t('search.minPrice')}
@@ -123,13 +125,13 @@ function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }
       </form>
 
       <fieldset>
-        <legend className="mb-2 font-bold text-ink-900">{t('search.filterRating')}</legend>
-        <ul className="space-y-1">
+        <legend className={`mb-2 font-bold text-ink-900 ${sheet ? 'text-[15px]' : ''}`}>{t('search.filterRating')}</legend>
+        <ul className={sheet ? 'flex flex-wrap items-center gap-2' : 'space-y-1'}>
           {[4, 3, 2].map((r) => (
             <li key={r}>
-              <label className="flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-ink-100">
-                <input type="radio" name="rating" checked={local.rating === r} onChange={() => go({ rating: r })} className="size-4 accent-brand-600" />
-                <span className="inline-flex items-center gap-1 text-ink-700">
+              <label className={sheet ? `inline-flex cursor-pointer items-center rounded-full border px-3 py-1.5 has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-brand-400 ${local.rating === r ? 'border-brand-600 bg-brand-50 font-semibold text-brand-700' : 'border-ink-200 bg-white'}` : 'flex cursor-pointer items-center gap-2.5 rounded-lg px-2 py-1.5 hover:bg-ink-100'}>
+                <input type="radio" name="rating" checked={local.rating === r} onChange={() => go({ rating: r })} className={sheet ? 'sr-only' : 'size-4 accent-brand-600'} />
+                <span className={`inline-flex items-center gap-1 ${sheet ? '' : 'text-ink-700'}`}>
                   <Star className="size-3.5 fill-sand-500 text-sand-500" aria-hidden />
                   {t('search.ratingAndUp', { n: r })}
                 </span>
@@ -142,9 +144,10 @@ function Panel({ query, facets, basePath, fixed = [], categoryBase, onNavigate }
         </ul>
       </fieldset>
 
-      <label className="flex cursor-pointer items-center gap-2.5 px-2">
+      <label className={sheet ? 'flex cursor-pointer items-center justify-between rounded-xl border border-ink-200 bg-white px-3.5 py-3' : 'flex cursor-pointer items-center gap-2.5 px-2'}>
+        {sheet ? <span className="font-semibold text-ink-900">{t('search.inStockOnly')}</span> : null}
         <input type="checkbox" checked={local.inStock} onChange={() => go({ inStock: !local.inStock })} className="size-4 rounded accent-brand-600" />
-        <span className="font-medium text-ink-800">{t('search.inStockOnly')}</span>
+        {sheet ? null : <span className="font-medium text-ink-800">{t('search.inStockOnly')}</span>}
       </label>
     </div>
   );
@@ -182,9 +185,18 @@ export function Filters({ variant, className = '', ...props }: Props & { total: 
         {t('search.filters')}
         {activeCount > 0 && <span className={`tabular min-w-5 rounded-full px-1.5 text-xs leading-5 bg-brand-600 text-white`}>{activeCount}</span>}
       </button>
-      <Dialog open={open} onClose={() => setOpen(false)} title={t('search.filters')} closeLabel={t('common.close')}>
-        {open && <Panel {...props} onNavigate={navigate} />}
-        <button type="button" onClick={() => setOpen(false)} className="btn-primary mt-6 w-full">{t('search.showResults')} · {t.plural('search.count', props.total)}</button>
+      <Dialog
+        open={open} onClose={() => setOpen(false)} title={t('search.filters')} closeLabel={t('common.close')} sheet
+        footer={(
+          <div className="flex gap-2">
+            {activeCount > 0 && (
+              <button type="button" onClick={() => navigate(href(props.basePath, { ...props.query, brands: [], rating: undefined, inStock: false, min: undefined, max: undefined, page: 1 }, props.fixed ?? []))} className="btn-secondary shrink-0 px-4" data-testid="filters-clear">{t('common.clear')}</button>
+            )}
+            <button type="button" onClick={() => setOpen(false)} className="btn-primary w-full">{t('search.showResults')} · {t.plural('search.count', props.total)}</button>
+          </div>
+        )}
+      >
+        {open && <Panel {...props} onNavigate={navigate} sheet />}
       </Dialog>
     </>
   );

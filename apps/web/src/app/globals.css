@@ -320,3 +320,6 @@ html[data-theme='dark'] .bg-brand-800 { background-color: #4c169a; }
 }
 html[data-theme='dark'] .logo-on-light { display: none; }
 html[data-theme='dark'] .logo-on-dark { display: block; }
+
+/* An open dialog/sheet: the page behind it must not scroll. */
+html:has(dialog[open]), body:has(dialog[open]) { overflow: hidden; overscroll-behavior: none; }

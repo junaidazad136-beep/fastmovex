@@ -5,7 +5,7 @@ import { useEffect, useId, useRef, type ReactNode } from 'react';
 
 /** Accessible modal built on the native <dialog> element (focus trap, Esc to close, inert background). */
 /** `sheet`: on phones it slides up from the bottom edge (easier to reach and read), a centred box elsewhere. */
-export function Dialog({ open, onClose, title, children, closeLabel, wide = false, sheet = false, subtitle }: { open: boolean; onClose: () => void; title: string; children: ReactNode; closeLabel: string; wide?: boolean; sheet?: boolean; subtitle?: string }) {
+export function Dialog({ open, onClose, title, children, closeLabel, wide = false, sheet = false, subtitle, footer }: { open: boolean; onClose: () => void; title: string; children: ReactNode; closeLabel: string; wide?: boolean; sheet?: boolean; subtitle?: string; footer?: ReactNode }) {
   const ref = useRef<HTMLDialogElement>(null);
   const id = useId();
   useEffect(() => {
@@ -31,7 +31,8 @@ export function Dialog({ open, onClose, title, children, closeLabel, wide = fals
           <X className="size-5" aria-hidden />
         </button>
       </div>
-      <div className={`overflow-y-auto px-5 py-4 ${sheet ? 'max-h-[75vh] max-sm:max-h-[80vh] max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]' : 'max-h-[75vh]'}`}>{children}</div>
+      <div className={`overscroll-contain overflow-y-auto px-5 py-4 ${sheet ? (footer ? 'max-h-[62vh] max-sm:max-h-[66vh]' : 'max-h-[75vh] max-sm:max-h-[80vh] max-sm:pb-[calc(1rem+env(safe-area-inset-bottom))]') : 'max-h-[75vh]'}`}>{children}</div>
+      {footer ? <div className="border-t border-ink-100 bg-white px-5 pt-3 pb-[calc(0.75rem+env(safe-area-inset-bottom))]">{footer}</div> : null}
     </dialog>
   );
 }

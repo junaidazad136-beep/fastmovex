@@ -51,7 +51,7 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
           <div className="absolute inset-x-0 bottom-0 bg-ink-900/70 py-1 text-center text-xs font-semibold text-white">{t('product.outOfStock')}</div>
         )}
       </div>
-      <div className="flex flex-1 flex-col p-2 pt-1 @min-[150px]:p-2.5 @min-[150px]:pt-1.5">
+      <div className="flex flex-1 flex-col p-2 pb-2.5 pt-1 @min-[150px]:p-2.5 @min-[150px]:pb-3 @min-[150px]:pt-1.5">
         <h3 className="pcard-title">
           <Link href={paths.product(locale, p.slug)} className="after:absolute after:inset-0 after:content-['']">
             {title}
@@ -65,10 +65,12 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
           </p>
         ) : null}
         <div className="mt-auto pt-1.5">
-          {was ? (
-            <p className="tabular text-[11px] leading-4 text-ink-400 line-through @min-[150px]:text-[12px]" data-testid="price-was">{formatMoney(was, p.currencyCode, locale, { minorUnits, compact: true })}</p>
-          ) : null}
-          <p className="tabular text-[14px] font-extrabold leading-5 text-brand-700 @min-[150px]:text-[16px] @min-[150px]:leading-6" data-testid="price-now">{formatMoney(now, p.currencyCode, locale, { minorUnits, compact: true })}</p>
+          <div className="flex flex-wrap items-baseline gap-x-1.5">
+            <p className="tabular text-[14px] font-extrabold leading-5 text-brand-700 @min-[150px]:text-[16px] @min-[150px]:leading-6" data-testid="price-now">{formatMoney(now, p.currencyCode, locale, { minorUnits, compact: true })}</p>
+            {was ? (
+              <p className="tabular text-[11px] leading-4 text-ink-400 line-through @min-[150px]:text-[12px]" data-testid="price-was">{formatMoney(was, p.currencyCode, locale, { minorUnits, compact: true })}</p>
+            ) : null}
+          </div>
           {p.inStock && p.lowStockCount !== null ? (
             <p className="text-[11.5px] font-medium text-warning-600">{t.plural('product.onlyLeft', p.lowStockCount)}</p>
           ) : p.inStock ? <CardDelivery /> : null}
