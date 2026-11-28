@@ -87,6 +87,8 @@ const en = {
   },
   search: {
     under: 'Under {amount}',
+    cod: 'Cash on delivery',
+    addToCart: 'Add to cart',
     listView: 'List view',
     gridView: 'Grid view',
     quickFilters: 'Quick filters',

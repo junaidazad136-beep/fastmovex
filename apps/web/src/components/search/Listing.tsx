@@ -5,7 +5,6 @@ import type { T } from '@/lib/i18n';
 import { toUrlParams, type ListingQuery } from '@/lib/listing';
 import { ProductGrid } from '../product/ProductCard';
 import { ProductRow } from '../product/ProductRow';
-import { CartBar } from './CartBar';
 import { QuickChips } from './QuickChips';
 import { ResultsView } from './ResultsView';
 import { NoResults, SpellingNote } from './SearchHelp';
@@ -39,7 +38,6 @@ export function Listing({
 
   return (
     <div className="lg:flex lg:gap-8">
-      <CartBar />
       <Filters variant="sidebar" query={query} facets={result.facets} basePath={basePath} fixed={fixed} total={result.total} categoryBase={categoryBase} />
       <div className="min-w-0 flex-1">
         <QuickChips t={t} result={result} query={query} basePath={basePath} fixed={fixed} minorUnits={minorUnits} categoryBase={categoryBase} />
@@ -76,7 +74,7 @@ export function Listing({
         {result.items.length ? (
           <ResultsView
             count={<p className="text-[12.5px] text-ink-500" data-testid="result-count-phone"><b className="font-semibold text-ink-900">{t.plural('search.count', result.total)}</b>{query.q ? <> · <bdi>{t.locale === 'ar' ? `«${query.q}»` : `“${query.q}”`}</bdi></> : null}</p>}
-            list={<ul>{result.items.map((p, i) => <li key={p.id}><ProductRow p={p} t={t} minorUnits={minorUnits} q={query.q} priority={i < 3} /></li>)}</ul>}
+            list={<ul className="space-y-2.5">{result.items.map((p, i) => <li key={p.id}><ProductRow p={p} t={t} minorUnits={minorUnits} priority={i < 3} /></li>)}</ul>}
             grid={<ProductGrid items={result.items} t={t} minorUnits={minorUnits} priorityCount={4} />}
           />
         ) : (

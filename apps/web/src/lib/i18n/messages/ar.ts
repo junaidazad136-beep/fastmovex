@@ -87,6 +87,8 @@ const ar: Localized<Messages> = {
   },
   search: {
     under: 'أقل من {amount}',
+    cod: 'الدفع عند الاستلام',
+    addToCart: 'أضف إلى السلة',
     listView: 'عرض كقائمة',
     gridView: 'عرض كشبكة',
     quickFilters: 'فلاتر سريعة',

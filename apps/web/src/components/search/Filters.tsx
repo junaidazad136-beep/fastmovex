@@ -174,13 +174,13 @@ export function Filters({ variant, className = '', ...props }: Props & { total: 
         type="button"
         onClick={() => setOpen(true)}
         className={variant === 'chip'
-          ? `inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold ${activeCount ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-200 bg-white text-ink-900'} ${pending ? 'opacity-60' : ''} ${className}`
+          ? `inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full border px-3 text-[12.5px] font-semibold ${activeCount ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-900'} ${pending ? 'opacity-60' : ''} ${className}`
           : `inline-flex h-11 items-center justify-center gap-2 rounded-xl border border-ink-200 bg-white px-3 text-sm font-semibold text-ink-900 hover:bg-ink-50 lg:hidden ${pending ? 'opacity-60' : ''} ${className}`}
         data-testid="open-filters"
       >
         <SlidersHorizontal className="size-4" aria-hidden />
         {t('search.filters')}
-        {activeCount > 0 && <span className={`tabular min-w-5 rounded-full px-1.5 text-xs leading-5 ${variant === 'chip' ? 'bg-white text-brand-700' : 'bg-brand-600 text-white'}`}>{activeCount}</span>}
+        {activeCount > 0 && <span className={`tabular min-w-5 rounded-full px-1.5 text-xs leading-5 bg-brand-600 text-white`}>{activeCount}</span>}
       </button>
       <Dialog open={open} onClose={() => setOpen(false)} title={t('search.filters')} closeLabel={t('common.close')}>
         {open && <Panel {...props} onNavigate={navigate} />}

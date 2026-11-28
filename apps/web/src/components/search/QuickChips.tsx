@@ -33,7 +33,7 @@ export function QuickChips({ t, result, query, basePath, fixed = [], minorUnits,
           href={c.to}
           scroll={false}
           aria-pressed={c.on}
-          className={`inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 text-[12.5px] font-semibold transition-colors ${c.on ? 'border-brand-600 bg-brand-600 text-white' : 'border-ink-200 bg-white text-ink-900'}`}
+          className={`inline-flex h-8 shrink-0 items-center gap-1 whitespace-nowrap rounded-full border px-3 text-[12.5px] font-semibold transition-colors ${c.on ? 'border-brand-600 bg-brand-50 text-brand-700' : 'border-ink-200 bg-white text-ink-900'}`}
           data-testid={`chip-${c.key}`}
         >
           {c.label}
