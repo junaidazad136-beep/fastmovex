@@ -2,24 +2,26 @@ import { expect, test } from './fixtures';
 
 /** The FastMoveX app-style home: header, chips, slider, cards with "Add", barcode search, five tabs on phones. */
 test.describe('Storefront look (FastMoveX)', () => {
-  test('phone: logo with tagline, Qatar, popular searches, slider dots, four-across cards, five tabs', async ({ page }) => {
+  test('phone: logo with tagline, Qatar, shortcuts, Hot / New / Deals with three cards across, five tabs', async ({ page }) => {
     await page.setViewportSize({ width: 430, height: 932 });
     await page.goto('/en');
     await expect(page.getByRole('img', { name: 'FastMoveX' }).first()).toBeVisible();
-    await expect(page.getByTestId('logo-tagline').first()).toBeVisible();
     await expect(page.getByTestId('logo-tagline').first()).toHaveText(/SHOP SMART\s*LIVE BETTER/);
     await expect(page.getByTestId('location-button')).toContainText('Qatar');
-    await expect(page.getByTestId('popular-chip').first()).toBeVisible();
-    await expect(page.getByRole('heading', { name: 'Flash Deals' })).toBeVisible();
-    await expect(page.getByTestId('deal-countdown').first()).toHaveText(/\d\d:\d\d$/);
+    // popular searches live in the search box on phones (rotating hint), not in a row of chips
+    await expect(page.getByTestId('popular-chip').first()).toBeHidden();
+    await expect(page.getByRole('navigation', { name: 'Shortcuts' }).getByRole('link')).toHaveCount(4);
     const tabs = page.getByRole('navigation', { name: 'Menu' }).getByRole('link');
     await expect(tabs).toHaveCount(5);
     await expect(tabs.nth(3)).toHaveText('Wishlist');
-    // four product cards side by side in a rail
-    const cards = page.locator('#rail-flash_deals').locator('xpath=ancestor::section').getByTestId('product-card');
-    const boxes = await Promise.all([0, 1, 2, 3].map(async (i) => (await cards.nth(i).boundingBox())!));
+    // Deals tab: countdown, three product cards side by side, each with a round "+"
+    await page.getByTestId('home-tab-deals').click();
+    await expect(page.getByTestId('deal-countdown').first()).toHaveText(/\d\d:\d\d$/);
+    const cards = page.locator('#panel-deals').getByTestId('product-card');
+    const boxes = await Promise.all([0, 1, 2].map(async (i) => (await cards.nth(i).boundingBox())!));
     expect(new Set(boxes.map((b) => Math.round(b.y))).size).toBe(1);
-    expect(boxes[3].x + boxes[3].width).toBeLessThanOrEqual(431);
+    expect(boxes[2].x + boxes[2].width).toBeLessThanOrEqual(431);
+    await expect(page.locator('#panel-deals').getByTestId('scroll-track')).toBeVisible();
     // the location sheet holds the language switch
     await page.getByTestId('location-button').click();
     await expect(page.getByRole('dialog', { name: 'Where should we deliver?' })).toBeVisible();

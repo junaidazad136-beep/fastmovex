@@ -10,6 +10,7 @@ import { Rail } from '../ui/Rail';
 import { Stars } from '../ui/Stars';
 import { CategoryIcon } from './CategoryIcon';
 import { SlideBody } from './PromoSlide';
+import { ScrollTrack } from '../ui/ScrollTrack';
 
 function BannerLink({ banner, t, className, children }: { banner: Banner; t: T; className: string; children: React.ReactNode }) {
   const link = bannerHref(t.locale, banner.linkUrl);
@@ -24,9 +25,9 @@ function pickOpt(l: string, en?: string | null, ar?: string | null): string | nu
 }
 
 /** Section title row: icon + title on one side, "View all →" on the other. */
-export function SectionHead({ id, title, icon, href, linkLabel, extra }: { id: string; title: string; icon?: React.ReactNode; href?: string; linkLabel: string; extra?: React.ReactNode }) {
+export function SectionHead({ id, title, icon, href, linkLabel, extra, phoneHidden = false }: { id: string; title: string; icon?: React.ReactNode; href?: string; linkLabel: string; extra?: React.ReactNode; phoneHidden?: boolean }) {
   return (
-    <div className="mb-2 flex items-center justify-between gap-3 sm:mb-3">
+    <div className={`mb-2 flex items-center justify-between gap-3 sm:mb-3 ${phoneHidden ? 'max-md:sr-only' : ''}`}>
       <div className="flex min-w-0 items-center gap-2.5">
         <h2 id={id} className="inline-flex items-center gap-1.5 text-[17px] font-bold tracking-tight text-ink-900 sm:gap-2 sm:text-xl">
           {icon}
@@ -47,7 +48,7 @@ export function SectionHead({ id, title, icon, href, linkLabel, extra }: { id: s
 export function PopularSearches({ queries, t }: { queries: string[]; t: T }) {
   if (!queries.length) return null;
   return (
-    <section aria-labelledby="home-popular" className="container-page pt-3">
+    <section aria-labelledby="home-popular" className="container-page pt-3 max-md:hidden">
       <div className="flex items-center gap-2">
         <h2 id="home-popular" className="inline-flex shrink-0 items-center gap-1.5 text-[12.5px] font-semibold text-ink-900 sm:text-[13.5px]">
           <History className="size-4 text-ink-700 sm:size-[18px]" aria-hidden />{t('home.popularSearches')}
@@ -78,7 +79,7 @@ export function ValueProps({ t }: { t: T }) {
   return (
     <section className="container-page mt-3 max-sm:px-2 sm:mt-6" aria-label={t('home.whyUs')}>
       {/* one row of three, each name on ONE line with the icon beside it. On phones the strip runs edge to edge so all three fit (icons drop away only on the very narrowest screens). */}
-      <ul className="grid grid-cols-3 divide-x divide-ink-100 rounded-full border border-ink-100 bg-white py-2 rtl:divide-x-reverse sm:rounded-2xl sm:py-2.5 lg:py-3.5">
+      <ul className="grid grid-cols-3 divide-x divide-ink-100 rounded-2xl border border-ink-100 bg-white py-2 rtl:divide-x-reverse sm:py-2.5 lg:py-3.5">
         {items.map(({ Icon, title, text }) => (
           <li key={title} className="flex min-w-0 items-center justify-center gap-1 px-1 sm:justify-start sm:gap-2.5 sm:px-4 lg:px-5">
             <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-brand-50 text-brand-600 max-[379px]:hidden sm:size-8 sm:rounded-lg lg:size-11 lg:rounded-xl"><Icon className="size-[11px] sm:size-[18px] lg:size-[22px]" aria-hidden /></span>
@@ -96,8 +97,9 @@ export function ValueProps({ t }: { t: T }) {
 /** Category tiles with a photo (the category's best seller) — a swipeable row, like the app. */
 export function CategoryTiles({ items, t, title }: { items: { slug: string; name: string; nameAr: string; iconUrl: string | null; imageUrl?: string | null }[]; t: T; title: string }) {
   return (
-    <section className="container-page mt-5 sm:mt-7" aria-labelledby="home-cats">
-      <SectionHead id="home-cats" title={title} href={`/${t.locale}/categories`} linkLabel={t('home.viewAll')} />
+    <section className="container-page mt-4 sm:mt-7" aria-labelledby="home-cats">
+      <SectionHead id="home-cats" title={title} href={`/${t.locale}/categories`} linkLabel={t('home.viewAll')} phoneHidden />
+      <ScrollTrack>
       <ul className="no-scrollbar -mx-4 flex snap-x gap-2.5 overflow-x-auto scroll-px-4 px-4 sm:-mx-6 sm:px-6 lg:mx-0 lg:px-0">
         {items.slice(0, 24).map((c) => (
           <li key={c.slug} className="w-[calc((100%-50px)/6)] min-w-[64px] max-w-[132px] shrink-0 snap-start sm:w-[104px]">
@@ -114,6 +116,7 @@ export function CategoryTiles({ items, t, title }: { items: { slug: string; name
           </li>
         ))}
       </ul>
+      </ScrollTrack>
     </section>
   );
 }
@@ -130,7 +133,7 @@ export function RailProducts({ id, label, items, t, minorUnits, compact = false 
     <Rail label={label} prevLabel={t('common.previous')} nextLabel={t('common.next')}>
       {items.map((p, i) => (
         <li key={p.id} className={compact ? 'rail-item max-sm:!w-[31%] max-sm:!min-w-[100px]' : 'rail-item'}>
-          <ProductCard p={p} t={t} minorUnits={minorUnits} badge={cardBadge(id, p, i, t)} sizes={`(min-width: 1280px) 200px, (min-width: 768px) 22vw, ${compact ? '31vw' : '38vw'}`} />
+          <ProductCard p={p} t={t} minorUnits={minorUnits} compact={compact} badge={cardBadge(id, p, i, t)} sizes={`(min-width: 1280px) 200px, (min-width: 768px) 22vw, ${compact ? '31vw' : '38vw'}`} />
         </li>
       ))}
     </Rail>

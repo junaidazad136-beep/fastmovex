@@ -20,7 +20,7 @@ function flagOf(code: string): string {
 export function Header({ t, market, categories }: { t: T; market: Market; categories: CategoryNode[] }) {
   const l = t.locale;
   return (
-    <header className="sticky top-0 z-40 border-b border-ink-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
+    <header className="sticky top-0 z-40 max-sm:[&:has(input[type=search])]:-top-[60px] border-b border-ink-100 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/90">
       <a href="#main" className="sr-only focus:not-sr-only focus:absolute focus:start-4 focus:top-2 focus:z-50 focus:rounded-lg focus:bg-white focus:px-3 focus:py-2 focus:shadow">
         {t('nav.skipToContent')}
       </a>

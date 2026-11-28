@@ -1,6 +1,6 @@
 'use client';
 
-import { Check, ShoppingCart, Truck } from 'lucide-react';
+import { Check, Plus, ShoppingCart, Truck } from 'lucide-react';
 import Link from 'next/link';
 import { useRef, useState } from 'react';
 import { useDeliveryPromise } from '@/lib/delivery-promise';
@@ -33,21 +33,24 @@ export function CardDelivery() {
  * The card's purple "Add" button. One-option products go straight into the cart; products with options (size,
  * colour) open the product page to choose; sold-out products cannot be added.
  */
-export function CardAddButton({ productId, slug, title, variantId, inStock }: { productId: string; slug: string; title: string; variantId: string | null; inStock: boolean }) {
+export function CardAddButton({ productId, slug, title, variantId, inStock, round = false }: { productId: string; slug: string; title: string; variantId: string | null; inStock: boolean; round?: boolean }) {
   const t = useT();
   const cart = useCart();
   const toast = useToast();
   const [done, setDone] = useState(false);
   const timer = useRef<number | undefined>(undefined);
-  const cls = 'relative z-10 mt-1.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg text-[12.5px] font-semibold transition-colors @min-[150px]:mt-2 @min-[150px]:h-9 @min-[150px]:text-[13px]';
+  const cls = round
+    ? 'absolute bottom-1.5 end-1.5 z-10 inline-flex size-7 items-center justify-center rounded-full shadow-[0_2px_8px_rgb(116_34_230/0.35)] transition-colors'
+    : 'relative z-10 mt-1.5 inline-flex h-8 w-full items-center justify-center gap-1.5 rounded-lg text-[12.5px] font-semibold transition-colors @min-[150px]:mt-2 @min-[150px]:h-9 @min-[150px]:text-[13px]';
 
   if (!inStock) {
+    if (round) return null;
     return <button type="button" disabled className={`${cls} cursor-not-allowed bg-ink-100 text-ink-400`}>{t('product.outOfStock')}</button>;
   }
   if (!variantId) {
     return (
       <Link href={paths.product(t.locale, slug)} className={`${cls} bg-brand-600 text-white hover:bg-brand-700`} aria-label={t('card.chooseOptions', { title })} data-testid="card-add" data-product={productId}>
-        <ShoppingCart className="size-4" aria-hidden />{t('card.add')}
+        {round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <><ShoppingCart className="size-4" aria-hidden />{t('card.add')}</>}
       </Link>
     );
   }
@@ -64,8 +67,8 @@ export function CardAddButton({ productId, slug, title, variantId, inStock }: { 
   }
   return (
     <button type="button" onClick={add} className={`${cls} bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800`} aria-label={t('card.addTitle', { title })} data-testid="card-add" data-product={productId}>
-      {done ? <Check className="pop size-4" aria-hidden /> : <ShoppingCart className="size-4" aria-hidden />}
-      {done ? t('card.added') : t('card.add')}
+      {done ? <Check className="pop size-4" aria-hidden /> : round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <ShoppingCart className="size-4" aria-hidden />}
+      {round ? null : done ? t('card.added') : t('card.add')}
     </button>
   );
 }

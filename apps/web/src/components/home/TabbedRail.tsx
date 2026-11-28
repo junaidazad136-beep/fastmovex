@@ -2,6 +2,7 @@
 
 import Link from 'next/link';
 import { useState, type ReactNode } from 'react';
+import { ScrollTrack } from '../ui/ScrollTrack';
 
 export type RailTab = { key: string; label: string; href?: string; extra?: ReactNode; node: ReactNode };
 
@@ -40,7 +41,7 @@ export function TabbedRail({ tabs, seeAll }: { tabs: RailTab[]; seeAll: string }
         </div>
       </div>
       {tabs.map((x) => (
-        <div key={x.key} id={`panel-${x.key}`} role="tabpanel" aria-labelledby={`tab-${x.key}`} hidden={x.key !== cur.key}>{x.node}</div>
+        <div key={x.key} id={`panel-${x.key}`} role="tabpanel" aria-labelledby={`tab-${x.key}`} hidden={x.key !== cur.key}><ScrollTrack>{x.node}</ScrollTrack></div>
       ))}
     </section>
   );
