@@ -1,8 +1,7 @@
 'use client';
 
 import { Check, Plus, ShoppingCart, Truck } from 'lucide-react';
-import Link from 'next/link';
-import { useRef, useState } from 'react';
+import { useCallback, useRef, useState } from 'react';
 import { useDeliveryPromise } from '@/lib/delivery-promise';
 import { errorMessage } from '@/lib/errors';
 import { useT } from '@/lib/i18n/client';
@@ -10,6 +9,7 @@ import { useCart } from '@/lib/state/cart';
 import { useToast } from '@/lib/state/toast';
 import { paths } from '@/lib/urls';
 import { haptic } from '@/lib/haptics';
+import { OptionsSheet } from './OptionsSheet';
 
 /** "Tomorrow" / "Today" / "Thu 12" / "1–2 days" under a card's price (from the real delivery windows). */
 export function CardDelivery() {
@@ -38,6 +38,8 @@ export function CardAddButton({ productId, slug, title, variantId, inStock, roun
   const cart = useCart();
   const toast = useToast();
   const [done, setDone] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const closeSheet = useCallback(() => setSheet(false), []);
   const timer = useRef<number | undefined>(undefined);
   const cls = round
     ? 'absolute bottom-1.5 end-1.5 z-10 inline-flex size-7 items-center justify-center rounded-full shadow-[0_2px_8px_rgb(116_34_230/0.35)] transition-colors'
@@ -48,10 +50,14 @@ export function CardAddButton({ productId, slug, title, variantId, inStock, roun
     return <button type="button" disabled className={`${cls} cursor-not-allowed bg-ink-100 text-ink-400`}>{t('product.outOfStock')}</button>;
   }
   if (!variantId) {
+    // colour / size to pick: choose it in a sheet right here instead of leaving the page
     return (
-      <Link href={paths.product(t.locale, slug)} className={`${cls} bg-brand-600 text-white hover:bg-brand-700`} aria-label={t('card.chooseOptions', { title })} data-testid="card-add" data-product={productId}>
-        {round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <><ShoppingCart className="size-4" aria-hidden />{t('card.add')}</>}
-      </Link>
+      <>
+        <button type="button" onClick={() => { haptic('tap'); setSheet(true); }} className={`${cls} bg-brand-600 text-white hover:bg-brand-700`} aria-label={t('card.chooseOptions', { title })} aria-haspopup="dialog" data-testid="card-add" data-product={productId}>
+          {round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <><ShoppingCart className="size-4" aria-hidden />{t('card.add')}</>}
+        </button>
+        {sheet ? <OptionsSheet slug={slug} open={sheet} onClose={closeSheet} /> : null}
+      </>
     );
   }
   /** "Added ✓" and the cart badge change the moment it is tapped; a refusal (sold out meanwhile) puts it back. */

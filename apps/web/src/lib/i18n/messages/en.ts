@@ -87,6 +87,9 @@ const en = {
   },
   search: {
     under: 'Under {amount}',
+    pickOptions: 'Choose your option',
+    addMore: 'Add more · {count} in cart',
+    seeDetails: 'See full details',
     cod: 'Cash on delivery',
     addToCart: 'Add to cart',
     listView: 'List view',

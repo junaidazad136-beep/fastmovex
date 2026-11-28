@@ -1,15 +1,14 @@
 'use client';
 
 import { Minus, Plus } from 'lucide-react';
-import Link from 'next/link';
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import type { Cart } from '@/lib/api/types';
 import { errorMessage } from '@/lib/errors';
 import { haptic } from '@/lib/haptics';
 import { useT } from '@/lib/i18n/client';
 import { useCart } from '@/lib/state/cart';
 import { useToast } from '@/lib/state/toast';
-import { paths } from '@/lib/urls';
+import { OptionsSheet } from './OptionsSheet';
 
 function lineOf(cart: Cart | null, variantId: string) {
   for (const g of cart?.groups ?? []) for (const i of g.items) if (i.variantId === variantId) return i;
@@ -25,13 +24,20 @@ export function QtyStepper({ productId, slug, title, variantId, inStock }: { pro
   const cart = useCart();
   const toast = useToast();
   const [busy, setBusy] = useState(false);
+  const [sheet, setSheet] = useState(false);
+  const closeSheet = useCallback(() => setSheet(false), []);
   const round = 'inline-flex h-9 w-full items-center justify-center gap-1.5 rounded-full bg-brand-600 text-[13px] font-bold text-white transition-colors hover:bg-brand-700 active:scale-[0.98]';
   if (!inStock) return null;
   if (!variantId) {
+    // colour / size to pick: a sheet opens here (no page change); shows how many of this product are already in the cart
+    const inCart = (cart.cart?.groups ?? []).flatMap((g) => g.items).filter((i) => i.productSlug === slug).reduce((n, i) => n + i.quantity, 0);
     return (
-      <Link href={paths.product(t.locale, slug)} className={`relative z-10 ${round}`} aria-label={t('card.chooseOptions', { title })} data-testid="row-add" data-product={productId}>
-        <Plus className="size-4" strokeWidth={2.6} aria-hidden />{t('search.addToCart')}
-      </Link>
+      <>
+        <button type="button" onClick={() => { haptic('tap'); setSheet(true); }} className={`relative z-10 ${round}`} aria-label={t('card.chooseOptions', { title })} aria-haspopup="dialog" data-testid="row-add" data-product={productId}>
+          <Plus className="size-4" strokeWidth={2.6} aria-hidden />{inCart ? t('search.addMore', { count: inCart }) : t('search.addToCart')}
+        </button>
+        {sheet ? <OptionsSheet slug={slug} open={sheet} onClose={closeSheet} /> : null}
+      </>
     );
   }
   const line = lineOf(cart.cart, variantId);
