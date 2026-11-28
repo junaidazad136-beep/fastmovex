@@ -86,6 +86,11 @@ const en = {
     contact: 'Contact us',
   },
   search: {
+    under: 'Under {amount}',
+    listView: 'List view',
+    gridView: 'Grid view',
+    quickFilters: 'Quick filters',
+    related: 'Related',
     placeholder: 'Search products, brands & stores…',
     tryHint: 'Search “{q}”',
     voice: 'Search by voice',
@@ -346,6 +351,11 @@ const en = {
     location: 'Ships from {city}',
   },
   cart: {
+    barOpen: 'Cart',
+    barFree: 'Free delivery ✓',
+    decrease: 'One less {title}',
+    increase: 'One more {title}',
+    inCart: '{count} in cart',
     freeLeft: 'Add {amount} more from {store} for FREE delivery',
     freeDone: 'Your items from {store} qualify for FREE delivery',
     title: 'Your cart',

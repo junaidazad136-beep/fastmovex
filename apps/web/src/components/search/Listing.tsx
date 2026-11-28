@@ -4,6 +4,10 @@ import type { SearchResult } from '@/lib/api/types';
 import type { T } from '@/lib/i18n';
 import { toUrlParams, type ListingQuery } from '@/lib/listing';
 import { ProductGrid } from '../product/ProductCard';
+import { ProductRow } from '../product/ProductRow';
+import { CartBar } from './CartBar';
+import { QuickChips } from './QuickChips';
+import { ResultsView } from './ResultsView';
 import { NoResults, SpellingNote } from './SearchHelp';
 import { SearchLogger } from './SearchLogger';
 import { Filters } from './Filters';
@@ -35,8 +39,10 @@ export function Listing({
 
   return (
     <div className="lg:flex lg:gap-8">
+      <CartBar />
       <Filters variant="sidebar" query={query} facets={result.facets} basePath={basePath} fixed={fixed} total={result.total} categoryBase={categoryBase} />
       <div className="min-w-0 flex-1">
+        <QuickChips t={t} result={result} query={query} basePath={basePath} fixed={fixed} minorUnits={minorUnits} categoryBase={categoryBase} />
         {heading}
         {result.spelling && query.q && (
           <SpellingNote
@@ -47,13 +53,12 @@ export function Listing({
           />
         )}
         {/* Phones: [Filters] [Sort] side by side, count below. Large screens: count … sort (filters are in the sidebar). */}
-        <div className="mb-4 flex flex-wrap items-center gap-2 lg:flex-nowrap lg:gap-3">
-          <Filters variant="button" className="min-w-0 flex-1" query={query} facets={result.facets} basePath={basePath} fixed={fixed} total={result.total} categoryBase={categoryBase} />
+        <div className="mb-4 flex flex-wrap items-center gap-2 max-lg:hidden lg:flex-nowrap lg:gap-3">
           <SortSelect query={query} basePath={basePath} fixed={fixed} className="min-w-0 flex-1 lg:order-last lg:flex-none" />
           <p className="w-full text-sm text-ink-500 lg:w-auto lg:flex-1" data-testid="result-count">{t.plural('search.count', result.total)}</p>
         </div>
         {chips.length > 0 && (
-          <ul className="mb-4 flex flex-wrap items-center gap-2" aria-label={t('search.activeFilters')}>
+          <ul className="mb-4 flex flex-wrap items-center gap-2 max-lg:hidden" aria-label={t('search.activeFilters')}>
             {chips.map((c) => (
               <li key={c.label}>
                 <Link href={c.href} scroll={false} className="chip chip-active" aria-label={t('search.removeFilter', { name: c.label })}>
@@ -69,7 +74,11 @@ export function Listing({
           <p className="mb-4 rounded-xl bg-sand-50 px-4 py-3 text-sm text-sand-700">{t('search.broadMatch')}</p>
         )}
         {result.items.length ? (
-          <ProductGrid items={result.items} t={t} minorUnits={minorUnits} priorityCount={4} />
+          <ResultsView
+            count={<p className="text-[12.5px] text-ink-500" data-testid="result-count-phone"><b className="font-semibold text-ink-900">{t.plural('search.count', result.total)}</b>{query.q ? <> · <bdi>{t.locale === 'ar' ? `«${query.q}»` : `“${query.q}”`}</bdi></> : null}</p>}
+            list={<ul>{result.items.map((p, i) => <li key={p.id}><ProductRow p={p} t={t} minorUnits={minorUnits} q={query.q} priority={i < 3} /></li>)}</ul>}
+            grid={<ProductGrid items={result.items} t={t} minorUnits={minorUnits} priorityCount={4} />}
+          />
         ) : (
           <NoResults t={t} help={result.noResults} minorUnits={minorUnits} />
         )}

@@ -86,6 +86,11 @@ const ar: Localized<Messages> = {
     contact: 'تواصل معنا',
   },
   search: {
+    under: 'أقل من {amount}',
+    listView: 'عرض كقائمة',
+    gridView: 'عرض كشبكة',
+    quickFilters: 'فلاتر سريعة',
+    related: 'ذات صلة',
     placeholder: 'ابحث عن منتجات وماركات ومتاجر…',
     tryHint: 'ابحث عن «{q}»',
     voice: 'البحث بالصوت',
@@ -346,6 +351,11 @@ const ar: Localized<Messages> = {
     location: 'يشحن من {city}',
   },
   cart: {
+    barOpen: 'السلة',
+    barFree: 'توصيل مجاني ✓',
+    decrease: 'قطعة أقل من {title}',
+    increase: 'قطعة أخرى من {title}',
+    inCart: '{count} في السلة',
     freeLeft: 'أضف {amount} من {store} لتحصل على توصيل مجاني',
     freeDone: 'منتجاتك من {store} مؤهلة للتوصيل المجاني',
     title: 'سلة التسوق',

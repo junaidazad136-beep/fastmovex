@@ -35,7 +35,7 @@ export default async function SearchPage({ params, searchParams }: PageProps<'/[
   const brand = words && !query.brands.length ? result.facets.brands.find((b) => b.name.toLowerCase() === words || words.startsWith(`${b.name.toLowerCase()} `)) : undefined;
   const cats = result.facets.categories.slice(0, 8);
   return (
-    <div className="container-page py-6">
+    <div className="container-page py-3 pb-24 lg:py-6 lg:pb-6">
       <Listing
         t={t}
         result={result}
@@ -44,18 +44,18 @@ export default async function SearchPage({ params, searchParams }: PageProps<'/[
         minorUnits={market.currency.minorUnits}
         heading={
           <div className="mb-2">
-            <h1 className="text-xl sm:text-2xl font-bold tracking-tight">{query.q ? t('search.resultsFor', { q: result.spelling?.auto ? result.spelling.corrected : query.q }) : t('search.allProducts')}</h1>
+            <h1 className="text-xl font-bold tracking-tight max-lg:sr-only sm:text-2xl">{query.q ? t('search.resultsFor', { q: result.spelling?.auto ? result.spelling.corrected : query.q }) : t('search.allProducts')}</h1>
             {brand ? (
-              <Link href={paths.brand(locale, brand.slug)} className="mt-3 inline-flex items-center gap-2 rounded-xl border border-brand-100 bg-brand-50 px-3.5 py-2 text-sm font-medium text-brand-800 hover:bg-brand-100" data-testid="search-brand-link">
+              <Link href={paths.brand(locale, brand.slug)} className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-3 py-1.5 text-[12.5px] font-semibold text-brand-800 hover:bg-brand-100 lg:mt-3 lg:gap-2 lg:rounded-xl lg:border lg:border-brand-100 lg:px-3.5 lg:py-2 lg:text-sm lg:font-medium" data-testid="search-brand-link">
                 <Tag className="size-4" aria-hidden />{t('search.brandPage', { name: brand.name })}<ArrowRight className="size-4 rtl:rotate-180" aria-hidden />
               </Link>
             ) : null}
             {query.q && cats.length > 1 ? (
-              <div className="mt-3" data-testid="search-categories">
-                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400">{t('search.inCategories')}</p>
-                <ul className="no-scrollbar flex gap-2 overflow-x-auto">
+              <div className="mt-2 lg:mt-3" data-testid="search-categories">
+                <p className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-ink-400 max-lg:sr-only">{t('search.inCategories')}</p>
+                <ul className="no-scrollbar -mx-4 flex gap-2 overflow-x-auto px-4 lg:mx-0 lg:px-0">
                   {cats.map((c) => (
-                    <li key={c.slug}><Link href={`${paths.category(locale, c.slug)}?q=${encodeURIComponent(query.q!)}`} className="chip whitespace-nowrap">{pick(locale, c.name, c.nameAr)} <span className="text-ink-400 tabular">{c.count}</span></Link></li>
+                    <li key={c.slug}><Link href={`${paths.category(locale, c.slug)}?q=${encodeURIComponent(query.q!)}`} className="chip whitespace-nowrap max-lg:h-8 max-lg:border-0 max-lg:bg-brand-50 max-lg:px-3 max-lg:text-[12.5px] max-lg:font-medium max-lg:text-brand-800">{pick(locale, c.name, c.nameAr)} <span className="text-ink-400 tabular">{c.count}</span></Link></li>
                   ))}
                 </ul>
               </div>
