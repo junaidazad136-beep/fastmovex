@@ -33,7 +33,7 @@ export function CardDelivery() {
  * The card's purple "Add" button. One-option products go straight into the cart; products with options (size,
  * colour) open the product page to choose; sold-out products cannot be added.
  */
-export function CardAddButton({ productId, slug, title, variantId, inStock, round = false }: { productId: string; slug: string; title: string; variantId: string | null; inStock: boolean; round?: boolean }) {
+export function CardAddButton({ productId, slug, title, variantId, inStock, round = false, long = false }: { productId: string; slug: string; title: string; variantId: string | null; inStock: boolean; round?: boolean; long?: boolean }) {
   const t = useT();
   const cart = useCart();
   const toast = useToast();
@@ -54,7 +54,7 @@ export function CardAddButton({ productId, slug, title, variantId, inStock, roun
     return (
       <>
         <button type="button" onClick={() => { haptic('tap'); setSheet(true); }} className={`${cls} bg-brand-600 text-white hover:bg-brand-700`} aria-label={t('card.chooseOptions', { title })} aria-haspopup="dialog" data-testid="card-add" data-product={productId}>
-          {round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <><ShoppingCart className="size-4" aria-hidden />{t('card.add')}</>}
+          {round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <><ShoppingCart className="size-4" aria-hidden />{long ? t('search.addToCart') : t('card.add')}</>}
         </button>
         {sheet ? <OptionsSheet slug={slug} open={sheet} onClose={closeSheet} /> : null}
       </>
@@ -74,7 +74,7 @@ export function CardAddButton({ productId, slug, title, variantId, inStock, roun
   return (
     <button type="button" onClick={add} className={`${cls} bg-brand-600 text-white hover:bg-brand-700 active:bg-brand-800`} aria-label={t('card.addTitle', { title })} data-testid="card-add" data-product={productId}>
       {done ? <Check className="pop size-4" aria-hidden /> : round ? <Plus className="size-4" strokeWidth={2.6} aria-hidden /> : <ShoppingCart className="size-4" aria-hidden />}
-      {round ? null : done ? t('card.added') : t('card.add')}
+      {round ? null : done ? t('card.added') : long ? t('search.addToCart') : t('card.add')}
     </button>
   );
 }

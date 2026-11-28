@@ -46,7 +46,6 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
         <div className="absolute end-0.5 top-0.5 @min-[150px]:end-1.5 @min-[150px]:top-1.5">
           <WishlistButton productId={p.id} compact />
         </div>
-        {compact ? <CardAddButton productId={p.id} slug={p.slug} title={title} variantId={p.quickAddVariantId ?? null} inStock={p.inStock} round /> : null}
         {!p.inStock && (
           <div className="absolute inset-x-0 bottom-0 bg-ink-900/70 py-1 text-center text-xs font-semibold text-white">{t('product.outOfStock')}</div>
         )}
@@ -74,7 +73,7 @@ export function ProductCard({ p, t, minorUnits = 2, priority = false, sizes, bad
           {p.inStock && p.lowStockCount !== null ? (
             <p className="text-[11.5px] font-medium text-warning-600">{t.plural('product.onlyLeft', p.lowStockCount)}</p>
           ) : p.inStock ? <CardDelivery /> : null}
-          {compact ? null : <CardAddButton productId={p.id} slug={p.slug} title={title} variantId={p.quickAddVariantId ?? null} inStock={p.inStock} />}
+          <CardAddButton productId={p.id} slug={p.slug} title={title} variantId={p.quickAddVariantId ?? null} inStock={p.inStock} long={compact} />
         </div>
       </div>
     </article>
